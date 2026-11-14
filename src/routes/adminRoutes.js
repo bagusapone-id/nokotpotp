@@ -212,4 +212,55 @@ router.delete('/country/:key', authAdmin, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/notifications
+ * List all notifications
+ */
+router.get('/notifications', authAdmin, async (req, res) => {
+  try {
+    const snap = await db.ref('notifications').orderByChild('created_at').limitToLast(100).once('value');
+    const items = [];
+    if (snap.exists()) snap.forEach(c => items.push({ id: c.key, ...c.val() }));
+    items.sort((a, b) => b.created_at - a.created_at);
+    return res.status(200).json({ success: true, notifications: items });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/notifications
+ * Broadcast a notification to all users
+ * Body: { title, message, type: 'info'|'warning'|'success' }
+ */
+router.post('/notifications', authAdmin, async (req, res) => {
+  const { title, message, type = 'info' } = req.body;
+  if (!title || !message) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'title dan message wajib diisi.' });
+  }
+  if (!['info','warning','success'].includes(type)) {
+    return res.status(400).json({ error: 'INVALID_TYPE', message: 'type harus info, warning, atau success.' });
+  }
+  try {
+    const ref = db.ref('notifications').push();
+    await ref.set({ title, message, type, created_at: Date.now(), active: true });
+    return res.status(201).json({ success: true, id: ref.key });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
+ * DELETE /api/admin/notifications/:id
+ * Delete a notification
+ */
+router.delete('/notifications/:id', authAdmin, async (req, res) => {
+  try {
+    await db.ref(`notifications/${req.params.id}`).remove();
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
 module.exports = router;

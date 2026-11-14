@@ -172,6 +172,7 @@ function initApp() {
   setupConnectionListener();
   setupBalanceListener();
   setupCountriesAndStockListener();
+  setupNotificationsListener();
   checkForActiveOrder();
 }
 
@@ -834,52 +835,31 @@ window.backToMethodSelect = function() {
 };
 
 // ══════════════════════════════════════════════════════
-// RIWAYAT PEMBELIAN
+// NOTIFICATIONS
 // ══════════════════════════════════════════════════════
 
-window.openHistoryModal = async function() {
-  document.getElementById('history-modal').classList.remove('hidden');
-  const list = document.getElementById('history-list');
-  list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i>Memuat...</div>';
-  try {
-    const res  = await apiFetch('/api/orders/history');
-    const data = await safeJson(res);
-    if (!res.ok || !data.orders) {
-      list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem">Gagal memuat riwayat.</div>';
-      return;
-    }
-    if (!data.orders.length) {
-      list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem"><i class="fa-solid fa-box-open" style="display:block;font-size:1.5rem;margin-bottom:8px;color:#1e293b"></i>Belum ada pembelian.</div>';
-      return;
-    }
-    const statusCfg = {
-      WAITING_OTP:  { cls:'s-lock',  label:'Menunggu OTP' },
-      OTP_REQUESTED:{ cls:'s-lock',  label:'OTP Diminta' },
-      COMPLETED:    { cls:'s-avail', label:'Selesai' },
-      EXPIRED:      { cls:'s-exp',   label:'Kadaluarsa' },
-      CANCELLED:    { cls:'s-burn',  label:'Dibatalkan' },
-    };
-    list.innerHTML = data.orders.map(o => {
-      const cfg = statusCfg[o.status] || { cls:'s-exp', label: o.status };
-      const date = new Date(o.created_at).toLocaleDateString('id-ID',{ day:'2-digit', month:'short', year:'numeric' });
-      const time = new Date(o.created_at).toLocaleTimeString('id-ID',{ hour:'2-digit', minute:'2-digit' });
-      return '<div style="background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:11px 13px">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
-          '<span style="font-family:\'Geist Mono\',monospace;font-size:.8125rem;color:#f1f5f9;font-weight:600">' + (o.phone_number || '—') + '</span>' +
-          '<span class="' + cfg.cls + '" style="font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px">' + cfg.label + '</span>' +
+function setupNotificationsListener() {
+  const typeCfg = {
+    info:    { icon:'fa-circle-info',          color:'#38bdf8', bg:'rgba(14,165,233,.1)',  bdr:'rgba(14,165,233,.2)'  },
+    success: { icon:'fa-circle-check',         color:'#34d399', bg:'rgba(16,185,129,.1)',  bdr:'rgba(16,185,129,.2)'  },
+    warning: { icon:'fa-triangle-exclamation', color:'#fbbf24', bg:'rgba(245,158,11,.1)',  bdr:'rgba(245,158,11,.2)'  },
+  };
+  firebaseDB.ref("notifications").on("value", (snap) => {
+    const container = document.getElementById("notif-banners");
+    if (!container) return;
+    if (!snap.exists()) { container.innerHTML = ""; return; }
+    const items = [];
+    snap.forEach(c => items.push({ id: c.key, ...c.val() }));
+    items.sort((a, b) => b.created_at - a.created_at);
+    container.innerHTML = items.map(n => {
+      const cfg = typeCfg[n.type] || typeCfg.info;
+      return '<div class="fu" style="display:flex;align-items:flex-start;gap:10px;background:'+cfg.bg+';border:1px solid '+cfg.bdr+';border-radius:10px;padding:10px 12px">' +
+        '<i class="fa-solid '+cfg.icon+'" style="color:'+cfg.color+';font-size:14px;margin-top:1px;flex-shrink:0"></i>' +
+        '<div style="min-width:0;flex:1">' +
+          '<div style="font-size:.8125rem;font-weight:700;color:#e2e8f0;margin-bottom:2px">'+n.title+'</div>' +
+          '<div style="font-size:.75rem;color:#94a3b8;line-height:1.45">'+n.message+'</div>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;justify-content:space-between">' +
-          '<span style="font-size:.75rem;color:#475569">' + (o.country_name || '—') + '</span>' +
-          '<span style="font-size:.75rem;color:#334155">' + date + ' ' + time + '</span>' +
-        '</div>' +
-        (o.price ? '<div style="margin-top:5px;font-size:.75rem;color:#334155">Harga: <span style="color:#34d399;font-weight:600">' + formatRupiah(o.price) + '</span>' + (o.is_refunded ? ' <span style="color:#fb7185">(Refund)</span>' : '') + '</div>' : '') +
       '</div>';
-    }).join('');
-  } catch (err) {
-    list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem">Koneksi bermasalah.</div>';
-  }
-};
-
-window.closeHistoryModal = function() {
-  document.getElementById('history-modal').classList.add('hidden');
-};
+    }).join("");
+  });
+}
