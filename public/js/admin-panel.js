@@ -55,11 +55,11 @@ function showApp() {
   initAdmin();
 }
 
-function initAdmin() { listenOrders(); listenStock(); listenCountries(); }
+function initAdmin() { listenOrders(); listenStock(); listenCountries(); listenNotifications(); }
 
 // ── Nav tabs ──
 window.showAdminTab = function(tab) {
-  ["orders","stock","countries"].forEach(t => {
+  ["orders","stock","countries","notifications"].forEach(t => {
     const el = document.getElementById("tab-"+t);
     if (el) el.style.display = "none";
     const nav = document.getElementById("nav-"+t);
@@ -425,4 +425,78 @@ window.startLongPress = function(type, id) {
 window.cancelLongPress = function() {
   if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
   if (_lpBarEl) { _lpBarEl.style.transition = 'none'; _lpBarEl.style.width = '0'; _lpBarEl = null; }
+};
+
+// ── Notifications ──
+let notificationsData = {};
+
+function listenNotifications() {
+  firebaseDB.ref("notifications").on("value", (snap) => {
+    notificationsData = snap.val() || {};
+    renderNotifList();
+  });
+}
+
+function renderNotifList() {
+  const container = document.getElementById("notif-list");
+  if (!container) return;
+  const entries = Object.entries(notificationsData).sort((a,b) => b[1].created_at - a[1].created_at);
+  if (!entries.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">Belum ada notifikasi.</div>';
+    return;
+  }
+  const typeCfg = {
+    info:    { icon:'fa-circle-info',       color:'#38bdf8', bg:'rgba(14,165,233,.1)',  bdr:'rgba(14,165,233,.2)'  },
+    success: { icon:'fa-circle-check',      color:'#34d399', bg:'rgba(16,185,129,.1)',  bdr:'rgba(16,185,129,.2)'  },
+    warning: { icon:'fa-triangle-exclamation', color:'#fbbf24', bg:'rgba(245,158,11,.1)', bdr:'rgba(245,158,11,.2)' },
+  };
+  container.innerHTML = entries.map(([id, n]) => {
+    const cfg = typeCfg[n.type] || typeCfg.info;
+    const date = new Date(n.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    return '<div style="background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:11px 12px;display:flex;gap:10px;align-items:flex-start">' +
+      '<div style="width:32px;height:32px;border-radius:8px;background:'+cfg.bg+';border:1px solid '+cfg.bdr+';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+        '<i class="fa-solid '+cfg.icon+'" style="color:'+cfg.color+';font-size:13px"></i>' +
+      '</div>' +
+      '<div style="min-width:0;flex:1">' +
+        '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0;margin-bottom:2px">'+n.title+'</div>' +
+        '<div style="font-size:.75rem;color:#64748b;margin-bottom:4px;line-height:1.4">'+n.message+'</div>' +
+        '<div style="font-size:.625rem;color:#334155">'+date+'</div>' +
+      '</div>' +
+      '<button onclick="deleteNotif(\''+id+'\')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
+        '<i class="fa-solid fa-trash" style="font-size:10px"></i>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById("notif-form");
+  if (!form) return;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const type    = document.getElementById("notif-type").value;
+    const title   = document.getElementById("notif-title").value.trim();
+    const message = document.getElementById("notif-message").value.trim();
+    const errEl   = document.getElementById("notif-error");
+    errEl.classList.add("hidden");
+    if (!title || !message) { errEl.textContent = "Judul dan pesan wajib diisi."; errEl.classList.remove("hidden"); return; }
+    const sb = form.querySelector("button[type=submit]");
+    sb.disabled = true; sb.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:12px"></i> Mengirim...';
+    try {
+      const res  = await adminFetch("/api/admin/notifications", { method:"POST", body:JSON.stringify({ title, message, type }) });
+      const data = await safeJson(res);
+      if (!res.ok) { errEl.textContent = data.message || "Gagal."; errEl.classList.remove("hidden"); }
+      else { form.reset(); }
+    } catch { errEl.textContent = "Koneksi bermasalah."; errEl.classList.remove("hidden"); }
+    finally { sb.disabled = false; sb.innerHTML = '<i class="fa-solid fa-bell" style="font-size:12px"></i> Broadcast ke Semua User'; }
+  });
+});
+
+window.deleteNotif = async function(id) {
+  const ok = await Dialog.confirmDanger("Hapus Notifikasi?", "Notifikasi akan dihapus dan tidak tampil lagi ke user.", "Ya, Hapus");
+  if (!ok) return;
+  try {
+    const res = await adminFetch("/api/admin/notifications/"+id, { method:"DELETE" });
+    if (!res.ok) { const d = await safeJson(res); await Dialog.alert("error","Gagal",d.message||"Gagal hapus."); }
+  } catch { await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet."); }
 };

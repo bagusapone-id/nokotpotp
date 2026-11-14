@@ -154,6 +154,9 @@
     <button onclick="showAdminTab('countries')" id="nav-countries" class="nav-tab">
       <i class="fa-solid fa-earth-asia" style="font-size:12px"></i> Negara
     </button>
+    <button onclick="showAdminTab('notifications')" id="nav-notifications" class="nav-tab">
+      <i class="fa-solid fa-bell" style="font-size:12px"></i> Notif
+    </button>
   </div>
 
   <!-- Content -->
@@ -335,6 +338,56 @@
       </div>
     </div>
 
+    <!-- ── TAB NOTIFICATIONS ── -->
+    <div id="tab-notifications" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr;gap:14px">
+
+        <!-- Form kirim notifikasi -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-paper-plane" style="color:#a855f7;font-size:12px"></i> Kirim Notifikasi
+          </div>
+          <form id="notif-form" style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div class="tl" style="margin-bottom:5px">Tipe</div>
+              <select id="notif-type" class="inp inp-no-icon" style="padding-left:12px">
+                <option value="info">ℹ️ Info</option>
+                <option value="success">✅ Sukses</option>
+                <option value="warning">⚠️ Peringatan</option>
+              </select>
+            </div>
+            <div>
+              <div class="tl" style="margin-bottom:5px">Judul</div>
+              <div class="inp-wrap"><i class="inp-ico fa-solid fa-heading"></i>
+                <input class="inp" type="text" id="notif-title" required placeholder="cth: Maintenance Malam Ini"/>
+              </div>
+            </div>
+            <div>
+              <div class="tl" style="margin-bottom:5px">Pesan</div>
+              <textarea id="notif-message" class="inp inp-no-icon" rows="3" required placeholder="Tulis pesan notifikasi..." style="padding:10px 12px;resize:none"></textarea>
+            </div>
+            <div id="notif-error" class="alert alert-r hidden" style="margin-bottom:0">
+              <i class="fa-solid fa-circle-exclamation"></i><span id="notif-error-text"></span>
+            </div>
+            <button type="submit" class="btn btn-purple btn-full btn-h">
+              <i class="fa-solid fa-bell" style="font-size:12px"></i> Broadcast ke Semua User
+            </button>
+          </form>
+        </div>
+
+        <!-- Daftar notifikasi aktif -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:12px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-list" style="color:#a855f7;font-size:12px"></i> Notifikasi Aktif
+          </div>
+          <div id="notif-list" style="display:flex;flex-direction:column;gap:7px">
+            <div class="sk" style="height:52px"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -365,6 +418,7 @@
   patch('stock-success',  'stock-success-text');
   patch('country-error',  'country-error-text');
   patch('country-success','country-success-text');
+  patch('notif-error',    'notif-error-text');
 
   // Bridge classList hidden <-> display for screens
   function bridgeDisplay(id, show, hiddenFirst) {
@@ -384,8 +438,8 @@
   bridgeDisplay('login-error',    'flex',  true);
   bridgeDisplay('stock-error',    'flex',  true);
   bridgeDisplay('stock-success',  'flex',  true);
-  bridgeDisplay('country-error',  'flex',  true);
   bridgeDisplay('country-success','flex',  true);
+  bridgeDisplay('country-error',  'flex',  true);
 })();
 
 // ── Dialog System ──
