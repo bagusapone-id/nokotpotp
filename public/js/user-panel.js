@@ -139,6 +139,11 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 });
 
 // ---- Screens ----
+function showSuccessModal(message) {
+  document.getElementById("success-message").textContent = message;
+  document.getElementById("success-modal").classList.remove("hidden");
+}
+
 function showLoginScreen() {
   const ls = document.getElementById("login-screen");
   ls.classList.remove("hidden");
@@ -601,7 +606,7 @@ window.selectPaymentMethod = async function(method) {
       method: 'POST',
       body: JSON.stringify({ amount, payment_method: method }),
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     
     if (!res.ok) {
       showError(data.message || 'Gagal membuat deposit');
@@ -715,22 +720,19 @@ function startDepositStatusCheck(depositId) {
   depositCheckInterval = setInterval(async () => {
     try {
       const res = await apiFetch(`/api/deposit/status/${depositId}`);
-      const data = await res.json();
+      const data = await safeJson(res);
       
       if (data.success && data.deposit.status === 'SUCCESS') {
         clearInterval(depositCheckInterval);
         depositCheckInterval = null;
-        showSuccessModal(`Deposit berhasil! +${formatRupiah(data.deposit.amount)}`);
         closeDepositModal();
-        // Reload balance
-        const balSnap = await firebaseDB.ref(`users/${firebaseAuth.currentUser.uid}/balance`).once('value');
-        const bal = balSnap.val() || 0;
-        updateBalanceDisplay(bal);
+        showSuccessModal(`Deposit berhasil! +${formatRupiah(data.deposit.amount)}`);
+        // Balance diupdate otomatis oleh Firebase realtime listener
       }
     } catch (err) {
       console.error('[deposit] status check error:', err);
     }
-  }, 5000); // Check every 5 seconds
+  }, 5000);
 }
 
 window.backToMethodSelect = function() {
