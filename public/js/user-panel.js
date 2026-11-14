@@ -140,8 +140,11 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 
 // ---- Screens ----
 function showLoginScreen() {
-  document.getElementById("login-screen").classList.remove("hidden"); document.getElementById("login-screen").style.display = "";
+  const ls = document.getElementById("login-screen");
+  ls.classList.remove("hidden");
+  ls.style.display = "flex"; // harus flex agar align-items & justify-content bekerja
   document.getElementById("app-screen").classList.add("hidden");
+  document.getElementById("app-screen").style.display = "none";
 }
 
 function showApp() {
