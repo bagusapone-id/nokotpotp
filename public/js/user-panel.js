@@ -390,7 +390,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
         '<i class="fa-solid fa-rotate-right" style="font-size:11px"></i> ' +
         '<span id="resend-txt-' + orderId + '">Kirim Ulang OTP</span>' +
       '</button>' +
-      '<button id="cancel-btn-' + orderId + '" class="btn btn-ghost btn-full" style="height:34px;font-size:.75rem;color:#fb7185" onclick="cancelOrderById(\'' + orderId + '\')">' +
+      '<button id="cancel-btn-' + orderId + '" class="btn btn-ghost btn-full" style="display:none;height:34px;font-size:.75rem;color:#fb7185" onclick="cancelOrderById(\'' + orderId + '\')">' +
         '<i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Batalkan & Refund' +
       '</button>' +
     '</div>';
@@ -443,6 +443,9 @@ function startOrderTimer(orderId, expiresAt) {
     if (rem <= 60 && el) {
       el.style.color = "#fb7185";
       if (pill) { pill.style.background = "rgba(244,63,94,.12)"; pill.style.borderColor = "rgba(244,63,94,.25)"; }
+      // Tampilkan tombol batalkan setelah 4 menit
+      const cancelBtn = document.getElementById("cancel-btn-" + orderId);
+      if (cancelBtn) cancelBtn.style.display = "flex";
     }
     if (rem <= 0) {
       clearInterval(s.timerInterval);
