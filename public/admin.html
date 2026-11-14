@@ -6,7 +6,8 @@
   <title>Admin — NOKOTPOTP</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -14,7 +15,7 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html{font-size:15px}
-    body{margin:0;background:#020617;color:#94a3b8;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;-webkit-font-smoothing:antialiased}
+    body{margin:0;background:#020617;color:#94a3b8;font-family:'Geist',system-ui,sans-serif;min-height:100dvh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
     ::-webkit-scrollbar{width:3px;height:3px}
     ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px}
     :root{
@@ -40,7 +41,7 @@
     .tt3{font-size:.875rem;font-weight:600;color:#cbd5e1}
     .tb {font-size:.8125rem;font-weight:400;color:#64748b;line-height:1.5}
     .tl {font-size:.625rem;font-weight:600;color:#475569;letter-spacing:.07em;text-transform:uppercase}
-    .tm {font-family:'JetBrains Mono',monospace;font-weight:700;color:#f1f5f9}
+    .tm {font-family:'Geist Mono',monospace;font-weight:700;color:#f1f5f9}
     /* Buttons */
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:.8125rem;font-weight:700;cursor:pointer;transition:transform .12s,opacity .12s;-webkit-user-select:none;user-select:none;white-space:nowrap}
     .btn:active{transform:scale(.96);opacity:.85}
@@ -60,7 +61,7 @@
     .inp-no-icon{padding-left:12px}
     .inp::placeholder{color:#1e293b}
     .inp:focus{border-color:rgba(168,85,247,.4)}
-    textarea.inp{height:auto;padding:10px 12px;resize:vertical;line-height:1.6;font-family:'JetBrains Mono',monospace;font-size:.8125rem}
+    textarea.inp{height:auto;padding:10px 12px;resize:vertical;line-height:1.6;font-family:'Geist Mono',monospace;font-size:.8125rem}
     select.inp{appearance:none;cursor:pointer}
     .inp-wrap{position:relative}
     .inp-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#334155;font-size:12px;pointer-events:none}
@@ -303,7 +304,7 @@
               <div>
                 <div class="tl" style="margin-bottom:5px">ID Key</div>
                 <div class="inp-wrap"><i class="inp-ico fa-solid fa-key"></i>
-                  <input class="inp" type="text" id="c-key" required placeholder="cth: indonesia_reguler" style="font-family:'JetBrains Mono',monospace;font-size:.8125rem"/>
+                  <input class="inp" type="text" id="c-key" required placeholder="cth: indonesia_reguler" style="font-family:'Geist Mono',monospace;font-size:.8125rem"/>
                 </div>
               </div>
             </div>
