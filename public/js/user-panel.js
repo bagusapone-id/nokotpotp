@@ -287,7 +287,7 @@ function renderCountryList() {
   }
   container.innerHTML = entries.map(([key, c]) => {
     const stock    = getStockCount(key);
-    const disabled = stock === 0 || activeOrderId !== null;
+    const disabled = stock === 0;
     const badge = stock === 0
       ? '<span class="badge badge-r">Habis</span>'
       : '<span class="badge badge-g">' + stock + '</span>';
@@ -295,7 +295,7 @@ function renderCountryList() {
       ? 'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#334155;cursor:not-allowed;border-radius:9px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;flex-shrink:0;display:inline-flex;align-items:center'
       : 'background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:9px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;flex-shrink:0;display:inline-flex;align-items:center';
     const btnAttr  = disabled ? " disabled" : ' onclick="buyNokos(\'' + key + '\', \'' + c.country_name.replace(/'/g, "\\'") + '\', ' + c.price + ')"';
-    const btnLabel = activeOrderId ? "Aktif" : stock === 0 ? "Habis" : "Beli";
+    const btnLabel = stock === 0 ? "Habis" : "Beli";
     return '<div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px">' +
       '<span style="font-size:1.375rem;line-height:1;flex-shrink:0">' + (c.flag || "\uD83C\uDF0D") + '</span>' +
       '<div style="min-width:0;flex:1">' +
@@ -355,7 +355,7 @@ function showActiveOrder(orderId, phoneNumber, expiresAt, countryName, initialSt
   document.getElementById("active-phone-number").textContent = phoneNumber;
   const cEl = document.getElementById("active-country"); cEl.textContent = countryName || "";
   document.getElementById("active-order-section").classList.remove("hidden");
-  document.getElementById("shop-section").classList.add("hidden");
+  // shop-section tetap tampil agar user bisa beli lagi
   startTimer(expiresAt);
   listenOrder(orderId);
   if (initialStatus === "OTP_REQUESTED") {
@@ -404,7 +404,6 @@ function listenOrder(orderId) {
       activeOrderId = null;
       document.getElementById("active-order-section").classList.add("hidden");
       document.getElementById("otp-code-display").classList.add("hidden");
-      document.getElementById("shop-section").classList.remove("hidden");
       document.getElementById("success-message").textContent =
         "Nomor " + o.phone_number + " berhasil! Selamat menggunakan WhatsApp baru.";
       document.getElementById("success-modal").classList.remove("hidden");
@@ -415,7 +414,6 @@ function listenOrder(orderId) {
       if (orderListenerRef) orderListenerRef.off();
       activeOrderId = null;
       document.getElementById("active-order-section").classList.add("hidden");
-      document.getElementById("shop-section").classList.remove("hidden");
       document.getElementById("timeout-modal").classList.add("hidden");
       document.getElementById("otp-code-display").classList.add("hidden");
       renderCountryList();
