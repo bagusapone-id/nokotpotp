@@ -203,7 +203,7 @@ async function apiFetch(url, opts = {}) {
   });
 }
 
-// Safe JSON parse — returns {} if body is empty or not valid JSON
+// Safe JSON parse ï¿½ returns {} if body is empty or not valid JSON
 async function safeJson(res) {
   const text = await res.text();
   if (!text || !text.trim()) return {};
@@ -380,7 +380,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
         '</div>' +
       '</div>' +
     '</div>' +
-    // Kotak OTP — selalu tampil, berubah saat OTP masuk
+    // Kotak OTP ï¿½ selalu tampil, berubah saat OTP masuk
     '<div id="otp-display-' + orderId + '" style="background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
       '<span class="tl" style="white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>' +
       '<span id="otp-val-' + orderId + '" style="font-size:.8125rem;color:#334155;font-style:italic">' +
@@ -455,7 +455,21 @@ function startOrderTimer(orderId, expiresAt) {
     if (rem <= 0) {
       clearInterval(s.timerInterval);
       const card = document.getElementById("order-card-" + orderId);
-      if (card) card.querySelectorAll("button").forEach(b => b.disabled = true);
+      if (card) {
+        // Disable semua tombol kecuali cancel
+        card.querySelectorAll("button").forEach(b => {
+          if (!b.id.startsWith("cancel-btn-")) b.disabled = true;
+        });
+      }
+      // Pastikan tombol cancel muncul dan aktif
+      const cancelBtn = document.getElementById("cancel-btn-" + orderId);
+      if (cancelBtn) {
+        cancelBtn.style.display = "flex";
+        cancelBtn.disabled = false;
+        cancelBtn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Waktu Habis â€” Batalkan & Refund';
+        cancelBtn.style.background = "rgba(244,63,94,.15)";
+        cancelBtn.style.border = "1px solid rgba(244,63,94,.3)";
+      }
     }
   }
   tick();
@@ -584,8 +598,8 @@ function listenOrderById(orderId) {
   });
 }
 
-// ---- Cancel (dari timeout modal — ambil order pertama yang ada) ----
-function startTimer() {} // stub — tidak dipakai lagi
+// ---- Cancel (dari timeout modal ï¿½ ambil order pertama yang ada) ----
+function startTimer() {} // stub ï¿½ tidak dipakai lagi
 function listenOrder() {} // stub
 
 // ---- Cancel per order ----
@@ -721,7 +735,7 @@ function renderPaymentInstructions(deposit) {
   const container = document.getElementById('deposit-payment-instructions');
   
   if (deposit.payment_method === 'payment_link') {
-    // Payment Link — arahkan ke halaman Pakasir
+    // Payment Link ï¿½ arahkan ke halaman Pakasir
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
         <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">Klik tombol di bawah untuk melanjutkan pembayaran</div>
