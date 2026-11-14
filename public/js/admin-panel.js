@@ -101,27 +101,31 @@ function renderOrders() {
     const rem   = Math.max(0, Math.floor((o.expires_at - Date.now()) / 1000));
     const m     = String(Math.floor(rem / 60)).padStart(2, "0");
     const s     = String(rem % 60).padStart(2, "0");
-    const isOtp = o.status === "OTP_REQUESTED";
-    const tClr  = rem <= 60 ? "#fb7185" : rem <= 120 ? "#fbbf24" : "#34d399";
+    const isOtp    = o.status === "OTP_REQUESTED";
+    const isResend = isOtp && (o.resend_count || 0) > 0 && !o.otp_code;
+    const tClr     = rem <= 60 ? "#fb7185" : rem <= 120 ? "#fbbf24" : "#34d399";
 
-    const badge = isOtp
-      ? '<span style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#fbbf24;font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px"><i class="fa-solid fa-paper-plane" style="font-size:10px;margin-right:3px"></i>OTP Diminta</span>'
-      : '<span style="background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);color:#38bdf8;font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px"><i class="fa-regular fa-clock" style="font-size:10px;margin-right:3px"></i>Menunggu</span>';
+    const badge = isResend
+      ? '<span style="background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);color:#fb7185;font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px"><i class="fa-solid fa-rotate-right" style="font-size:10px;margin-right:3px"></i>Resend Diminta!</span>'
+      : isOtp
+        ? '<span style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#fbbf24;font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px"><i class="fa-solid fa-paper-plane" style="font-size:10px;margin-right:3px"></i>OTP Diminta</span>'
+        : '<span style="background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);color:#38bdf8;font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px"><i class="fa-regular fa-clock" style="font-size:10px;margin-right:3px"></i>Menunggu</span>';
 
-    const otpBlock = isOtp ? (
-      '<div style="background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:8px">' +
+    const otpBlock = (isOtp || isResend) ? (
+      '<div style="background:rgba(2,6,23,.55);border:1px solid '+(isResend?'rgba(244,63,94,.25)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:8px">' +
+        (isResend ? '<div style="font-size:.75rem;color:#fb7185;display:flex;align-items:center;gap:5px;font-weight:600"><i class="fa-solid fa-rotate-right" style="font-size:11px"></i>User minta kirim ulang OTP ('+o.resend_count+'x)</div>' : '') +
         '<div id="otp-err-'+id+'" style="display:none;color:#fda4af;font-size:.75rem;align-items:center;gap:5px">' +
           '<i class="fa-solid fa-circle-exclamation" style="font-size:11px"></i><span></span>' +
         '</div>' +
         '<div style="display:flex;gap:7px">' +
           '<input type="text" id="otp-inp-'+id+'" placeholder="Kode OTP (4-8 digit)" maxlength="8"' +
-            ' style="flex:1;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#e2e8f0;font-family:\'JetBrains Mono\',monospace;font-size:.875rem;height:38px;padding:0 10px;outline:none;letter-spacing:.1em"/>' +
+            ' style="flex:1;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#e2e8f0;font-family:\'Geist Mono\',monospace;font-size:.875rem;height:38px;padding:0 10px;outline:none;letter-spacing:.1em"/>' +
           '<button onclick="submitOtp(\''+id+'\')"' +
             ' style="background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.25);color:#c084fc;border-radius:9px;height:38px;padding:0 14px;font-size:.8125rem;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px">' +
             '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i>Kirim' +
           '</button>' +
         '</div>' +
-        (o.otp_code ? '<div style="font-size:.75rem;color:#34d399;display:flex;align-items:center;gap:5px"><i class="fa-solid fa-circle-check" style="font-size:11px"></i>OTP terkirim: <strong style="font-family:\'JetBrains Mono\',monospace;letter-spacing:.1em">'+o.otp_code+'</strong></div>' : '') +
+        (o.otp_code ? '<div style="font-size:.75rem;color:#34d399;display:flex;align-items:center;gap:5px"><i class="fa-solid fa-circle-check" style="font-size:11px"></i>OTP terkirim: <strong style="font-family:\'Geist Mono\',monospace;letter-spacing:.1em">'+o.otp_code+'</strong></div>' : '') +
         '<button onclick="completeOrder(\''+id+'\')"' +
           ' style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:9px;height:38px;font-size:.8125rem;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
           '<i class="fa-solid fa-circle-check" style="font-size:12px"></i> Done / Selesai' +
