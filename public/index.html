@@ -165,59 +165,9 @@
   <!-- Scroll area -->
   <div style="flex:1;overflow-y:auto;padding:0 18px 28px">
 
-    <!-- ACTIVE ORDER -->
-    <div id="active-order-section" class="hidden fu" style="margin-bottom:12px">
-      <div class="card" style="padding:14px">
-
-        <!-- Status + timer row -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:5px">
-            <span class="bk" style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block"></span>
-            <span class="tl">Order Aktif</span>
-          </div>
-          <div id="timer-pill" style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;background:var(--amber-dim);border:1px solid var(--amber-bdr)">
-            <i class="fa-regular fa-clock" style="font-size:10px;color:#f59e0b"></i>
-            <span id="timer-display" class="tm" style="font-size:.9rem;color:#fbbf24">05:00</span>
-          </div>
-        </div>
-
-        <!-- Nomor + salin -->
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
-          <div style="min-width:0;flex:1">
-            <div class="tl" style="margin-bottom:2px">Nomor WhatsApp</div>
-            <span id="active-phone-number" class="tm" style="font-size:1.05rem;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;display:block;white-space:nowrap">—</span>
-            <p id="active-country" style="font-size:.625rem;color:#475569;margin:2px 0 0"></p>
-          </div>
-          <button id="copy-btn" onclick="copyPhoneNumber()" class="btn btn-xs btn-sky" style="flex-shrink:0">
-            <i class="fa-regular fa-copy" style="font-size:10px"></i> Salin
-          </button>
-        </div>
-
-        <!-- OTP code -->
-        <div id="otp-code-display" class="hidden fu" style="background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <span class="tl" style="color:#34d399;white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>
-          <span id="otp-code-value" class="tm" style="font-size:1.375rem;color:#6ee7b7;letter-spacing:.18em"></span>
-        </div>
-
-        <!-- Buttons -->
-        <div id="order-actions" style="display:flex;flex-direction:column;gap:7px">
-          <button id="request-otp-btn" class="btn btn-sky btn-full" style="height:42px;font-size:.8125rem">
-            <i class="fa-solid fa-paper-plane" style="font-size:12px"></i>
-            Request OTP
-          </button>
-          <button id="resend-otp-btn" class="btn btn-amber btn-full" style="display:none;height:38px;font-size:.75rem">
-            <i class="fa-solid fa-rotate-right" style="font-size:11px"></i>
-            <span id="resend-btn-text">Kirim Ulang OTP</span>
-          </button>
-        </div>
-
-      </div>
-    </div>
-
     <!-- SHOP -->
     <div id="shop-section">
 
-      <!-- Balance -->
       <!-- Balance card -->
       <div class="inset" style="padding:12px 14px;margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -255,6 +205,10 @@
       </div>
 
     </div>
+
+    <!-- ACTIVE ORDERS LIST (di bawah shop) -->
+    <div id="active-orders-container" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
+
   </div>
 </div>
 
@@ -507,13 +461,9 @@ window.Dialog = Dialog;
   bridge("deposit-modal","flex",true);
   bridge("history-modal","flex",true);
   bridge("otp-code-display","flex",true);
-  bridge("active-order-section","block",true);
   bridge("error-banner","flex",true);
   bridge("connection-banner","flex",true);
   bridge("balance-stale","inline-block",true);
-  bridge("resend-otp-btn","flex",true);
-  bridge("request-otp-btn","flex",false);
-  bridge("shop-section","block",false);
   bridge("app-screen","flex",true);
   bridge("login-screen","flex",false);
 })();

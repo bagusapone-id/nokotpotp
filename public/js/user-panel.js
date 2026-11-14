@@ -159,9 +159,9 @@ function showApp() {
 }
 
 function cleanupListeners() {
-  if (orderListenerRef) { orderListenerRef.off(); orderListenerRef = null; }
   if (balanceListenerRef) { balanceListenerRef.off(); balanceListenerRef = null; }
-  if (autoOtpTimeout) { clearTimeout(autoOtpTimeout); autoOtpTimeout = null; }
+  // Cleanup semua active orders
+  Object.keys(orderStates).forEach(id => removeOrderCard(id));
   clearInterval(timerInterval);
   clearInterval(resendCooldownInterval);
   activeOrderId = null;
@@ -328,13 +328,16 @@ window.buyNokos = async function(countryKey, countryName, price) {
       showError(ERROR_MAP[data.error] || data.message || "Gagal membeli.");
       return;
     }
-    showActiveOrder(data.order_id, data.phone_number, data.expires_at, countryName);
+    addActiveOrderCard(data.order_id, data.phone_number, data.expires_at, countryName);
   } catch (err) {
     showError("Koneksi bermasalah. Coba lagi.");
   }
 };
 
-// ---- Active Order ----
+// ---- Multi-Order State ----
+// Map: orderId → { listenerRef, timerInterval, cooldownInterval, autoOtpTimeout }
+const orderStates = {};
+
 function checkForActiveOrder() {
   if (!currentUser) return;
   firebaseDB.ref("orders").orderByChild("user_id").equalTo(currentUser.uid).once("value", (snap) => {
@@ -342,220 +345,259 @@ function checkForActiveOrder() {
     snap.forEach((child) => {
       const o = child.val();
       if (["WAITING_OTP", "OTP_REQUESTED"].includes(o.status)) {
-        showActiveOrder(child.key, o.phone_number, o.expires_at, o.country_name, o.status);
+        addActiveOrderCard(child.key, o.phone_number, o.expires_at, o.country_name, o.status);
       }
     });
   });
 }
 
-let autoOtpTimeout = null;
+function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initialStatus) {
+  // Jangan duplikat
+  if (document.getElementById("order-card-" + orderId)) return;
 
-function showActiveOrder(orderId, phoneNumber, expiresAt, countryName, initialStatus) {
-  activeOrderId = orderId;
-  document.getElementById("active-phone-number").textContent = phoneNumber;
-  const cEl = document.getElementById("active-country"); cEl.textContent = countryName || "";
-  document.getElementById("active-order-section").classList.remove("hidden");
-  // shop-section tetap tampil agar user bisa beli lagi
-  startTimer(expiresAt);
-  listenOrder(orderId);
+  const container = document.getElementById("active-orders-container");
+  const card = document.createElement("div");
+  card.id = "order-card-" + orderId;
+  card.className = "card fu";
+  card.style.cssText = "padding:14px";
+  card.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+      '<div style="min-width:0;flex:1">' +
+        '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;flex-shrink:0"></span>' +
+          '<span class="tl">Order Aktif</span>' +
+        '</div>' +
+        '<div style="font-family:\'Geist Mono\',monospace;font-size:.9375rem;font-weight:700;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + phoneNumber + '</div>' +
+        '<div style="font-size:.625rem;color:#475569;margin-top:1px">' + (countryName || "") + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' +
+        '<button onclick="copyOrderNumber(\'' + phoneNumber + '\')" class="btn btn-xs btn-sky"><i class="fa-regular fa-copy" style="font-size:10px"></i></button>' +
+        '<div id="timer-pill-' + orderId + '" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:7px;background:var(--amber-dim);border:1px solid var(--amber-bdr)">' +
+          '<i class="fa-regular fa-clock" style="font-size:9px;color:#f59e0b"></i>' +
+          '<span id="timer-' + orderId + '" class="tm" style="font-size:.8rem;color:#fbbf24">05:00</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div id="otp-display-' + orderId + '" style="display:none;background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:9px;padding:9px 12px;margin-bottom:10px;align-items:center;justify-content:space-between;gap:10px">' +
+      '<span class="tl" style="color:#34d399;white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>' +
+      '<span id="otp-val-' + orderId + '" class="tm" style="font-size:1.375rem;color:#6ee7b7;letter-spacing:.18em"></span>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:7px">' +
+      '<button id="req-btn-' + orderId + '" class="btn btn-sky btn-full" style="height:40px;font-size:.8125rem" onclick="doRequestOtpFor(\'' + orderId + '\')">' +
+        '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP (30s)' +
+      '</button>' +
+      '<button id="resend-btn-' + orderId + '" class="btn btn-amber btn-full" style="display:none;height:38px;font-size:.75rem" onclick="doResendOtpFor(\'' + orderId + '\')">' +
+        '<i class="fa-solid fa-rotate-right" style="font-size:11px"></i> ' +
+        '<span id="resend-txt-' + orderId + '">Kirim Ulang OTP</span>' +
+      '</button>' +
+      '<button id="cancel-btn-' + orderId + '" class="btn btn-ghost btn-full" style="height:34px;font-size:.75rem;color:#fb7185" onclick="cancelOrderById(\'' + orderId + '\')">' +
+        '<i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Batalkan & Refund' +
+      '</button>' +
+    '</div>';
+  container.appendChild(card);
+
+  // Init state
+  orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null };
+
+  startOrderTimer(orderId, expiresAt);
+  listenOrderById(orderId);
+
   if (initialStatus === "OTP_REQUESTED") {
-    document.getElementById("request-otp-btn").classList.add("hidden");
-    document.getElementById("resend-otp-btn").classList.remove("hidden");
+    document.getElementById("req-btn-" + orderId).style.display = "none";
+    document.getElementById("resend-btn-" + orderId).style.display = "flex";
   } else {
-    // Auto-click Request OTP setelah 30 detik jika user tidak klik
-    if (autoOtpTimeout) clearTimeout(autoOtpTimeout);
-    const btn = document.getElementById("request-otp-btn");
-    btn.disabled = false;
-    // Countdown di label tombol
-    let cd = 30;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP (' + cd + 's)';
-    const cdInterval = setInterval(() => {
-      cd--;
-      if (cd <= 0) {
-        clearInterval(cdInterval);
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
-      } else {
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP (' + cd + 's)';
-      }
-    }, 1000);
-    // Kalau user klik duluan, cdInterval ikut berhenti
-    btn.addEventListener("click", () => clearInterval(cdInterval), { once: true });
-    autoOtpTimeout = setTimeout(() => {
-      clearInterval(cdInterval);
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
-      doRequestOtp();
-    }, 30000);
+    startAutoOtpCountdown(orderId);
   }
 }
 
-function listenOrder(orderId) {
-  if (orderListenerRef) orderListenerRef.off();
-  orderListenerRef = firebaseDB.ref("orders/" + orderId);
-  orderListenerRef.on("value", (snap) => {
+window.copyOrderNumber = function(num) {
+  navigator.clipboard.writeText(num);
+  showSuccessModal("Nomor " + num + " disalin!");
+};
+
+function removeOrderCard(orderId) {
+  const s = orderStates[orderId];
+  if (s) {
+    if (s.listenerRef) s.listenerRef.off();
+    if (s.timerInterval) clearInterval(s.timerInterval);
+    if (s.cooldownInterval) clearInterval(s.cooldownInterval);
+    if (s.autoOtpTimeout) clearTimeout(s.autoOtpTimeout);
+    delete orderStates[orderId];
+  }
+  const card = document.getElementById("order-card-" + orderId);
+  if (card) card.remove();
+}
+
+// ---- Timer per order ----
+function startOrderTimer(orderId, expiresAt) {
+  const s = orderStates[orderId];
+  if (!s) return;
+  if (s.timerInterval) clearInterval(s.timerInterval);
+  function tick() {
+    const rem = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    const m = String(Math.floor(rem / 60)).padStart(2, "0");
+    const sec = String(rem % 60).padStart(2, "0");
+    const el = document.getElementById("timer-" + orderId);
+    const pill = document.getElementById("timer-pill-" + orderId);
+    if (el) el.textContent = m + ":" + sec;
+    if (rem <= 60 && el) {
+      el.style.color = "#fb7185";
+      if (pill) { pill.style.background = "rgba(244,63,94,.12)"; pill.style.borderColor = "rgba(244,63,94,.25)"; }
+    }
+    if (rem <= 0) {
+      clearInterval(s.timerInterval);
+      const card = document.getElementById("order-card-" + orderId);
+      if (card) card.querySelectorAll("button").forEach(b => b.disabled = true);
+    }
+  }
+  tick();
+  s.timerInterval = setInterval(tick, 1000);
+}
+
+// ---- Auto OTP countdown per order ----
+function startAutoOtpCountdown(orderId) {
+  const s = orderStates[orderId];
+  if (!s) return;
+  const btn = document.getElementById("req-btn-" + orderId);
+  if (!btn) return;
+  let cd = 30;
+  btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP (' + cd + 's)';
+  const cdInt = setInterval(() => {
+    cd--;
+    if (cd <= 0) { clearInterval(cdInt); btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP'; }
+    else btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP (' + cd + 's)';
+  }, 1000);
+  btn.addEventListener("click", () => clearInterval(cdInt), { once: true });
+  s.autoOtpTimeout = setTimeout(() => {
+    clearInterval(cdInt);
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP';
+    doRequestOtpFor(orderId);
+  }, 30000);
+}
+
+// ---- Request OTP per order ----
+window.doRequestOtpFor = async function(orderId) {
+  const btn = document.getElementById("req-btn-" + orderId);
+  const s = orderStates[orderId];
+  if (!btn || btn.disabled) return;
+  if (s && s.autoOtpTimeout) { clearTimeout(s.autoOtpTimeout); s.autoOtpTimeout = null; }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:11px"></i> Memproses...';
+  try {
+    const res = await apiFetch("/api/orders/" + orderId + "/request-otp", { method: "POST" });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      showError(data.message || "Gagal meminta OTP.");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP';
+      return;
+    }
+    btn.style.display = "none";
+    const resendBtn = document.getElementById("resend-btn-" + orderId);
+    if (resendBtn) resendBtn.style.display = "flex";
+    startResendCooldownFor(orderId, 120);
+  } catch {
+    showError("Koneksi bermasalah.");
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP';
+  }
+};
+
+// ---- Resend OTP per order ----
+window.doResendOtpFor = async function(orderId) {
+  const btn = document.getElementById("resend-btn-" + orderId);
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const res = await apiFetch("/api/orders/" + orderId + "/resend-otp", { method: "POST" });
+    const data = await safeJson(res);
+    if (!res.ok) { showError(data.message || "Gagal kirim ulang OTP."); btn.disabled = false; return; }
+    startResendCooldownFor(orderId, 120);
+  } catch {
+    showError("Koneksi bermasalah.");
+    btn.disabled = false;
+  }
+};
+
+// ---- Resend cooldown per order ----
+function startResendCooldownFor(orderId, seconds) {
+  const s = orderStates[orderId];
+  const btn = document.getElementById("resend-btn-" + orderId);
+  const sp  = document.getElementById("resend-txt-" + orderId);
+  if (!btn) return;
+  btn.disabled = true;
+  if (s && s.cooldownInterval) clearInterval(s.cooldownInterval);
+  let cd = seconds;
+  function upd() { if (sp) sp.textContent = "Kirim Ulang OTP (" + cd + "s)"; }
+  upd();
+  const iv = setInterval(() => {
+    cd--;
+    if (cd <= 0) { clearInterval(iv); if (sp) sp.textContent = "Kirim Ulang OTP"; btn.disabled = false; }
+    else upd();
+  }, 1000);
+  if (s) s.cooldownInterval = iv;
+}
+
+// ---- Listen order by ID ----
+function listenOrderById(orderId) {
+  const s = orderStates[orderId];
+  if (!s) return;
+  const ref = firebaseDB.ref("orders/" + orderId);
+  s.listenerRef = ref;
+  ref.on("value", (snap) => {
     if (!snap.exists()) return;
     const o = snap.val();
     if (o.otp_code && o.otp_code.length > 0) {
-      document.getElementById("otp-code-value").textContent = o.otp_code;
-      document.getElementById("otp-code-display").classList.remove("hidden");
+      const otpEl = document.getElementById("otp-display-" + orderId);
+      const otpVal = document.getElementById("otp-val-" + orderId);
+      if (otpEl) otpEl.style.display = "flex";
+      if (otpVal) otpVal.textContent = o.otp_code;
     }
     if (o.status === "COMPLETED") {
-      clearInterval(timerInterval);
-      orderListenerRef.off();
-      activeOrderId = null;
-      document.getElementById("active-order-section").classList.add("hidden");
-      document.getElementById("otp-code-display").classList.add("hidden");
-      document.getElementById("success-message").textContent =
-        "Nomor " + o.phone_number + " berhasil! Selamat menggunakan WhatsApp baru.";
-      document.getElementById("success-modal").classList.remove("hidden");
+      removeOrderCard(orderId);
+      showSuccessModal("Nomor " + o.phone_number + " berhasil! Selamat menggunakan WhatsApp baru.");
       renderCountryList();
     }
     if (o.status === "EXPIRED" || o.status === "CANCELLED") {
-      clearInterval(timerInterval);
-      if (orderListenerRef) orderListenerRef.off();
-      activeOrderId = null;
-      document.getElementById("active-order-section").classList.add("hidden");
-      document.getElementById("timeout-modal").classList.add("hidden");
-      document.getElementById("otp-code-display").classList.add("hidden");
+      removeOrderCard(orderId);
       renderCountryList();
     }
   });
 }
 
-// ---- Timer ----
-function startTimer(expiresAt) {
-  clearInterval(timerInterval);
-  function tick() {
-    const rem = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-    const m = String(Math.floor(rem / 60)).padStart(2, "0");
-    const s = String(rem % 60).padStart(2, "0");
-    const el = document.getElementById("timer-display");
-    if (el) {
-      el.textContent = m + ":" + s;
-      if (rem <= 60) {
-        el.style.color = "#fb7185";
-        const pill = document.getElementById('timer-pill');
-        if (pill) { pill.style.background = "rgba(244,63,94,.12)"; pill.style.borderColor = "rgba(244,63,94,.25)"; }
-      }
-    }
-    if (rem <= 0) {
-      clearInterval(timerInterval);
-      document.querySelectorAll("#order-actions button").forEach(b => b.disabled = true);
-      document.getElementById("timeout-modal").classList.remove("hidden");
-    }
-  }
-  tick();
-  timerInterval = setInterval(tick, 1000);
-}
+// ---- Cancel (dari timeout modal — ambil order pertama yang ada) ----
+function startTimer() {} // stub — tidak dipakai lagi
+function listenOrder() {} // stub
 
-// ---- Cooldown helper ----
-function startResendCooldown(seconds) {
-  const btn = document.getElementById("resend-otp-btn");
-  const sp  = document.getElementById("resend-btn-text");
-  btn.disabled = true;
-  clearInterval(resendCooldownInterval);
-  let cd = seconds;
-  function updateLabel() {
-    if (sp) sp.textContent = "Kirim Ulang OTP (" + cd + "s)";
-  }
-  updateLabel();
-  resendCooldownInterval = setInterval(() => {
-    cd--;
-    if (cd <= 0) {
-      clearInterval(resendCooldownInterval);
-      if (sp) sp.textContent = "Kirim Ulang OTP";
-      btn.disabled = false;
-    } else {
-      updateLabel();
-    }
-  }, 1000);
-}
+// Fungsi lama untuk compat timeout modal
+let activeOrderId = null; // masih dipakai cancel-order-btn
 
-// ---- OTP Request ----
-async function doRequestOtp() {
-  const btn = document.getElementById("request-otp-btn");
-  if (btn.disabled) return;
-  if (autoOtpTimeout) { clearTimeout(autoOtpTimeout); autoOtpTimeout = null; }
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:12px"></i> Memproses...';
-  hideError();
+// ---- Cancel per order ----
+window.cancelOrderById = async function(orderId) {
+  const ok = await Dialog.confirmDanger(
+    "Batalkan Order?",
+    "Order akan dibatalkan dan saldo akan di-refund penuh.",
+    "Ya, Batalkan"
+  );
+  if (!ok) return;
+  const btn = document.getElementById("cancel-btn-" + orderId);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:11px"></i>'; }
   try {
-    const res  = await apiFetch("/api/orders/" + activeOrderId + "/request-otp", { method: "POST" });
+    const res = await apiFetch("/api/orders/" + orderId + "/cancel", { method: "POST" });
     const data = await safeJson(res);
     if (!res.ok) {
-      showError(data.message || "Gagal meminta OTP.");
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
+      showError(data.message || "Pembatalan gagal.");
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batal'; }
       return;
     }
-    btn.classList.add("hidden");
-    document.getElementById("resend-otp-btn").classList.remove("hidden");
-    startResendCooldown(120);
-  } catch {
-    showError("Koneksi bermasalah.");
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
-  }
-}
-
-document.getElementById("request-otp-btn").addEventListener("click", doRequestOtp);
-
-// ---- Resend OTP ----
-document.getElementById("resend-otp-btn").addEventListener("click", async () => {
-  const btn = document.getElementById("resend-otp-btn");
-  if (btn.disabled) return;
-  btn.disabled = true;
-  hideError();
-  try {
-    const res  = await apiFetch("/api/orders/" + activeOrderId + "/resend-otp", { method: "POST" });
-    const data = await safeJson(res);
-    if (!res.ok) {
-      showError(data.message || "Gagal kirim ulang OTP.");
-      btn.disabled = false;
-      return;
-    }
-    startResendCooldown(120);
-  } catch {
-    showError("Koneksi bermasalah.");
-    btn.disabled = false;
-  }
-});
-
-// ---- Cancel ----
-document.getElementById("cancel-order-btn").addEventListener("click", async () => {
-  const btn = document.getElementById("cancel-order-btn");
-  btn.disabled = true;
-  btn.innerHTML = "<i class=\"fa-solid fa-spinner fa-spin\" style=\"font-size:13px\"></i> Memproses...";
-  const resultEl = document.getElementById("cancel-result");
-  resultEl.classList.add("hidden");
-  try {
-    const res = await apiFetch("/api/orders/" + activeOrderId + "/cancel", { method: "POST" });
-    const data = await safeJson(res);
-    if (!res.ok) {
-      resultEl.textContent = data.message || "Pembatalan gagal. Hubungi admin.";
-      resultEl.className = "bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm mb-4";
-      resultEl.classList.remove("hidden");
-      btn.disabled = false;
-      btn.innerHTML = "<i class=\"fa-solid fa-rotate-left\" style=\"font-size:14px\"></i> Batalkan & Dapatkan Refund";
-      return;
-    }
-    clearInterval(timerInterval);
-    activeOrderId = null;
-    document.getElementById("timeout-modal").classList.add("hidden");
-    document.getElementById("active-order-section").classList.add("hidden");
-    document.getElementById("otp-code-display").classList.add("hidden");
-    document.getElementById("shop-section").classList.remove("hidden");
-    document.getElementById("success-message").textContent =
-      "Pesanan dibatalkan. Refund " + formatRupiah(data.refunded_amount) + " dikembalikan ke saldo.";
-    document.getElementById("success-modal").classList.remove("hidden");
+    removeOrderCard(orderId);
+    showSuccessModal("Pesanan dibatalkan. Refund " + formatRupiah(data.refunded_amount) + " dikembalikan ke saldo.");
     renderCountryList();
   } catch {
-    resultEl.textContent = "Koneksi bermasalah. Coba lagi.";
-    resultEl.className = "bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm mb-4";
-    resultEl.classList.remove("hidden");
-    btn.disabled = false;
-    btn.innerHTML = "<i class=\"fa-solid fa-rotate-left\" style=\"font-size:14px\"></i> Batalkan & Dapatkan Refund";
+    showError("Koneksi bermasalah.");
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batal'; }
   }
-});
+};
 
 // ---- Modals ----
 window.closeSuccessModal = function() {
