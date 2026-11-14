@@ -592,6 +592,9 @@ function listenOrderById(orderId) {
         otpVal.style.fontStyle = "normal";
         otpVal.textContent = o.otp_code;
       }
+      // OTP sudah masuk → sembunyikan tombol cancel, hanya admin yang bisa cancel
+      const cancelBtn = document.getElementById("cancel-btn-" + orderId);
+      if (cancelBtn) cancelBtn.style.display = "none";
     }
     if (o.status === "COMPLETED") {
       removeOrderCard(orderId);
@@ -623,6 +626,12 @@ window.cancelOrderById = async function(orderId) {
     const res = await apiFetch("/api/orders/" + orderId + "/cancel", { method: "POST" });
     const data = await safeJson(res);
     if (!res.ok) {
+      if (data.error === 'OTP_RECEIVED') {
+        // Sembunyikan tombol cancel karena OTP sudah masuk
+        if (btn) btn.style.display = "none";
+        await Dialog.alert("error", "Tidak Bisa Dibatalkan", "OTP sudah diterima. Pembatalan hanya bisa dilakukan oleh admin.");
+        return;
+      }
       showError(data.message || "Pembatalan gagal.");
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batal'; }
       return;
