@@ -38,7 +38,7 @@ async function cancelOrder(orderId, uid) {
 
     // 2. Restore user balance
     await db.ref(`users/${uid}/balance`).transaction((bal) => {
-      if (bal === null) return null;
+      // bal === null means node doesn't exist yet — initialize with the refund amount
       return (Number(bal) || 0) + price;
     });
 

@@ -34,7 +34,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 document.getElementById("logout-btn").addEventListener("click", () => firebaseAuth.signOut());
 
 async function adminFetch(url, opts = {}) {
-  if (adminUser) adminToken = await adminUser.getIdToken(false);
+  if (adminUser) adminToken = await adminUser.getIdToken(true);
   return fetch(url, { ...opts, headers: { "Content-Type":"application/json", "Authorization":"Bearer "+adminToken, ...(opts.headers||{}) } });
 }
 

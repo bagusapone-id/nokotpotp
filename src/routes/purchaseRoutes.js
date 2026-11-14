@@ -30,6 +30,7 @@ router.post('/', authUser, async (req, res) => {
       order_id: result.orderId,
       phone_number: result.phoneNumber,
       expires_at: result.expiresAt,
+      country_name: result.countryName,
     });
   } catch (err) {
     if (err instanceof PurchaseError) {
