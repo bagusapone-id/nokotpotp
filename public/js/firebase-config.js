@@ -1,4 +1,3 @@
-// Firebase configuration for frontend
 const firebaseConfig = {
   apiKey: "AIzaSyD0yEF6vqBOY0zacQAYB7Qw2WxEEYN-ziM",
   authDomain: "nokotpotp.firebaseapp.com",
@@ -7,11 +6,9 @@ const firebaseConfig = {
   storageBucket: "nokotpotp.firebasestorage.app",
   messagingSenderId: "489887988168",
   appId: "1:489887988168:web:08f9e3bf8509ccf8a4a8fd",
-  measurementId: "G-TWZ3M8K9CE"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
 const firebaseAuth = firebase.auth();
-const firebaseDB = firebase.database();
+const firebaseDB   = firebase.database();

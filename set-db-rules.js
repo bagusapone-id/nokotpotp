@@ -46,7 +46,8 @@ console.log(JSON.stringify({
     },
     orders: {
       ".read": "auth !== null",
-      ".write": "false"
+      ".write": "false",
+      ".indexOn": ["user_id"]
     },
     notifications: {
       ".read": "auth !== null",
@@ -56,7 +57,8 @@ console.log(JSON.stringify({
       "$depositId": {
         ".read": "auth !== null && data.child('user_id').val() === auth.uid",
         ".write": "false"
-      }
+      },
+      ".indexOn": ["user_id"]
     }
   }
 }, null, 2));
