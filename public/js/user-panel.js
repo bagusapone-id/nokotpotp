@@ -509,6 +509,13 @@ window.doRequestOtpFor = async function(orderId) {
     const res = await apiFetch("/api/orders/" + orderId + "/request-otp", { method: "POST" });
     const data = await safeJson(res);
     if (!res.ok) {
+      // 409 = sudah OTP_REQUESTED, switch ke resend mode tanpa error
+      if (res.status === 409) {
+        btn.style.display = "none";
+        const resendBtn = document.getElementById("resend-btn-" + orderId);
+        if (resendBtn) resendBtn.style.display = "flex";
+        return;
+      }
       showError(data.message || "Gagal meminta OTP.");
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP';
