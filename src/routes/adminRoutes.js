@@ -171,4 +171,38 @@ router.post('/country', authAdmin, async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/admin/country/:key
+ * Delete a country entry
+ */
+router.delete('/country/:key', authAdmin, async (req, res) => {
+  const { key } = req.params;
+  try {
+    const snap = await db.ref(`countries/${key}`).once('value');
+    if (!snap.exists()) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Negara tidak ditemukan.' });
+    }
+    // Check if there are AVAILABLE or LOCKED stocks under this country
+    const stockSnap = await db.ref('phone_stocks')
+      .orderByChild('country_key').equalTo(key).once('value');
+    let activeCount = 0;
+    if (stockSnap.exists()) {
+      stockSnap.forEach(child => {
+        if (['AVAILABLE','LOCKED'].includes(child.val().status)) activeCount++;
+      });
+    }
+    if (activeCount > 0) {
+      return res.status(403).json({
+        error: 'HAS_STOCK',
+        message: `Tidak bisa hapus negara yang masih memiliki ${activeCount} stok aktif. Hapus stoknya terlebih dahulu.`
+      });
+    }
+    await db.ref(`countries/${key}`).remove();
+    return res.status(200).json({ success: true, message: 'Negara berhasil dihapus.' });
+  } catch (err) {
+    console.error('[adminRoutes] delete country error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menghapus negara.' });
+  }
+});
+
 module.exports = router;
