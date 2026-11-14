@@ -16,7 +16,6 @@ async function processExpiredOrder(orderId, order) {
     // Refund balance if not already refunded
     if (!order.is_refunded && order.price && order.user_id) {
       await db.ref(`users/${order.user_id}/balance`).transaction((bal) => {
-        if (bal === null) return null;
         return (Number(bal) || 0) + order.price;
       });
       await db.ref(`orders/${orderId}/is_refunded`).set(true);

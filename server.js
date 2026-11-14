@@ -4,7 +4,7 @@ const path = require('path');
 
 require('./src/config/firebase');
 
-const { startExpiryGuardian } = require('./src/services/expiryGuardian');
+const { startExpiryGuardian, runGuardianTick } = require('./src/services/expiryGuardian');
 const purchaseRoutes = require('./src/routes/purchaseRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
 const cancelRoutes = require('./src/routes/cancelRoutes');
@@ -21,6 +21,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Cron endpoint — panggil ini setiap menit via Vercel Cron / UptimeRobot
+// Vercel Cron: tambahkan ke vercel.json "crons": [{"path":"/api/cron/tick","schedule":"* * * * *"}]
+app.get('/api/cron/tick', async (req, res) => {
+  try {
+    await runGuardianTick();
+    return res.status(200).json({ success: true, time: new Date().toISOString() });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 app.use('/api/register', registerRoutes);
