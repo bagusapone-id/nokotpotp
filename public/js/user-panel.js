@@ -448,22 +448,27 @@ function startOrderTimer(orderId, expiresAt) {
     if (rem <= 60 && el) {
       el.style.color = "#fb7185";
       if (pill) { pill.style.background = "rgba(244,63,94,.12)"; pill.style.borderColor = "rgba(244,63,94,.25)"; }
-      // Tampilkan tombol batalkan setelah 4 menit
-      const cancelBtn = document.getElementById("cancel-btn-" + orderId);
-      if (cancelBtn) cancelBtn.style.display = "flex";
+      // Tampilkan cancel hanya kalau OTP belum masuk
+      const otpVal = document.getElementById("otp-val-" + orderId);
+      const hasOtp = otpVal && otpVal.style.fontStyle !== "italic" && otpVal.textContent.trim().length > 0;
+      if (!hasOtp) {
+        const cancelBtn = document.getElementById("cancel-btn-" + orderId);
+        if (cancelBtn) cancelBtn.style.display = "flex";
+      }
     }
     if (rem <= 0) {
       clearInterval(s.timerInterval);
       const card = document.getElementById("order-card-" + orderId);
       if (card) {
-        // Disable semua tombol kecuali cancel
         card.querySelectorAll("button").forEach(b => {
           if (!b.id.startsWith("cancel-btn-")) b.disabled = true;
         });
       }
-      // Pastikan tombol cancel muncul dan aktif
+      // Tampilkan cancel hanya kalau OTP belum masuk
+      const otpValEl = document.getElementById("otp-val-" + orderId);
+      const hasOtpNow = otpValEl && otpValEl.style.fontStyle !== "italic" && otpValEl.textContent.trim().length > 0;
       const cancelBtn = document.getElementById("cancel-btn-" + orderId);
-      if (cancelBtn) {
+      if (cancelBtn && !hasOtpNow) {
         cancelBtn.style.display = "flex";
         cancelBtn.disabled = false;
         cancelBtn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Waktu Habis — Batalkan & Refund';
