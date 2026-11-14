@@ -26,6 +26,11 @@ async function cancelOrder(orderId, uid) {
     throw new CancelError('INVALID_STATUS', 'Order tidak dapat dibatalkan pada status ini.');
   }
 
+  // Kalau OTP sudah dikirim admin, user tidak bisa cancel — harus admin
+  if (order.otp_code && order.otp_code.length > 0) {
+    throw new CancelError('OTP_RECEIVED', 'OTP sudah diterima. Pembatalan hanya bisa dilakukan oleh admin.');
+  }
+
   const price = order.price || 0;
   const stockKey = order.stock_key;
 
