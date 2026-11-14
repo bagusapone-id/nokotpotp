@@ -81,6 +81,20 @@ function listenOrders() {
     });
     renderOrders();
   });
+  // Update timer setiap detik tanpa re-render penuh
+  setInterval(() => {
+    Object.keys(ordersData).forEach(id => {
+      const o = ordersData[id];
+      const rem = Math.max(0, Math.floor((o.expires_at - Date.now()) / 1000));
+      const m   = String(Math.floor(rem / 60)).padStart(2, "0");
+      const s   = String(rem % 60).padStart(2, "0");
+      const el  = document.getElementById("timer-" + id);
+      if (el) {
+        el.textContent = m + ":" + s;
+        el.style.color = rem <= 60 ? "#fb7185" : rem <= 120 ? "#fbbf24" : "#34d399";
+      }
+    });
+  }, 1000);
 }
 
 function renderOrders() {
@@ -143,7 +157,7 @@ function renderOrders() {
         '</div>' +
         '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px">' +
           badge +
-          '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:'+tClr+';display:flex;align-items:center;gap:4px">' +
+          '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:'+tClr+';display:flex;align-items:center;gap:4px" id="timer-'+id+'">' +
             '<i class="fa-regular fa-clock" style="font-size:10px"></i>'+m+':'+s+
           '</div>' +
           '<div style="font-size:.6875rem;color:#334155"><i class="fa-solid fa-rotate-right" style="font-size:10px;margin-right:2px"></i>Resend: '+(o.resend_count||0)+'x</div>' +
