@@ -37,9 +37,10 @@ async function runGuardianTick() {
     const tasks = [];
     snap.forEach((child) => {
       const order = child.val();
-      const isExpirable =
+    const isExpirable =
         (order.status === 'WAITING_OTP' || order.status === 'OTP_REQUESTED') &&
-        order.expires_at < now;
+        order.expires_at < now &&
+        (!order.otp_code || order.otp_code.length === 0); // jangan cancel kalau OTP sudah ada
       if (isExpirable) {
         tasks.push(processExpiredOrder(child.key, order));
       }
