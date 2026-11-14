@@ -379,15 +379,22 @@ window.deleteStock = async function(stockId) {
 // ── Delete Country ──
 window.deleteCountry = async function(key) {
   const country = countriesData[key];
-  if (!country) return;
+  if (!country) {
+    await Dialog.alert("error", "Error", "Data negara tidak ditemukan (key: "+key+"). Coba refresh halaman.");
+    return;
+  }
+  const avail = Object.values(stockData).filter(s=>s.country_key===key&&['AVAILABLE','LOCKED'].includes(s.status)).length;
   const ok = await Dialog.confirmDanger(
     "Hapus Negara?",
-    "<strong style='color:#e2e8f0'>"+(country.flag||"")+" "+country.country_name+"</strong> akan dihapus permanen. Pastikan semua stoknya sudah dihapus terlebih dahulu.",
+    (avail > 0
+      ? "<strong style='color:#fb7185'>⚠️ Masih ada "+avail+" stok aktif!</strong><br><br>"
+      : "") +
+    "Negara <strong style='color:#e2e8f0'>"+(country.flag||"")+" "+country.country_name+"</strong> akan dihapus permanen.",
     "Ya, Hapus"
   );
   if (!ok) return;
   try {
-    const res  = await adminFetch("/api/admin/country/"+key, { method:"DELETE" });
+    const res  = await adminFetch("/api/admin/country/"+encodeURIComponent(key), { method:"DELETE" });
     const data = await safeJson(res);
     if (!res.ok) {
       await Dialog.alert("error", "Gagal Hapus", data.message || "Tidak bisa menghapus negara.");
