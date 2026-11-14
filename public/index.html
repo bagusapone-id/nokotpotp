@@ -426,7 +426,7 @@ const Dialog = {
       btn.style.height = '44px';
       btn.style.fontSize = '.875rem';
       btn.innerHTML = b.label;
-      btn.onclick = () => { this._close(); if (this._resolve) this._resolve(b.value); };
+      btn.onclick = () => { const r = this._resolve; this._close(); if (r) r(b.value); };
       btnsEl.appendChild(btn);
     });
 
