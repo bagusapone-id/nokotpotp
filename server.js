@@ -37,9 +37,11 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`[Server] Panel Nokos WA running on port ${PORT}`);
-  startExpiryGuardian();
-});
-
 module.exports = app;
+
+if (require.main === module && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[Server] Panel Nokos WA running on port ${PORT}`);
+    startExpiryGuardian();
+  });
+}
