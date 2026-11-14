@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>NOKOTPOTP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{font-size:15px}
+    body{margin:0;background:#020617;color:#94a3b8;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:0}
+    :root{
+      --card:rgba(15,23,42,0.75);
+      --border:rgba(255,255,255,0.07);
+      --inset:rgba(2,6,23,0.55);
+      --green-dim:rgba(16,185,129,0.1);
+      --green-bdr:rgba(16,185,129,0.18);
+      --amber-dim:rgba(245,158,11,0.1);
+      --amber-bdr:rgba(245,158,11,0.2);
+      --rose-dim:rgba(244,63,94,0.1);
+      --rose-bdr:rgba(244,63,94,0.2);
+      --sky-dim:rgba(14,165,233,0.1);
+      --sky-bdr:rgba(14,165,233,0.2);
+    }
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .inset{background:var(--inset);border:1px solid rgba(255,255,255,.05);border-radius:10px}
+    /* Typography */
+    .tt1{font-size:1.25rem;font-weight:800;color:#f1f5f9;letter-spacing:-.025em;line-height:1.2}
+    .tt2{font-size:.9375rem;font-weight:700;color:#e2e8f0;line-height:1.3}
+    .tb {font-size:.8125rem;font-weight:400;color:#64748b;line-height:1.5}
+    .tl {font-size:.625rem;font-weight:600;color:#475569;letter-spacing:.07em;text-transform:uppercase}
+    .tm {font-family:'JetBrains Mono',monospace;font-weight:700;color:#f1f5f9}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;transition:transform .12s,opacity .12s;-webkit-user-select:none;user-select:none;white-space:nowrap}
+    .btn:active{transform:scale(.96);opacity:.85}
+    .btn:disabled{opacity:.3;pointer-events:none}
+    .btn-full{width:100%}
+    .btn-h{height:46px;padding:0 18px}
+    .btn-sm{height:32px;padding:0 12px;font-size:.75rem;border-radius:9px}
+    .btn-xs{height:28px;padding:0 10px;font-size:.6875rem;border-radius:8px}
+    .btn-icon{width:36px;height:36px;padding:0;border-radius:10px;flex-shrink:0}
+    .btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+    .btn-sky  {background:var(--sky-dim);border:1px solid var(--sky-bdr);color:#38bdf8}
+    .btn-amber{background:var(--amber-dim);border:1px solid var(--amber-bdr);color:#fbbf24}
+    .btn-rose {background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fb7185}
+    .btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--border);color:#64748b}
+    /* Input */
+    .inp{width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.09);border-radius:11px;color:#e2e8f0;font-family:'Inter',sans-serif;font-size:.9rem;height:46px;padding:0 14px 0 38px;outline:none;transition:border-color .15s}
+    .inp::placeholder{color:#1e293b}
+    .inp:focus{border-color:rgba(16,185,129,.4)}
+    .inp-wrap{position:relative}
+    .inp-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#334155;font-size:12px;pointer-events:none}
+    /* Tab pill */
+    .tab-pill{flex:1;height:34px;border-radius:8px;font-size:.8125rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:background .15s,color .15s;border:none;background:transparent;color:#475569}
+    .tab-pill.active{background:rgba(255,255,255,.09);color:#f1f5f9}
+    /* Badge */
+    .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.6875rem;font-weight:600;white-space:nowrap;flex-shrink:0}
+    .badge-g{background:var(--green-dim);border:1px solid var(--green-bdr);color:#34d399}
+    .badge-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fb7185}
+    /* Alert */
+    .alert{display:flex;align-items:flex-start;gap:8px;border-radius:10px;padding:10px 12px;font-size:.8125rem;font-weight:500;line-height:1.4}
+    .alert-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fda4af}
+    .alert-g{background:var(--green-dim);border:1px solid var(--green-bdr);color:#6ee7b7}
+    .alert i{flex-shrink:0;margin-top:1px;font-size:12px}
+    /* Animations */
+    @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .fu{animation:fu .2s cubic-bezier(.4,0,.2,1) both}
+    @keyframes bk{0%,100%{opacity:1}50%{opacity:.25}}
+    .bk{animation:bk 1.8s ease-in-out infinite}
+    /* Skeleton */
+    @keyframes sh{from{background-position:-400px 0}to{background-position:400px 0}}
+    .sk{background:linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.06) 50%,rgba(255,255,255,.03) 75%);background-size:800px 100%;animation:sh 1.4s infinite;border-radius:10px}
+    /* Deposit chip active */
+    .deposit-chip.active{background:var(--sky-dim);border-color:var(--sky-bdr);color:#38bdf8}
+    /* ── Custom Dialog ── */
+    #dialog-overlay.show { display: flex !important; }
+</style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;align-items:center;min-height:100dvh">
+<div style="width:100%;max-width:400px;height:100dvh;display:flex;flex-direction:column">
+
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px 24px">
+  <div style="width:100%;max-width:340px">
+
+    <div style="text-align:center;margin-bottom:22px" class="fu">
+      <div class="tt1" style="font-size:1.375rem">NOKOTPOTP</div>
+      <div class="tb" style="margin-top:4px;font-size:.75rem">Platform Nomor WhatsApp Kosong</div>
+    </div>
+
+  <div class="card" style="padding:20px;width:100%">
+    <!-- Tab -->
+    <div style="display:flex;background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px;margin-bottom:16px">
+      <button id="tab-login-btn" onclick="showAuthTab('login')" class="tab-pill active">Masuk</button>
+      <button id="tab-register-btn" onclick="showAuthTab('register')" class="tab-pill">Daftar</button>
+    </div>
+    <!-- Alerts -->
+    <div id="auth-error" class="alert alert-r hidden" style="margin-bottom:12px">
+      <i class="fa-solid fa-circle-exclamation"></i><span id="auth-error-text"></span>
+    </div>
+    <div id="auth-success" class="alert alert-g hidden" style="margin-bottom:12px">
+      <i class="fa-solid fa-circle-check"></i><span id="auth-success-text"></span>
+    </div>
+    <!-- Login form -->
+    <form id="login-form" style="display:flex;flex-direction:column;gap:10px">
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="login-email" required placeholder="Alamat email"/></div>
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="login-password" required placeholder="Password"/></div>
+      <button type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px">Masuk</button>
+    </form>
+    <!-- Register form -->
+    <form id="register-form" style="display:none;flex-direction:column;gap:10px">
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-at"></i><input class="inp" type="text" id="reg-username" required placeholder="Username"/></div>
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="reg-email" required placeholder="Alamat email"/></div>
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="reg-password" required placeholder="Password (min. 6)"/></div>
+      <button type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px">Buat Akun</button>
+    </form>
+  </div>
+  </div><!-- /max-width wrapper -->
+</div>
+
+
+<!-- ══ MAIN APP ══ -->
+<div id="app-screen" style="display:none;flex:1;flex-direction:column">
+
+  <!-- Header -->
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px">
+    <div>
+      <div style="font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-.02em;line-height:1">NOKOTPOTP</div>
+      <div id="connection-banner" style="display:none;align-items:center;gap:4px;margin-top:2px">
+        <span class="bk" style="width:5px;height:5px;border-radius:50%;background:#f43f5e;display:inline-block"></span>
+        <span style="font-size:.625rem;font-weight:600;color:#f43f5e">Offline</span>
+      </div>
+    </div>
+    <button id="logout-btn" class="btn btn-icon btn-ghost">
+      <i class="fa-solid fa-right-from-bracket" style="font-size:13px;color:#64748b"></i>
+    </button>
+  </header>
+
+  <!-- Error banner -->
+  <div id="error-banner" class="alert alert-r hidden fu" style="margin:0 18px 10px">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span id="error-banner-text" style="flex:1"></span>
+    <button onclick="hideError()" style="background:none;border:none;cursor:pointer;color:#fb7185;padding:0;flex-shrink:0;font-size:13px"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <!-- Scroll area -->
+  <div style="flex:1;overflow-y:auto;padding:0 18px 28px">
+
+    <!-- ACTIVE ORDER -->
+    <div id="active-order-section" class="hidden fu" style="margin-bottom:12px">
+      <div class="card" style="padding:14px">
+
+        <!-- Status + timer row -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <span class="bk" style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block"></span>
+            <span class="tl">Order Aktif</span>
+          </div>
+          <div id="timer-pill" style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;background:var(--amber-dim);border:1px solid var(--amber-bdr)">
+            <i class="fa-regular fa-clock" style="font-size:10px;color:#f59e0b"></i>
+            <span id="timer-display" class="tm" style="font-size:.9rem;color:#fbbf24">05:00</span>
+          </div>
+        </div>
+
+        <!-- Nomor + salin -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div style="min-width:0;flex:1">
+            <div class="tl" style="margin-bottom:2px">Nomor WhatsApp</div>
+            <span id="active-phone-number" class="tm" style="font-size:1.05rem;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;display:block;white-space:nowrap">—</span>
+            <p id="active-country" style="font-size:.625rem;color:#475569;margin:2px 0 0"></p>
+          </div>
+          <button id="copy-btn" onclick="copyPhoneNumber()" class="btn btn-xs btn-sky" style="flex-shrink:0">
+            <i class="fa-regular fa-copy" style="font-size:10px"></i> Salin
+          </button>
+        </div>
+
+        <!-- OTP code -->
+        <div id="otp-code-display" class="hidden fu" style="background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span class="tl" style="color:#34d399;white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>
+          <span id="otp-code-value" class="tm" style="font-size:1.375rem;color:#6ee7b7;letter-spacing:.18em"></span>
+        </div>
+
+        <!-- Buttons -->
+        <div id="order-actions" style="display:flex;flex-direction:column;gap:7px">
+          <button id="request-otp-btn" class="btn btn-sky btn-full" style="height:42px;font-size:.8125rem">
+            <i class="fa-solid fa-paper-plane" style="font-size:12px"></i>
+            Sudah Minta OTP, Tunggu Kode
+          </button>
+          <button id="resend-otp-btn" class="btn btn-amber btn-full" style="display:none;height:38px;font-size:.75rem">
+            <i class="fa-solid fa-rotate-right" style="font-size:11px"></i>
+            <span id="resend-btn-text">Kirim Ulang OTP</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SHOP -->
+    <div id="shop-section">
+
+      <!-- Balance -->
+      <!-- Balance card -->
+      <div class="inset" style="padding:12px 14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div class="tl" style="margin-bottom:3px">Saldo</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <span id="balance-display" class="tm" style="font-size:1.25rem;color:#34d399">Rp 0</span>
+              <i id="balance-stale" class="fa-solid fa-triangle-exclamation" style="display:none;color:#f59e0b;font-size:10px"></i>
+            </div>
+          </div>
+          <i class="fa-solid fa-wallet" style="color:#334155;font-size:18px"></i>
+        </div>
+        <button onclick="openDepositModal()" class="btn btn-sky btn-full" style="height:36px;font-size:.8125rem">
+          <i class="fa-solid fa-plus" style="font-size:11px"></i> Top-Up
+        </button>
+      </div>
+
+      <!-- Section title -->
+      <div style="margin-bottom:12px">
+        <div class="tt2">Pilih Layanan</div>
+        <div class="tb" style="margin-top:3px">Nomor siap pakai &middot; Stok real-time</div>
+      </div>
+
+      <!-- Tab pills -->
+      <div style="display:flex;background:rgba(2,6,23,.7);border:1px solid var(--border);border-radius:11px;padding:4px;gap:4px;margin-bottom:12px">
+        <button id="tab-indo" onclick="switchTab('indo')" class="tab-pill active"><span>&#127470;&#127465;</span> Nokos Indo</button>
+        <button id="tab-luar" onclick="switchTab('luar')" class="tab-pill"><i class="fa-solid fa-earth-asia" style="font-size:13px"></i> Nokos Luar</button>
+      </div>
+
+      <!-- Country list -->
+      <div id="country-list" style="display:flex;flex-direction:column;gap:8px">
+        <div class="sk" style="height:62px"></div>
+        <div class="sk" style="height:62px"></div>
+        <div class="sk" style="height:62px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ TIMEOUT MODAL ══ -->
+<div id="timeout-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.9);backdrop-filter:blur(6px)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:20px 20px 0 0;border-bottom:none;padding:20px 20px 32px">
+    <div style="width:32px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 20px"></div>
+    <div style="width:44px;height:44px;border-radius:12px;background:var(--rose-dim);border:1px solid var(--rose-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <i class="fa-solid fa-hourglass-end" style="color:#fb7185;font-size:18px"></i>
+    </div>
+    <div class="tt2" style="text-align:center;margin-bottom:6px">Waktu Habis</div>
+    <div class="tb" style="text-align:center;margin-bottom:18px;line-height:1.55">OTP tidak masuk dalam 5 menit. Batalkan untuk mendapat <span style="color:#34d399;font-weight:600">refund penuh</span>.</div>
+    <div id="cancel-result" class="hidden" style="margin-bottom:10px"></div>
+    <button id="cancel-order-btn" class="btn btn-rose btn-full btn-h">
+      <i class="fa-solid fa-rotate-left" style="font-size:13px"></i> Batalkan &amp; Dapatkan Refund
+    </button>
+  </div>
+</div>
+
+
+<!-- ══ SUCCESS MODAL ══ -->
+<div id="success-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.9);backdrop-filter:blur(6px)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:20px 20px 0 0;border-bottom:none;padding:20px 20px 32px">
+    <div style="width:32px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 20px"></div>
+    <div style="width:44px;height:44px;border-radius:12px;background:var(--green-dim);border:1px solid var(--green-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <i class="fa-solid fa-circle-check" style="color:#34d399;font-size:18px"></i>
+    </div>
+    <div class="tt2" style="text-align:center;margin-bottom:6px">Berhasil!</div>
+    <p id="success-message" class="tb" style="text-align:center;margin-bottom:18px;line-height:1.55"></p>
+    <button onclick="closeSuccessModal()" class="btn btn-primary btn-full btn-h">OK, Tutup</button>
+  </div>
+</div>
+
+
+<!-- ══ DEPOSIT MODAL ══ -->
+<div id="deposit-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(8px)">
+  <div class="card fu" style="width:100%;max-width:400px;height:85dvh;border-radius:20px 20px 0 0;border-bottom:none;padding:0;display:flex;flex-direction:column;overflow:hidden">
+    
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div class="tt2" style="margin:0">Top-Up Saldo</div>
+      <button onclick="closeDepositModal()" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <i class="fa-solid fa-xmark" style="color:#64748b;font-size:14px"></i>
+      </button>
+    </div>
+
+    <!-- Content (scrollable) -->
+    <div style="flex:1;overflow-y:auto;padding:18px">
+
+      <!-- Step 1: Amount -->
+      <div id="deposit-step-amount">
+        <div class="tb" style="margin-bottom:14px">Pilih atau masukkan nominal top-up:</div>
+        
+        <!-- Quick chips -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <button onclick="selectDepositAmount(10000)" data-amount="10000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 10.000</button>
+          <button onclick="selectDepositAmount(25000)" data-amount="25000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 25.000</button>
+          <button onclick="selectDepositAmount(50000)" data-amount="50000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 50.000</button>
+          <button onclick="selectDepositAmount(100000)" data-amount="100000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 100.000</button>
+        </div>
+
+        <!-- Manual input -->
+        <div class="inp-wrap" style="margin-bottom:20px">
+          <i class="inp-ico fa-solid fa-wallet"></i>
+          <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="10000" step="1000"/>
+        </div>
+
+        <button onclick="proceedToMethod()" class="btn btn-primary btn-full btn-h">
+          <i class="fa-solid fa-arrow-right" style="font-size:12px"></i> Lanjutkan
+        </button>
+      </div>
+
+      <!-- Step 2: Payment Method -->
+      <div id="deposit-step-method" style="display:none">
+        <div style="background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
+          <div class="tl" style="color:#34d399">Nominal Top-Up</div>
+          <div id="deposit-selected-amount" class="tm" style="font-size:1.375rem;color:#6ee7b7;margin-top:4px">Rp 0</div>
+        </div>
+
+        <div class="tb" style="margin-bottom:12px">Pilih metode pembayaran:</div>
+        
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
+            <i class="fa-solid fa-link" style="font-size:14px;margin-right:10px"></i>
+            <span style="flex:1;text-align:left">Payment Link (Semua Metode)</span>
+          </button>
+          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
+            <i class="fa-solid fa-qrcode" style="font-size:14px;margin-right:10px"></i>
+            <span style="flex:1;text-align:left">QRIS</span>
+          </button>
+          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
+            <i class="fa-solid fa-building-columns" style="font-size:14px;margin-right:10px"></i>
+            <span style="flex:1;text-align:left">BNI Virtual Account</span>
+          </button>
+          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
+            <i class="fa-solid fa-building-columns" style="font-size:14px;margin-right:10px"></i>
+            <span style="flex:1;text-align:left">BRI Virtual Account</span>
+          </button>
+        </div>
+
+        <button onclick="backToAmount()" class="btn btn-ghost btn-full" style="height:40px">
+          <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Kembali
+        </button>
+      </div>
+
+      <!-- Step 3: Payment Instructions -->
+      <div id="deposit-step-payment" style="display:none">
+        <div style="background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
+          <div style="font-size:.8125rem;color:#fbbf24;display:flex;align-items:center;justify-content:center;gap:6px">
+            <i class="fa-solid fa-hourglass-half"></i> Menunggu Pembayaran...
+          </div>
+        </div>
+
+        <div id="deposit-payment-instructions" style="background:rgba(2,6,23,.4);border:1px solid var(--border);border-radius:10px;margin-bottom:14px"></div>
+
+        <button onclick="backToMethodSelect()" class="btn btn-ghost btn-full" style="height:40px">
+          <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Pilih Metode Lain
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══ CUSTOM DIALOG ══ -->
+<div id="dialog-overlay" style="display:none;position:fixed;inset:0;z-index:99;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(6px)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:20px 20px 0 0;border-bottom:none;padding:20px 20px 28px">
+    <div style="width:32px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 18px"></div>
+    <!-- icon -->
+    <div id="dialog-icon-wrap" style="margin:0 auto 12px;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center"></div>
+    <div id="dialog-title" class="tt2" style="text-align:center;margin-bottom:6px"></div>
+    <div id="dialog-body" class="tb" style="text-align:center;margin-bottom:20px;line-height:1.55"></div>
+    <div id="dialog-btns" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+</div></div>
+
+<script src="/js/firebase-config.js"></script>
+<script src="/js/user-panel.js"></script>
+<script>
+// ── Custom Dialog System ──
+const Dialog = {
+  _resolve: null,
+
+  _config: {
+    confirm: { icon: 'fa-solid fa-circle-question', iconBg: 'rgba(14,165,233,.12)', iconBdr: 'rgba(14,165,233,.2)', iconColor: '#38bdf8' },
+    warn:    { icon: 'fa-solid fa-triangle-exclamation', iconBg: 'rgba(245,158,11,.12)', iconBdr: 'rgba(245,158,11,.2)', iconColor: '#fbbf24' },
+    success: { icon: 'fa-solid fa-circle-check', iconBg: 'rgba(16,185,129,.12)', iconBdr: 'rgba(16,185,129,.2)', iconColor: '#34d399' },
+    error:   { icon: 'fa-solid fa-circle-exclamation', iconBg: 'rgba(244,63,94,.12)', iconBdr: 'rgba(244,63,94,.2)', iconColor: '#fb7185' },
+  },
+
+  _show(type, title, body, buttons) {
+    const cfg = this._config[type] || this._config.confirm;
+    const wrap = document.getElementById('dialog-icon-wrap');
+    wrap.style.background   = cfg.iconBg;
+    wrap.style.border       = '1px solid ' + cfg.iconBdr;
+    wrap.innerHTML          = '<i class="' + cfg.icon + '" style="color:' + cfg.iconColor + ';font-size:18px"></i>';
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-body').innerHTML    = body;
+
+    const btnsEl = document.getElementById('dialog-btns');
+    btnsEl.innerHTML = '';
+    buttons.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-full ' + b.cls;
+      btn.style.height = '44px';
+      btn.style.fontSize = '.875rem';
+      btn.innerHTML = b.label;
+      btn.onclick = () => { this._close(); if (this._resolve) this._resolve(b.value); };
+      btnsEl.appendChild(btn);
+    });
+
+    const overlay = document.getElementById('dialog-overlay');
+    overlay.style.display = 'flex';
+    overlay.classList.add('show');
+    return new Promise(r => { this._resolve = r; });
+  },
+
+  _close() {
+    const overlay = document.getElementById('dialog-overlay');
+    overlay.style.display = 'none';
+    overlay.classList.remove('show');
+    this._resolve = null;
+  },
+
+  // confirm(title, body) → Promise<boolean>
+  confirm(title, body) {
+    return this._show('confirm', title, body, [
+      { label: 'Ya, Lanjutkan', cls: 'btn-primary', value: true },
+      { label: 'Batal',         cls: 'btn-ghost',   value: false },
+    ]);
+  },
+
+  // confirmDanger(title, body, okLabel) → Promise<boolean>
+  confirmDanger(title, body, okLabel = 'Ya, Lanjutkan') {
+    return this._show('warn', title, body, [
+      { label: okLabel, cls: 'btn-rose',  value: true },
+      { label: 'Batal', cls: 'btn-ghost', value: false },
+    ]);
+  },
+
+  // alert(type, title, body) → Promise<void>
+  alert(type, title, body) {
+    return this._show(type, title, body, [
+      { label: 'OK', cls: 'btn-ghost', value: true },
+    ]);
+  },
+};
+
+window.Dialog = Dialog;
+</script>
+<script>
+(function() {
+  function patchText(id, textId) {
+    const el = document.getElementById(id), tx = document.getElementById(textId);
+    if (!el || !tx) return;
+    Object.defineProperty(el, "textContent", { set(v){tx.textContent=v}, get(){return tx.textContent} });
+  }
+  patchText("auth-error","auth-error-text");
+  patchText("auth-success","auth-success-text");
+
+  function bridge(id, show, hiddenFirst) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const oa = el.classList.add.bind(el.classList), or = el.classList.remove.bind(el.classList);
+    el.classList.add    = function(...a){ if(a.includes("hidden")){el.style.display="none";return} oa(...a) };
+    el.classList.remove = function(...a){ if(a.includes("hidden")){el.style.display=show;return} or(...a) };
+    el.style.display = hiddenFirst ? "none" : show;
+  }
+
+  bridge("timeout-modal","flex",true);
+  bridge("success-modal","flex",true);
+  bridge("deposit-modal","flex",true);
+  bridge("otp-code-display","flex",true);
+  bridge("active-order-section","block",true);
+  bridge("error-banner","flex",true);
+  bridge("connection-banner","flex",true);
+  bridge("balance-stale","inline-block",true);
+  bridge("resend-otp-btn","flex",true);
+  bridge("request-otp-btn","flex",false);
+  bridge("shop-section","block",false);
+  bridge("app-screen","flex",true);
+  bridge("login-screen","flex",false);
+})();
+</script>
+</body>
+</html>

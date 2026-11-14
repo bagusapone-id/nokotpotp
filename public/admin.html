@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Admin — NOKOTPOTP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{font-size:15px}
+    body{margin:0;background:#020617;color:#94a3b8;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:3px;height:3px}
+    ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px}
+    :root{
+      --card:rgba(15,23,42,0.75);
+      --border:rgba(255,255,255,0.07);
+      --inset:rgba(2,6,23,0.55);
+      --purple-dim:rgba(168,85,247,0.1);
+      --purple-bdr:rgba(168,85,247,0.2);
+      --green-dim:rgba(16,185,129,0.1);
+      --green-bdr:rgba(16,185,129,0.18);
+      --amber-dim:rgba(245,158,11,0.1);
+      --amber-bdr:rgba(245,158,11,0.2);
+      --rose-dim:rgba(244,63,94,0.1);
+      --rose-bdr:rgba(244,63,94,0.2);
+      --sky-dim:rgba(14,165,233,0.1);
+      --sky-bdr:rgba(14,165,233,0.2);
+    }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .inset{background:var(--inset);border:1px solid rgba(255,255,255,.05);border-radius:10px}
+    /* Typography */
+    .tt1{font-size:1.125rem;font-weight:800;color:#f1f5f9;letter-spacing:-.02em;line-height:1.2}
+    .tt2{font-size:.9375rem;font-weight:700;color:#e2e8f0;line-height:1.3}
+    .tt3{font-size:.875rem;font-weight:600;color:#cbd5e1}
+    .tb {font-size:.8125rem;font-weight:400;color:#64748b;line-height:1.5}
+    .tl {font-size:.625rem;font-weight:600;color:#475569;letter-spacing:.07em;text-transform:uppercase}
+    .tm {font-family:'JetBrains Mono',monospace;font-weight:700;color:#f1f5f9}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:.8125rem;font-weight:700;cursor:pointer;transition:transform .12s,opacity .12s;-webkit-user-select:none;user-select:none;white-space:nowrap}
+    .btn:active{transform:scale(.96);opacity:.85}
+    .btn:disabled{opacity:.3;pointer-events:none}
+    .btn-full{width:100%}
+    .btn-h{height:44px;padding:0 16px}
+    .btn-sm{height:30px;padding:0 10px;font-size:.75rem;border-radius:8px}
+    .btn-icon{width:34px;height:34px;padding:0;border-radius:9px;flex-shrink:0}
+    .btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+    .btn-purple{background:var(--purple-dim);border:1px solid var(--purple-bdr);color:#c084fc}
+    .btn-sky   {background:var(--sky-dim);border:1px solid var(--sky-bdr);color:#38bdf8}
+    .btn-amber {background:var(--amber-dim);border:1px solid var(--amber-bdr);color:#fbbf24}
+    .btn-rose  {background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fb7185}
+    .btn-ghost {background:rgba(255,255,255,.05);border:1px solid var(--border);color:#64748b}
+    /* Input */
+    .inp{width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#e2e8f0;font-family:'Inter',sans-serif;font-size:.875rem;height:44px;padding:0 12px 0 36px;outline:none;transition:border-color .15s}
+    .inp-no-icon{padding-left:12px}
+    .inp::placeholder{color:#1e293b}
+    .inp:focus{border-color:rgba(168,85,247,.4)}
+    textarea.inp{height:auto;padding:10px 12px;resize:vertical;line-height:1.6;font-family:'JetBrains Mono',monospace;font-size:.8125rem}
+    select.inp{appearance:none;cursor:pointer}
+    .inp-wrap{position:relative}
+    .inp-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#334155;font-size:12px;pointer-events:none}
+    /* Alert */
+    .alert{display:flex;align-items:flex-start;gap:8px;border-radius:10px;padding:10px 12px;font-size:.8125rem;font-weight:500;line-height:1.4}
+    .alert-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fda4af}
+    .alert-g{background:var(--green-dim);border:1px solid var(--green-bdr);color:#6ee7b7}
+    .alert i{flex-shrink:0;margin-top:1px;font-size:12px}
+    /* Nav tab */
+    .nav-tab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:.8125rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;color:#475569}
+    .nav-tab.active{background:var(--purple-dim);border-color:var(--purple-bdr);color:#c084fc}
+    .nav-tab:hover:not(.active){color:#94a3b8;background:rgba(255,255,255,.04)}
+    /* Status badge */
+    .s-avail{background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+    .s-lock {background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+    .s-burn {background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+    .s-exp  {background:rgba(100,116,139,.1);color:#94a3b8;border:1px solid rgba(100,116,139,.2)}
+    /* Stock tab toggle */
+    .stab{flex:1;height:36px;border-radius:8px;font-size:.8125rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .15s;border:1px solid transparent;color:#475569;background:transparent}
+    .stab.active{background:var(--green-dim);border-color:var(--green-bdr);color:#34d399}
+    /* Animations */
+    @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .fu{animation:fu .2s cubic-bezier(.4,0,.2,1) both}
+    @keyframes sk{from{background-position:-400px 0}to{background-position:400px 0}}
+    .sk{background:linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.06) 50%,rgba(255,255,255,.03) 75%);background-size:800px 100%;animation:sk 1.4s infinite;border-radius:10px}
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen" style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px 36px">
+  <div style="text-align:center;margin-bottom:28px" class="fu">
+    <div class="tt1">Admin Panel</div>
+    <div class="tb" style="margin-top:4px">NOKOTPOTP — Operator Access</div>
+  </div>
+  <div class="card" style="width:100%;max-width:360px;padding:20px">
+    <div id="login-error" class="alert alert-r hidden" style="margin-bottom:12px">
+      <i class="fa-solid fa-circle-exclamation"></i><span id="login-error-text"></span>
+    </div>
+    <form id="login-form" style="display:flex;flex-direction:column;gap:10px">
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="login-email" required placeholder="Email admin"/></div>
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="login-password" required placeholder="Password"/></div>
+      <button type="submit" class="btn btn-purple btn-full btn-h" style="margin-top:2px">
+        <i class="fa-solid fa-right-to-bracket" style="font-size:12px"></i> Masuk
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ ACCESS DENIED ══ -->
+<div id="access-denied" style="display:none;min-height:100dvh;align-items:center;justify-content:center;padding:24px">
+  <div class="card" style="max-width:320px;width:100%;padding:24px;text-align:center">
+    <div style="width:44px;height:44px;border-radius:12px;background:var(--rose-dim);border:1px solid var(--rose-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <i class="fa-solid fa-ban" style="color:#fb7185;font-size:18px"></i>
+    </div>
+    <div class="tt2" style="margin-bottom:6px">Akses Ditolak</div>
+    <div class="tb" style="margin-bottom:16px">Anda tidak memiliki hak akses admin.</div>
+    <button onclick="window.location.href='/'" class="btn btn-ghost btn-full btn-h">
+      <i class="fa-solid fa-arrow-left" style="font-size:12px"></i> Ke Panel User
+    </button>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="app-screen" style="display:none;min-height:100dvh;flex-direction:column">
+
+  <!-- Header -->
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;background:rgba(2,6,23,.92);backdrop-filter:blur(12px)">
+    <div>
+      <div style="font-size:.9375rem;font-weight:800;color:#f1f5f9;letter-spacing:-.02em;line-height:1">Admin Panel</div>
+      <div style="font-size:.625rem;color:#334155;font-weight:500;margin-top:1px">NOKOTPOTP</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="admin-username" style="font-size:.6875rem;color:#334155"></span>
+      <button id="logout-btn" class="btn btn-icon btn-ghost">
+        <i class="fa-solid fa-right-from-bracket" style="font-size:12px;color:#64748b"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Nav tabs -->
+  <div style="padding:8px 18px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:4px">
+    <button onclick="showAdminTab('orders')" id="nav-orders" class="nav-tab active">
+      <i class="fa-solid fa-list-check" style="font-size:12px"></i> Order
+      <span id="order-count" style="background:rgba(168,85,247,.2);color:#c084fc;font-size:.625rem;font-weight:700;padding:1px 6px;border-radius:20px">0</span>
+    </button>
+    <button onclick="showAdminTab('stock')" id="nav-stock" class="nav-tab">
+      <i class="fa-solid fa-boxes-stacked" style="font-size:12px"></i> Stok
+    </button>
+    <button onclick="showAdminTab('countries')" id="nav-countries" class="nav-tab">
+      <i class="fa-solid fa-earth-asia" style="font-size:12px"></i> Negara
+    </button>
+  </div>
+
+  <!-- Content -->
+  <main style="flex:1;overflow-y:auto;padding:14px 18px 28px">
+
+    <!-- ── TAB ORDERS ── -->
+    <div id="tab-orders">
+      <div id="order-list" style="display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;padding:48px 0;color:#1e293b">
+          <i class="fa-solid fa-inbox" style="font-size:1.75rem;display:block;margin-bottom:10px;color:#0f172a"></i>
+          <span class="tb">Belum ada order aktif.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB STOCK ── -->
+    <div id="tab-stock" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr;gap:14px">
+
+        <!-- Form tambah stok -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-plus" style="color:#a855f7;font-size:12px"></i> Tambah Stok Nomor
+          </div>
+
+          <div id="stock-error" class="alert alert-r hidden" style="margin-bottom:12px">
+            <i class="fa-solid fa-circle-exclamation"></i><span id="stock-error-text"></span>
+          </div>
+          <div id="stock-success" class="alert alert-g hidden" style="margin-bottom:12px">
+            <i class="fa-solid fa-circle-check"></i><span id="stock-success-text"></span>
+          </div>
+
+          <form id="stock-form" style="display:flex;flex-direction:column;gap:12px">
+            <!-- Step 1 -->
+            <div>
+              <div class="tl" style="margin-bottom:6px">
+                <span style="background:var(--purple-dim);color:#c084fc;border-radius:4px;padding:1px 5px;margin-right:5px">1</span>Kategori
+              </div>
+              <div style="display:flex;gap:6px">
+                <button type="button" id="stock-tab-indo" onclick="selectStockTab('indo')" class="stab active">
+                  &#127470;&#127465; Nokos Indo
+                </button>
+                <button type="button" id="stock-tab-luar" onclick="selectStockTab('luar')" class="stab">
+                  <i class="fa-solid fa-earth-americas" style="font-size:12px"></i> Nokos Luar
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div>
+              <div class="tl" style="margin-bottom:6px">
+                <span style="background:var(--purple-dim);color:#c084fc;border-radius:4px;padding:1px 5px;margin-right:5px">2</span>Negara / Layanan
+              </div>
+              <div class="inp-wrap">
+                <i class="inp-ico fa-solid fa-earth-asia"></i>
+                <select id="stock-country" required class="inp" style="padding-left:32px">
+                  <option value="">Pilih negara...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div class="tl">
+                  <span style="background:var(--purple-dim);color:#c084fc;border-radius:4px;padding:1px 5px;margin-right:5px">3</span>Daftar Nomor
+                </div>
+                <span id="stock-preview-count" class="tl" style="text-transform:none;letter-spacing:0;color:#334155">0 nomor</span>
+              </div>
+              <textarea id="stock-numbers" class="inp inp-no-icon" rows="6" required
+                placeholder="6281234567890&#10;6281298765432&#10;6281311122233"></textarea>
+              <div class="tb" style="margin-top:5px;font-size:.6875rem">Satu nomor per baris</div>
+            </div>
+
+            <button type="submit" class="btn btn-purple btn-full btn-h">
+              <i class="fa-solid fa-floppy-disk" style="font-size:12px"></i> Simpan Stok
+            </button>
+          </form>
+        </div>
+
+        <!-- Daftar stok -->
+        <div class="card" style="padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="tt3" style="display:flex;align-items:center;gap:7px">
+              <i class="fa-solid fa-boxes-stacked" style="color:#a855f7;font-size:12px"></i> Daftar Stok
+            </div>
+            <div style="display:flex;gap:5px">
+              <span class="s-avail" style="font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px">
+                <span id="stock-available-count">0</span> tersedia
+              </span>
+              <span class="s-lock" style="font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:20px">
+                <span id="stock-locked-count">0</span> terkunci
+              </span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <select id="stock-filter-country" onchange="renderStockList()" class="inp inp-no-icon" style="flex:1;height:36px;font-size:.75rem;border-radius:8px;padding:0 10px"></select>
+            <select id="stock-filter-status"  onchange="renderStockList()" class="inp inp-no-icon" style="height:36px;font-size:.75rem;border-radius:8px;padding:0 10px;width:auto">
+              <option value="">Semua</option>
+              <option value="AVAILABLE">Tersedia</option>
+              <option value="LOCKED">Terkunci</option>
+              <option value="BURNED">Hangus</option>
+            </select>
+          </div>
+          <div id="stock-list" style="display:flex;flex-direction:column;gap:5px;max-height:380px;overflow-y:auto">
+            <div class="sk" style="height:36px"></div>
+            <div class="sk" style="height:36px"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── TAB COUNTRIES ── -->
+    <div id="tab-countries" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr;gap:14px">
+
+        <!-- Form tambah negara -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-plus" style="color:#a855f7;font-size:12px"></i> Tambah Negara / Layanan
+          </div>
+          <div id="country-error" class="alert alert-r hidden" style="margin-bottom:12px">
+            <i class="fa-solid fa-circle-exclamation"></i><span id="country-error-text"></span>
+          </div>
+          <div id="country-success" class="alert alert-g hidden" style="margin-bottom:12px">
+            <i class="fa-solid fa-circle-check"></i><span id="country-success-text"></span>
+          </div>
+          <form id="country-form" style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div class="tl" style="margin-bottom:5px">Tab</div>
+              <select id="c-tab" required class="inp inp-no-icon" style="padding-left:12px">
+                <option value="indo">Nokos Indo</option>
+                <option value="luar">Nokos Luar</option>
+              </select>
+            </div>
+            <div>
+              <div class="tl" style="margin-bottom:5px">Nama Negara / Layanan</div>
+              <div class="inp-wrap"><i class="inp-ico fa-solid fa-earth-asia"></i>
+                <input class="inp" type="text" id="c-name" required placeholder="cth: Indonesia - WA Reguler"/>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <div class="tl" style="margin-bottom:5px">Bendera</div>
+                <input class="inp inp-no-icon" type="text" id="c-flag" placeholder="&#127470;&#127465;" maxlength="4" style="text-align:center;font-size:1.25rem"/>
+              </div>
+              <div>
+                <div class="tl" style="margin-bottom:5px">Harga (Rp)</div>
+                <div class="inp-wrap"><i class="inp-ico fa-solid fa-tag"></i>
+                  <input class="inp" type="number" id="c-price" required placeholder="5000" min="0"/>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="tl" style="margin-bottom:5px">ID Key</div>
+              <div class="inp-wrap"><i class="inp-ico fa-solid fa-key"></i>
+                <input class="inp" type="text" id="c-key" required placeholder="cth: indonesia_reguler" style="font-family:'JetBrains Mono',monospace;font-size:.8125rem"/>
+              </div>
+              <div class="tb" style="margin-top:4px;font-size:.6875rem">Huruf kecil, angka, underscore</div>
+            </div>
+            <button type="submit" class="btn btn-purple btn-full btn-h" style="margin-top:2px">
+              <i class="fa-solid fa-floppy-disk" style="font-size:12px"></i> Simpan Negara
+            </button>
+          </form>
+        </div>
+
+        <!-- Daftar negara -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:12px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-earth-asia" style="color:#a855f7;font-size:12px"></i> Daftar Negara
+          </div>
+          <div id="countries-list" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto">
+            <div class="sk" style="height:52px"></div>
+            <div class="sk" style="height:52px"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ CUSTOM DIALOG ══ -->
+<div id="dialog-overlay" style="display:none;position:fixed;inset:0;z-index:99;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(6px)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:18px 18px 28px">
+    <div style="width:30px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 16px"></div>
+    <div id="dialog-icon-wrap" style="margin:0 auto 10px;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center"></div>
+    <div id="dialog-title" style="font-size:.9375rem;font-weight:700;color:#f1f5f9;text-align:center;margin-bottom:5px"></div>
+    <div id="dialog-body" style="font-size:.8125rem;color:#64748b;text-align:center;margin-bottom:16px;line-height:1.55"></div>
+    <div id="dialog-btns" style="display:flex;flex-direction:column;gap:7px"></div>
+  </div>
+</div>
+
+<script src="/js/firebase-config.js"></script>
+<script src="/js/admin-panel.js"></script>
+
+<script>
+// ── Patch textContent for two-part alert elements ──
+(function() {
+  function patch(id, textId) {
+    const el = document.getElementById(id), tx = document.getElementById(textId);
+    if (!el || !tx) return;
+    Object.defineProperty(el, 'textContent', { set(v){tx.textContent=v}, get(){return tx.textContent} });
+  }
+  patch('login-error',    'login-error-text');
+  patch('stock-error',    'stock-error-text');
+  patch('stock-success',  'stock-success-text');
+  patch('country-error',  'country-error-text');
+  patch('country-success','country-success-text');
+
+  // Bridge classList hidden <-> display for screens
+  function bridgeDisplay(id, show, hiddenFirst) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const oa = el.classList.add.bind(el.classList);
+    const or = el.classList.remove.bind(el.classList);
+    el.classList.add    = function(...a){ if(a.includes('hidden')){el.style.display='none';return} oa(...a) };
+    el.classList.remove = function(...a){ if(a.includes('hidden')){el.style.display=show;return} or(...a) };
+    el.style.display = hiddenFirst ? 'none' : show;
+  }
+  bridgeDisplay('login-screen',   'flex',  false);
+  bridgeDisplay('access-denied',  'flex',  true);
+  bridgeDisplay('app-screen',     'flex',  true);
+  bridgeDisplay('tab-stock',      'block', true);
+  bridgeDisplay('tab-countries',  'block', true);
+  bridgeDisplay('login-error',    'flex',  true);
+  bridgeDisplay('stock-error',    'flex',  true);
+  bridgeDisplay('stock-success',  'flex',  true);
+  bridgeDisplay('country-error',  'flex',  true);
+  bridgeDisplay('country-success','flex',  true);
+})();
+
+// ── Dialog System ──
+const Dialog = {
+  _resolve: null,
+  _cfg: {
+    confirm:{ icon:'fa-solid fa-circle-question',    bg:'rgba(14,165,233,.12)', bdr:'rgba(14,165,233,.2)',  c:'#38bdf8' },
+    warn:   { icon:'fa-solid fa-triangle-exclamation',bg:'rgba(245,158,11,.12)',bdr:'rgba(245,158,11,.2)', c:'#fbbf24' },
+    success:{ icon:'fa-solid fa-circle-check',       bg:'rgba(16,185,129,.12)', bdr:'rgba(16,185,129,.2)', c:'#34d399' },
+    error:  { icon:'fa-solid fa-circle-exclamation', bg:'rgba(244,63,94,.12)',  bdr:'rgba(244,63,94,.2)',  c:'#fb7185' },
+  },
+  _show(type, title, body, btns) {
+    const cfg = this._cfg[type]||this._cfg.confirm;
+    const iw = document.getElementById('dialog-icon-wrap');
+    iw.style.cssText = 'margin:0 auto 10px;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:'+cfg.bg+';border:1px solid '+cfg.bdr;
+    iw.innerHTML = '<i class="'+cfg.icon+'" style="color:'+cfg.c+';font-size:17px"></i>';
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-body').innerHTML = body;
+    const be = document.getElementById('dialog-btns'); be.innerHTML='';
+    btns.forEach(b=>{
+      const btn=document.createElement('button');
+      btn.style.cssText='display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:42px;border:none;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:700;cursor:pointer;'+b.s;
+      btn.innerHTML=b.l;
+      btn.onclick=()=>{this._close();if(this._resolve)this._resolve(b.v)};
+      be.appendChild(btn);
+    });
+    document.getElementById('dialog-overlay').style.display='flex';
+    return new Promise(r=>{this._resolve=r});
+  },
+  _close(){document.getElementById('dialog-overlay').style.display='none';this._resolve=null},
+  confirm(t,b){return this._show('confirm',t,b,[
+    {l:'Ya, Lanjutkan',s:'background:linear-gradient(135deg,#10b981,#059669);color:#fff',v:true},
+    {l:'Batal',s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b',v:false},
+  ])},
+  confirmDanger(t,b,ok){return this._show('warn',t,b,[
+    {l:ok||'Ya',s:'background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.25);color:#fb7185',v:true},
+    {l:'Batal',s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b',v:false},
+  ])},
+  alert(type,t,b){return this._show(type,t,b,[
+    {l:'OK',s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b',v:true},
+  ])},
+};
+window.Dialog = Dialog;
+</script>
+</body>
+</html>

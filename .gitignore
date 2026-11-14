@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment & Secret Keys (SANGAT PENTING: jangan sampai ke-push!)
+.env
+.env.local
+.env.*.local
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
+# Kiro & IDE / Editor Config
+.kiro/
+.vscode/
+.idea/
+
+# Vercel Deployment Cache
+.vercel/
+
+# Logs & System Files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
