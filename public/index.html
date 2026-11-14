@@ -399,22 +399,29 @@
 <script src="/js/user-panel.js"></script>
 <script>
 // ── Custom Dialog System ──
-const Dialog = {
-  _resolve: null,
+const Dialog = (() => {
+  let _resolve = null;
 
-  _config: {
-    confirm: { icon: 'fa-solid fa-circle-question', iconBg: 'rgba(14,165,233,.12)', iconBdr: 'rgba(14,165,233,.2)', iconColor: '#38bdf8' },
-    warn:    { icon: 'fa-solid fa-triangle-exclamation', iconBg: 'rgba(245,158,11,.12)', iconBdr: 'rgba(245,158,11,.2)', iconColor: '#fbbf24' },
-    success: { icon: 'fa-solid fa-circle-check', iconBg: 'rgba(16,185,129,.12)', iconBdr: 'rgba(16,185,129,.2)', iconColor: '#34d399' },
-    error:   { icon: 'fa-solid fa-circle-exclamation', iconBg: 'rgba(244,63,94,.12)', iconBdr: 'rgba(244,63,94,.2)', iconColor: '#fb7185' },
-  },
+  const _config = {
+    confirm: { icon: 'fa-solid fa-circle-question',     bg: 'rgba(14,165,233,.12)', bdr: 'rgba(14,165,233,.2)',  color: '#38bdf8' },
+    warn:    { icon: 'fa-solid fa-triangle-exclamation', bg: 'rgba(245,158,11,.12)', bdr: 'rgba(245,158,11,.2)', color: '#fbbf24' },
+    success: { icon: 'fa-solid fa-circle-check',         bg: 'rgba(16,185,129,.12)', bdr: 'rgba(16,185,129,.2)', color: '#34d399' },
+    error:   { icon: 'fa-solid fa-circle-exclamation',   bg: 'rgba(244,63,94,.12)',  bdr: 'rgba(244,63,94,.2)',  color: '#fb7185' },
+  };
 
-  _show(type, title, body, buttons) {
-    const cfg = this._config[type] || this._config.confirm;
+  function _close() {
+    const overlay = document.getElementById('dialog-overlay');
+    overlay.style.display = 'none';
+    overlay.classList.remove('show');
+    _resolve = null;
+  }
+
+  function _show(type, title, body, buttons) {
+    const cfg = _config[type] || _config.confirm;
     const wrap = document.getElementById('dialog-icon-wrap');
-    wrap.style.background   = cfg.iconBg;
-    wrap.style.border       = '1px solid ' + cfg.iconBdr;
-    wrap.innerHTML          = '<i class="' + cfg.icon + '" style="color:' + cfg.iconColor + ';font-size:18px"></i>';
+    wrap.style.background = cfg.bg;
+    wrap.style.border     = '1px solid ' + cfg.bdr;
+    wrap.innerHTML        = '<i class="' + cfg.icon + '" style="color:' + cfg.color + ';font-size:18px"></i>';
     document.getElementById('dialog-title').textContent = title;
     document.getElementById('dialog-body').innerHTML    = body;
 
@@ -423,49 +430,33 @@ const Dialog = {
     buttons.forEach(b => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-full ' + b.cls;
-      btn.style.height = '44px';
-      btn.style.fontSize = '.875rem';
+      btn.style.height    = '44px';
+      btn.style.fontSize  = '.875rem';
       btn.innerHTML = b.label;
-      btn.onclick = () => { const r = this._resolve; this._close(); if (r) r(b.value); };
+      btn.onclick = () => { const r = _resolve; _close(); if (r) r(b.value); };
       btnsEl.appendChild(btn);
     });
 
     const overlay = document.getElementById('dialog-overlay');
     overlay.style.display = 'flex';
     overlay.classList.add('show');
-    return new Promise(r => { this._resolve = r; });
-  },
+    return new Promise(r => { _resolve = r; });
+  }
 
-  _close() {
-    const overlay = document.getElementById('dialog-overlay');
-    overlay.style.display = 'none';
-    overlay.classList.remove('show');
-    this._resolve = null;
-  },
-
-  // confirm(title, body) → Promise<boolean>
-  confirm(title, body) {
-    return this._show('confirm', title, body, [
+  return {
+    confirm: (title, body) => _show('confirm', title, body, [
       { label: 'Ya, Lanjutkan', cls: 'btn-primary', value: true },
       { label: 'Batal',         cls: 'btn-ghost',   value: false },
-    ]);
-  },
-
-  // confirmDanger(title, body, okLabel) → Promise<boolean>
-  confirmDanger(title, body, okLabel = 'Ya, Lanjutkan') {
-    return this._show('warn', title, body, [
+    ]),
+    confirmDanger: (title, body, okLabel = 'Ya, Lanjutkan') => _show('warn', title, body, [
       { label: okLabel, cls: 'btn-rose',  value: true },
       { label: 'Batal', cls: 'btn-ghost', value: false },
-    ]);
-  },
-
-  // alert(type, title, body) → Promise<void>
-  alert(type, title, body) {
-    return this._show(type, title, body, [
+    ]),
+    alert: (type, title, body) => _show(type, title, body, [
       { label: 'OK', cls: 'btn-ghost', value: true },
-    ]);
-  },
-};
+    ]),
+  };
+})();
 
 window.Dialog = Dialog;
 </script>

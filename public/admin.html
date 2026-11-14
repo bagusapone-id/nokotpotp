@@ -388,45 +388,59 @@
 })();
 
 // ── Dialog System ──
-const Dialog = {
-  _resolve: null,
-  _cfg: {
+const Dialog = (() => {
+  let _resolve = null;
+
+  const _cfg = {
     confirm:{ icon:'fa-solid fa-circle-question',    bg:'rgba(14,165,233,.12)', bdr:'rgba(14,165,233,.2)',  c:'#38bdf8' },
     warn:   { icon:'fa-solid fa-triangle-exclamation',bg:'rgba(245,158,11,.12)',bdr:'rgba(245,158,11,.2)', c:'#fbbf24' },
     success:{ icon:'fa-solid fa-circle-check',       bg:'rgba(16,185,129,.12)', bdr:'rgba(16,185,129,.2)', c:'#34d399' },
     error:  { icon:'fa-solid fa-circle-exclamation', bg:'rgba(244,63,94,.12)',  bdr:'rgba(244,63,94,.2)',  c:'#fb7185' },
-  },
-  _show(type, title, body, btns) {
-    const cfg = this._cfg[type]||this._cfg.confirm;
+  };
+
+  function _close() {
+    document.getElementById('dialog-overlay').style.display = 'none';
+    _resolve = null;
+  }
+
+  function _show(type, title, body, btns) {
+    const cfg = _cfg[type] || _cfg.confirm;
     const iw = document.getElementById('dialog-icon-wrap');
     iw.style.cssText = 'margin:0 auto 10px;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:'+cfg.bg+';border:1px solid '+cfg.bdr;
     iw.innerHTML = '<i class="'+cfg.icon+'" style="color:'+cfg.c+';font-size:17px"></i>';
     document.getElementById('dialog-title').textContent = title;
     document.getElementById('dialog-body').innerHTML = body;
-    const be = document.getElementById('dialog-btns'); be.innerHTML='';
-    btns.forEach(b=>{
-      const btn=document.createElement('button');
-      btn.style.cssText='display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:42px;border:none;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:700;cursor:pointer;'+b.s;
-      btn.innerHTML=b.l;
-      btn.onclick=()=>{const r=this._resolve;this._close();if(r)r(b.v)};
+    const be = document.getElementById('dialog-btns');
+    be.innerHTML = '';
+    btns.forEach(b => {
+      const btn = document.createElement('button');
+      btn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:42px;border:none;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:700;cursor:pointer;'+b.s;
+      btn.innerHTML = b.l;
+      btn.onclick = () => {
+        const r = _resolve;
+        _close();
+        if (r) r(b.v);
+      };
       be.appendChild(btn);
     });
-    document.getElementById('dialog-overlay').style.display='flex';
-    return new Promise(r=>{this._resolve=r});
-  },
-  _close(){document.getElementById('dialog-overlay').style.display='none';this._resolve=null},
-  confirm(t,b){return this._show('confirm',t,b,[
-    {l:'Ya, Lanjutkan',s:'background:linear-gradient(135deg,#10b981,#059669);color:#fff',v:true},
-    {l:'Batal',s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b',v:false},
-  ])},
-  confirmDanger(t,b,ok){return this._show('warn',t,b,[
-    {l:ok||'Ya',s:'background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.25);color:#fb7185',v:true},
-    {l:'Batal',s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b',v:false},
-  ])},
-  alert(type,t,b){return this._show(type,t,b,[
-    {l:'OK',s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b',v:true},
-  ])},
-};
+    document.getElementById('dialog-overlay').style.display = 'flex';
+    return new Promise(r => { _resolve = r; });
+  }
+
+  return {
+    confirm: (t,b) => _show('confirm', t, b, [
+      {l:'Ya, Lanjutkan', s:'background:linear-gradient(135deg,#10b981,#059669);color:#fff', v:true},
+      {l:'Batal', s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b', v:false},
+    ]),
+    confirmDanger: (t,b,ok) => _show('warn', t, b, [
+      {l:ok||'Ya', s:'background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.25);color:#fb7185', v:true},
+      {l:'Batal', s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b', v:false},
+    ]),
+    alert: (type,t,b) => _show(type, t, b, [
+      {l:'OK', s:'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b', v:true},
+    ]),
+  };
+})();
 window.Dialog = Dialog;
 </script>
 </body>
