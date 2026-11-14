@@ -645,14 +645,15 @@ function renderPaymentInstructions(deposit) {
   } else if (deposit.va_number) {
     // Virtual Account
     const bankName = {
-      'bni_va': 'BNI',
-      'bri_va': 'BRI',
-      'cimb_niaga_va': 'CIMB Niaga',
-      'permata_va': 'Permata',
-      'maybank_va': 'Maybank',
-      'bnc_va': 'Neo Commerce',
-      'artha_graha_va': 'Artha Graha',
-      'sampoerna_va': 'Sahabat Sampoerna',
+      'bni_va':       'BNI',
+      'bri_va':       'BRI',
+      'cimb_niaga_va':'CIMB Niaga',
+      'danamon_va':   'Danamon',
+      'maybank_va':   'Maybank',
+      'bnc_va':       'Neo Commerce',
+      'bsi_va':       'BSI',
+      'muamalat_va':  'Muamalat',
+      'ocbc_va':      'OCBC',
     }[deposit.payment_method] || 'Bank';
     
     container.innerHTML = `

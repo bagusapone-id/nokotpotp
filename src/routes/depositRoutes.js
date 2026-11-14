@@ -49,8 +49,8 @@ function verifyWebhook(headerValue, secret) {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const VALID_METHODS = [
   'payment_link','qris',
-  'bni_va','bri_va','cimb_niaga_va','permata_va',
-  'maybank_va','bnc_va','artha_graha_va','sampoerna_va',
+  'bni_va','bri_va','cimb_niaga_va','danamon_va',
+  'maybank_va','bnc_va','bsi_va','muamalat_va','ocbc_va',
 ];
 
 // ── POST /api/deposit/create ─────────────────────────────────────────────────
@@ -73,14 +73,14 @@ router.post('/create', authUser, async (req, res) => {
     let txData;
 
     if (payment_method === 'payment_link') {
-      // POST /api/v2/create-payment-link/{slug}/{order_id}
+      // payment_link juga pakai endpoint create-transaction dengan method: 'payment_link'
       const result = await pakasirFetch('POST',
-        `/api/v2/create-payment-link/${PAKASIR_SLUG()}/${orderId}`,
-        { amount }
+        `/api/v2/create-transaction/${PAKASIR_SLUG()}/${orderId}`,
+        { method: 'payment_link', amount }
       );
       txData = {
         txn_id:         result.txn_id,
-        payment_link:   result.payment_link,
+        payment_link:   result.payment_link || `https://app.pakasir.com/pay-v2/${result.txn_id}`,
         payment_method: 'payment_link',
         qr_string:      '',
         va_number:      '',
@@ -90,9 +90,10 @@ router.post('/create', authUser, async (req, res) => {
       };
     } else {
       // POST /api/v2/create-transaction/{slug}/{order_id}
+      // body pakai "method" bukan "payment_method"
       const tx = await pakasirFetch('POST',
         `/api/v2/create-transaction/${PAKASIR_SLUG()}/${orderId}`,
-        { amount, payment_method }
+        { method: payment_method, amount }
       );
       txData = {
         txn_id:         tx.txn_id,
