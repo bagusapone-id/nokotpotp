@@ -185,20 +185,27 @@ router.delete('/country/:key', authAdmin, async (req, res) => {
     // Check if there are AVAILABLE or LOCKED stocks under this country
     const stockSnap = await db.ref('phone_stocks')
       .orderByChild('country_key').equalTo(key).once('value');
-    let activeCount = 0;
+
+    // Hapus semua stok yang terkait (kecuali LOCKED — masih dalam order aktif)
     if (stockSnap.exists()) {
+      let lockedCount = 0;
       stockSnap.forEach(child => {
-        if (['AVAILABLE','LOCKED'].includes(child.val().status)) activeCount++;
+        if (child.val().status === 'LOCKED') lockedCount++;
       });
+      if (lockedCount > 0) {
+        return res.status(403).json({
+          error: 'HAS_LOCKED_STOCK',
+          message: `Tidak bisa hapus negara — ada ${lockedCount} nomor yang sedang terkunci dalam order aktif.`
+        });
+      }
+      // Hapus semua stok sekaligus
+      const deleteUpdates = {};
+      stockSnap.forEach(child => { deleteUpdates[`phone_stocks/${child.key}`] = null; });
+      await db.ref('/').update(deleteUpdates);
     }
-    if (activeCount > 0) {
-      return res.status(403).json({
-        error: 'HAS_STOCK',
-        message: `Tidak bisa hapus negara yang masih memiliki ${activeCount} stok aktif. Hapus stoknya terlebih dahulu.`
-      });
-    }
+
     await db.ref(`countries/${key}`).remove();
-    return res.status(200).json({ success: true, message: 'Negara berhasil dihapus.' });
+    return res.status(200).json({ success: true, message: 'Negara dan semua stoknya berhasil dihapus.' });
   } catch (err) {
     console.error('[adminRoutes] delete country error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menghapus negara.' });
