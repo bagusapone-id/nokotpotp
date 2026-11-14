@@ -569,9 +569,6 @@ function listenOrderById(orderId) {
 function startTimer() {} // stub — tidak dipakai lagi
 function listenOrder() {} // stub
 
-// Fungsi lama untuk compat timeout modal
-let activeOrderId = null; // masih dipakai cancel-order-btn
-
 // ---- Cancel per order ----
 window.cancelOrderById = async function(orderId) {
   const ok = await Dialog.confirmDanger(
