@@ -161,6 +161,7 @@ function showApp() {
 function cleanupListeners() {
   if (orderListenerRef) { orderListenerRef.off(); orderListenerRef = null; }
   if (balanceListenerRef) { balanceListenerRef.off(); balanceListenerRef = null; }
+  if (autoOtpTimeout) { clearTimeout(autoOtpTimeout); autoOtpTimeout = null; }
   clearInterval(timerInterval);
   clearInterval(resendCooldownInterval);
   activeOrderId = null;
@@ -347,6 +348,8 @@ function checkForActiveOrder() {
   });
 }
 
+let autoOtpTimeout = null;
+
 function showActiveOrder(orderId, phoneNumber, expiresAt, countryName, initialStatus) {
   activeOrderId = orderId;
   document.getElementById("active-phone-number").textContent = phoneNumber;
@@ -358,6 +361,27 @@ function showActiveOrder(orderId, phoneNumber, expiresAt, countryName, initialSt
   if (initialStatus === "OTP_REQUESTED") {
     document.getElementById("request-otp-btn").classList.add("hidden");
     document.getElementById("resend-otp-btn").classList.remove("hidden");
+  } else {
+    // Auto-click Request OTP setelah 30 detik jika user tidak klik
+    if (autoOtpTimeout) clearTimeout(autoOtpTimeout);
+    const btn = document.getElementById("request-otp-btn");
+    // Countdown di label tombol
+    let cd = 30;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP (' + cd + 's)';
+    const cdInterval = setInterval(() => {
+      cd--;
+      if (cd <= 0) {
+        clearInterval(cdInterval);
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP (' + cd + 's)';
+      }
+    }, 1000);
+    autoOtpTimeout = setTimeout(() => {
+      clearInterval(cdInterval);
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
+      if (!btn.disabled) btn.click();
+    }, 30000);
   }
 }
 
