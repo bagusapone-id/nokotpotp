@@ -328,7 +328,7 @@ window.buyNokos = async function(countryKey, countryName, price) {
       showError(ERROR_MAP[data.error] || data.message || "Gagal membeli.");
       return;
     }
-    addActiveOrderCard(data.order_id, data.phone_number, data.expires_at, countryName);
+    addActiveOrderCard(data.order_id, data.phone_number, data.expires_at, countryName, undefined, price);
   } catch (err) {
     showError("Koneksi bermasalah. Coba lagi.");
   }
@@ -345,13 +345,13 @@ function checkForActiveOrder() {
     snap.forEach((child) => {
       const o = child.val();
       if (["WAITING_OTP", "OTP_REQUESTED"].includes(o.status)) {
-        addActiveOrderCard(child.key, o.phone_number, o.expires_at, o.country_name, o.status);
+        addActiveOrderCard(child.key, o.phone_number, o.expires_at, o.country_name, o.status, o.price);
       }
     });
   });
 }
 
-function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initialStatus) {
+function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initialStatus, price) {
   // Jangan duplikat
   if (document.getElementById("order-card-" + orderId)) return;
 
@@ -366,6 +366,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
         '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">' +
           '<span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;flex-shrink:0"></span>' +
           '<span class="tl">Order Aktif</span>' +
+          (price ? '<span style="font-size:.625rem;font-weight:600;color:#34d399;background:var(--green-dim);border:1px solid var(--green-bdr);padding:1px 6px;border-radius:20px">' + formatRupiah(price) + '</span>' : '') +
         '</div>' +
         '<div style="font-family:\'Geist Mono\',monospace;font-size:.9375rem;font-weight:700;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + phoneNumber + '</div>' +
         '<div style="font-size:.625rem;color:#475569;margin-top:1px">' + (countryName || "") + '</div>' +
@@ -378,9 +379,12 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div id="otp-display-' + orderId + '" style="display:none;background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:9px;padding:9px 12px;margin-bottom:10px;align-items:center;justify-content:space-between;gap:10px">' +
-      '<span class="tl" style="color:#34d399;white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>' +
-      '<span id="otp-val-' + orderId + '" class="tm" style="font-size:1.375rem;color:#6ee7b7;letter-spacing:.18em"></span>' +
+    // Kotak OTP — selalu tampil, berubah saat OTP masuk
+    '<div id="otp-display-' + orderId + '" style="background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
+      '<span class="tl" style="white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>' +
+      '<span id="otp-val-' + orderId + '" style="font-size:.8125rem;color:#334155;font-style:italic">' +
+        '<i class="fa-solid fa-spinner fa-spin" style="font-size:10px;margin-right:4px"></i>Menunggu OTP...' +
+      '</span>' +
     '</div>' +
     '<div style="display:flex;flex-direction:column;gap:7px">' +
       '<button id="req-btn-' + orderId + '" class="btn btn-sky btn-full" style="height:40px;font-size:.8125rem" onclick="doRequestOtpFor(\'' + orderId + '\')">' +
@@ -553,8 +557,19 @@ function listenOrderById(orderId) {
     if (o.otp_code && o.otp_code.length > 0) {
       const otpEl = document.getElementById("otp-display-" + orderId);
       const otpVal = document.getElementById("otp-val-" + orderId);
-      if (otpEl) otpEl.style.display = "flex";
-      if (otpVal) otpVal.textContent = o.otp_code;
+      if (otpEl) {
+        otpEl.style.background = "var(--green-dim)";
+        otpEl.style.borderColor = "var(--green-bdr)";
+        otpEl.querySelector('.tl').style.color = "#34d399";
+      }
+      if (otpVal) {
+        otpVal.style.fontFamily = "'Geist Mono',monospace";
+        otpVal.style.fontSize = "1.375rem";
+        otpVal.style.color = "#6ee7b7";
+        otpVal.style.letterSpacing = ".18em";
+        otpVal.style.fontStyle = "normal";
+        otpVal.textContent = o.otp_code;
+      }
     }
     if (o.status === "COMPLETED") {
       removeOrderCard(orderId);
