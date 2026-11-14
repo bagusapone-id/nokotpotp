@@ -408,7 +408,7 @@ const Dialog = {
       const btn=document.createElement('button');
       btn.style.cssText='display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:42px;border:none;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:700;cursor:pointer;'+b.s;
       btn.innerHTML=b.l;
-      btn.onclick=()=>{this._close();if(this._resolve)this._resolve(b.v)};
+      btn.onclick=()=>{const r=this._resolve;this._close();if(r)r(b.v)};
       be.appendChild(btn);
     });
     document.getElementById('dialog-overlay').style.display='flex';

@@ -320,9 +320,12 @@ function renderCountriesList() {
           '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.625rem;color:#334155">'+k+'</span>' +
         '</div>' +
       '</div>' +
-      '<div style="text-align:right;flex-shrink:0">' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:#34d399">'+formatRupiah(v.price)+'</div>' +
-        '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' +
+        '<div style="text-align:right">' +
+          '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:#34d399">'+formatRupiah(v.price)+'</div>' +
+          '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
+        '</div>' +
+        '<button onclick="deleteCountry(\''+k+'\')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" title="Hapus Negara"><i class="fa-solid fa-trash" style="font-size:10px"></i></button>' +
       '</div>' +
     '</div>';
   }).join("");
@@ -370,5 +373,26 @@ window.deleteStock = async function(stockId) {
     }
   } catch {
     await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet.");
+  }
+};
+
+// ── Delete Country ──
+window.deleteCountry = async function(key) {
+  const country = countriesData[key];
+  if (!country) return;
+  const ok = await Dialog.confirmDanger(
+    "Hapus Negara?",
+    "<strong style='color:#e2e8f0'>"+(country.flag||"")+" "+country.country_name+"</strong> akan dihapus permanen. Pastikan semua stoknya sudah dihapus terlebih dahulu.",
+    "Ya, Hapus"
+  );
+  if (!ok) return;
+  try {
+    const res  = await adminFetch("/api/admin/country/"+key, { method:"DELETE" });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert("error", "Gagal Hapus", data.message || "Tidak bisa menghapus negara.");
+    }
+  } catch {
+    await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet.");
   }
 };
