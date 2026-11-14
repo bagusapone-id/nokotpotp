@@ -229,15 +229,15 @@ window.renderStockList = function() {
   const sClr = { AVAILABLE:"s-avail", LOCKED:"s-lock", BURNED:"s-burn", EXPIRED:"s-exp" };
   container.innerHTML = entries.map(([stockId,s]) => {
     const c = countriesData[s.country_key];
-    const canDelete = s.status !== "LOCKED"; // tidak bisa hapus yang terkunci
-    const deleteBtn = canDelete
-      ? '<button onclick="deleteStock(\''+stockId+'\')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" title="Hapus"><i class="fa-solid fa-trash" style="font-size:10px"></i></button>'
-      : '<button disabled style="background:rgba(100,116,139,.05);border:1px solid rgba(100,116,139,.1);color:#334155;border-radius:7px;width:28px;height:28px;padding:0;cursor:not-allowed;flex-shrink:0;display:flex;align-items:center;justify-content:center;opacity:.3" title="Tidak bisa hapus (terkunci)"><i class="fa-solid fa-lock" style="font-size:9px"></i></button>';
-    return '<div style="display:flex;align-items:center;gap:8px;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px">' +
-      '<span style="font-size:1rem;line-height:1;flex-shrink:0">'+(c?c.flag||"":"")+'</span>' +
-      '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.75rem;color:#94a3b8;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.number+'</span>' +
-      '<span class="'+(sClr[s.status]||"s-exp")+'" style="font-size:.625rem;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0">'+s.status+'</span>' +
-      deleteBtn +
+    const locked = s.status === "LOCKED";
+    const attrs = locked
+      ? 'title="Terkunci dalam order aktif"'
+      : 'onmousedown="startLongPress(\'stock\',\''+stockId+'\')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'stock\',\''+stockId+'\')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"';
+    return '<div id="si-'+stockId+'" '+attrs+' style="display:flex;align-items:center;gap:8px;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;cursor:'+(locked?'default':'pointer')+';user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
+      '<div id="lp-'+stockId+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
+      '<span style="font-size:1rem;line-height:1;flex-shrink:0;position:relative">'+(c?c.flag||"":"")+'</span>' +
+      '<span style="font-family:\'Geist Mono\',monospace;font-size:.75rem;color:#94a3b8;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative">'+s.number+'</span>' +
+      '<span class="'+(sClr[s.status]||"s-exp")+'" style="font-size:.625rem;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;position:relative">'+s.status+'</span>' +
     '</div>';
   }).join("");
 };
@@ -310,22 +310,20 @@ function renderCountriesList() {
     const tb = v.tab==="indo"
       ? '<span style="background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.18);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">Indo</span>'
       : '<span style="background:rgba(14,165,233,.1);color:#38bdf8;border:1px solid rgba(14,165,233,.18);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">Luar</span>';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;gap:10px">' +
-      '<div style="display:flex;align-items:center;gap:10px;min-width:0">' +
+    return '<div id="ci-'+k+'" onmousedown="startLongPress(\'country\',\''+k+'\')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'country\',\''+k+'\')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()" style="display:flex;align-items:center;justify-content:space-between;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
+      '<div id="lp-'+k+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
+      '<div style="display:flex;align-items:center;gap:10px;min-width:0;position:relative">' +
         '<span style="font-size:1.375rem;line-height:1;flex-shrink:0">'+(v.flag||"")+'</span>' +
         '<div style="min-width:0">' +
           '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">' +
             '<span style="font-size:.875rem;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.country_name+'</span>'+tb+
           '</div>' +
-          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.625rem;color:#334155">'+k+'</span>' +
+          '<span style="font-family:\'Geist Mono\',monospace;font-size:.625rem;color:#334155">'+k+'</span>' +
         '</div>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' +
-        '<div style="text-align:right">' +
-          '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:#34d399">'+formatRupiah(v.price)+'</div>' +
-          '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
-        '</div>' +
-        '<button onclick="deleteCountry(\''+k+'\')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" title="Hapus Negara"><i class="fa-solid fa-trash" style="font-size:10px"></i></button>' +
+      '<div style="text-align:right;flex-shrink:0;position:relative">' +
+        '<div style="font-family:\'Geist Mono\',monospace;font-weight:700;font-size:.875rem;color:#34d399">'+formatRupiah(v.price)+'</div>' +
+        '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
       '</div>' +
     '</div>';
   }).join("");
@@ -404,4 +402,27 @@ window.deleteCountry = async function(key) {
   } catch {
     await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet.");
   }
+};
+
+// ── Long Press to Delete ──
+let _lpTimer = null;
+let _lpBarEl = null;
+
+window.startLongPress = function(type, id) {
+  cancelLongPress();
+  const barEl = document.getElementById('lp-' + id);
+  if (!barEl) return;
+  _lpBarEl = barEl;
+  // Animate bar fill over 500ms
+  requestAnimationFrame(() => { barEl.style.width = '100%'; });
+  _lpTimer = setTimeout(() => {
+    _lpBarEl = null;
+    if (type === 'stock') deleteStock(id);
+    else if (type === 'country') deleteCountry(id);
+  }, 500);
+};
+
+window.cancelLongPress = function() {
+  if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
+  if (_lpBarEl) { _lpBarEl.style.transition = 'none'; _lpBarEl.style.width = '0'; _lpBarEl = null; }
 };
