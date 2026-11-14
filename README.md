@@ -8,16 +8,41 @@ Platform jual-beli nomor kosong (Nokos) WhatsApp berbasis Node.js + Express + Fi
 
 **Backend (`.env`):**
 ```
-cp .env.example .env
+copy .env.example .env
 ```
 Isi `.env` dengan kredensial Firebase project kamu:
-- `FIREBASE_PROJECT_ID` — Project ID dari Firebase Console
-- `FIREBASE_CLIENT_EMAIL` — Email dari service account key (JSON)
-- `FIREBASE_PRIVATE_KEY` — Private key dari service account key (JSON)
-- `FIREBASE_DATABASE_URL` — URL Realtime Database (contoh: `https://nama-project-default-rtdb.firebaseio.com`)
-- `TELEGRAM_BOT_TOKEN` — Token bot Telegram dari BotFather
-- `ADMIN_CHAT_ID` — Chat ID Telegram admin untuk notifikasi
-- `ADMIN_SECRET_UID` — UID user Firebase yang dijadikan admin
+- `FIREBASE_PROJECT_ID` ï¿½ Project ID dari Firebase Console
+- `FIREBASE_CLIENT_EMAIL` ï¿½ Email dari service account key (JSON)
+- `FIREBASE_PRIVATE_KEY` ï¿½ Private key dari service account key (JSON)
+- `FIREBASE_DATABASE_URL` ï¿½ URL Realtime Database (contoh: `https://nama-project-default-rtdb.firebaseio.com`)
+- `TELEGRAM_BOT_TOKEN` ï¿½ Token bot Telegram dari BotFather
+- `ADMIN_CHAT_ID` ï¿½ Chat ID Telegram admin untuk notifikasi
+- `ADMIN_SECRET_UID` ï¿½ UID user Firebase yang dijadikan admin
+
+### Deploy ke Vercel
+
+Hubungkan repository GitHub ke Vercel dan deploy dari folder root repository. Vercel akan mendeteksi aplikasi Express dari `server.js`. Jangan menjalankan `bot.js` sebagai Vercel Function.
+
+Tambahkan Environment Variables berikut di **Vercel Project Settings â†’ Environment Variables** untuk setiap environment yang dipakai (Production, Preview, dan Development):
+
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY` â€” tempel private key service account; jika baris baru tersimpan sebagai `\n`, aplikasi akan mengubahnya.
+- `FIREBASE_DATABASE_URL`
+- `TELEGRAM_BOT_TOKEN`
+- `ADMIN_CHAT_ID`
+- `ADMIN_SECRET_UID`
+- `PAKASIR_SLUG`
+- `PAKASIR_API_KEY`
+- `PAKASIR_WEBHOOK_SECRET`
+
+Jangan gunakan `FIREBASE_SERVICE_ACCOUNT_PATH` di Vercel kecuali file service account memang disertakan dengan aman pada build. Gunakan variabel service account di atas. Setelah mengubah variabel Vercel, buat deployment baru.
+
+Periksa **Deployment â†’ Functions â†’ Logs** jika fungsi masih gagal. Error konfigurasi Firebase sekarang menyebut nama variabel yang belum diisi; jangan kirim nilai rahasia ke log atau chat.
+
+Vercel Functions tidak menjalankan proses dan timer background secara terus-menerus. Karena itu, `ExpiryGuardian` yang berjalan tiap 30 detik hanya aktif saat server dijalankan langsung dengan `npm start`; untuk menjalankan expiry otomatis di Vercel, gunakan scheduler eksternal atau worker/server yang selalu hidup. Bot interaktif `bot.js` menggunakan polling dan perlu dijalankan di worker/server yang selalu hidup, bukan di Vercel Functions.
+
+Jika token Telegram pernah di-commit atau di-push ke GitHub, revoke token lama lewat BotFather lalu perbarui `TELEGRAM_BOT_TOKEN` di Vercel dan `.env`.
 
 **Frontend (`public/js/firebase-config.js`):**
 Ganti nilai placeholder di file ini dengan config Firebase web app kamu (dari Firebase Console ? Project Settings ? Your apps).
@@ -70,37 +95,37 @@ Lalu tambah stok nomor dari **Admin Panel ? Tambah Stok**.
 ```
 +-- server.js                    # Entry point Express
 +-- src/
-¦   +-- config/firebase.js       # Firebase Admin SDK init
-¦   +-- middleware/
-¦   ¦   +-- authUser.js          # Auth middleware untuk user
-¦   ¦   +-- authAdmin.js         # Auth middleware untuk admin
-¦   +-- routes/
-¦   ¦   +-- purchaseRoutes.js    # POST /api/purchase
-¦   ¦   +-- orderRoutes.js       # POST /api/orders/:id/*
-¦   ¦   +-- cancelRoutes.js      # POST /api/orders/:id/cancel
-¦   ¦   +-- adminRoutes.js       # POST /api/admin/*
-¦   +-- services/
-¦   ¦   +-- purchaseService.js   # Logika beli + atomic transaction
-¦   ¦   +-- orderService.js      # OTP request, resend, submit, complete
-¦   ¦   +-- cancelService.js     # Cancel + refund
-¦   ¦   +-- expiryGuardian.js    # Background job expiry stok
-¦   ¦   +-- telegramService.js   # Kirim notifikasi Telegram
-¦   +-- utils/retryTransaction.js
+ï¿½   +-- config/firebase.js       # Firebase Admin SDK init
+ï¿½   +-- middleware/
+ï¿½   ï¿½   +-- authUser.js          # Auth middleware untuk user
+ï¿½   ï¿½   +-- authAdmin.js         # Auth middleware untuk admin
+ï¿½   +-- routes/
+ï¿½   ï¿½   +-- purchaseRoutes.js    # POST /api/purchase
+ï¿½   ï¿½   +-- orderRoutes.js       # POST /api/orders/:id/*
+ï¿½   ï¿½   +-- cancelRoutes.js      # POST /api/orders/:id/cancel
+ï¿½   ï¿½   +-- adminRoutes.js       # POST /api/admin/*
+ï¿½   +-- services/
+ï¿½   ï¿½   +-- purchaseService.js   # Logika beli + atomic transaction
+ï¿½   ï¿½   +-- orderService.js      # OTP request, resend, submit, complete
+ï¿½   ï¿½   +-- cancelService.js     # Cancel + refund
+ï¿½   ï¿½   +-- expiryGuardian.js    # Background job expiry stok
+ï¿½   ï¿½   +-- telegramService.js   # Kirim notifikasi Telegram
+ï¿½   +-- utils/retryTransaction.js
 +-- public/
-¦   +-- index.html               # User Panel
-¦   +-- admin.html               # Admin Panel
-¦   +-- js/
-¦       +-- firebase-config.js   # Firebase web SDK config
-¦       +-- user-panel.js        # Logic user panel
-¦       +-- admin-panel.js       # Logic admin panel
+ï¿½   +-- index.html               # User Panel
+ï¿½   +-- admin.html               # Admin Panel
+ï¿½   +-- js/
+ï¿½       +-- firebase-config.js   # Firebase web SDK config
+ï¿½       +-- user-panel.js        # Logic user panel
+ï¿½       +-- admin-panel.js       # Logic admin panel
 ```
 
 ## Fitur
 
-- ?? **Beli Nomor Instant** — Timer 5 menit, stok di-lock atomik
-- ?? **User Panel** — Tab Indo/Luar, saldo real-time, timer countdown
-- ?? **Admin Panel** — Monitor order, input OTP, complete, tambah stok
-- ?? **Notifikasi Telegram** — OTP request & resend auto-notify admin
-- ?? **Resend OTP** — Cooldown 60 detik anti-spam
-- ?? **Auto-Refund** — Cancel order = saldo kembali 100%
-- ? **Expiry Guardian** — Background job expire order macet otomatis setiap 30 detik
+- ?? **Beli Nomor Instant** ï¿½ Timer 5 menit, stok di-lock atomik
+- ?? **User Panel** ï¿½ Tab Indo/Luar, saldo real-time, timer countdown
+- ?? **Admin Panel** ï¿½ Monitor order, input OTP, complete, tambah stok
+- ?? **Notifikasi Telegram** ï¿½ OTP request & resend auto-notify admin
+- ?? **Resend OTP** ï¿½ Cooldown 60 detik anti-spam
+- ?? **Auto-Refund** ï¿½ Cancel order = saldo kembali 100%
+- ? **Expiry Guardian** ï¿½ Background job expire order macet otomatis setiap 30 detik
