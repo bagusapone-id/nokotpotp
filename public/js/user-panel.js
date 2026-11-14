@@ -365,6 +365,7 @@ function showActiveOrder(orderId, phoneNumber, expiresAt, countryName, initialSt
     // Auto-click Request OTP setelah 30 detik jika user tidak klik
     if (autoOtpTimeout) clearTimeout(autoOtpTimeout);
     const btn = document.getElementById("request-otp-btn");
+    btn.disabled = false;
     // Countdown di label tombol
     let cd = 30;
     btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP (' + cd + 's)';
@@ -377,10 +378,12 @@ function showActiveOrder(orderId, phoneNumber, expiresAt, countryName, initialSt
         btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP (' + cd + 's)';
       }
     }, 1000);
+    // Kalau user klik duluan, cdInterval ikut berhenti
+    btn.addEventListener("click", () => clearInterval(cdInterval), { once: true });
     autoOtpTimeout = setTimeout(() => {
       clearInterval(cdInterval);
       btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
-      if (!btn.disabled) btn.click();
+      doRequestOtp();
     }, 30000);
   }
 }
@@ -447,48 +450,56 @@ function startTimer(expiresAt) {
 }
 
 // ---- Cooldown helper ----
-// seconds: how long to lock the button before it can be clicked
 function startResendCooldown(seconds) {
   const btn = document.getElementById("resend-otp-btn");
+  const sp  = document.getElementById("resend-btn-text");
   btn.disabled = true;
   clearInterval(resendCooldownInterval);
   let cd = seconds;
-  const sp = document.getElementById("resend-btn-text"); if(sp) sp.innerHTML = '<i class="fa-solid fa-rotate-right text-sm"></i> Kirim Ulang OTP (' + cd + 's)';
+  function updateLabel() {
+    if (sp) sp.textContent = "Kirim Ulang OTP (" + cd + "s)";
+  }
+  updateLabel();
   resendCooldownInterval = setInterval(() => {
     cd--;
     if (cd <= 0) {
       clearInterval(resendCooldownInterval);
-      const sp2 = document.getElementById("resend-btn-text"); if (sp2) sp2.textContent = "Kirim Ulang OTP";
+      if (sp) sp.textContent = "Kirim Ulang OTP";
       btn.disabled = false;
     } else {
-      const sp = document.getElementById("resend-btn-text"); if(sp) sp.innerHTML = '<i class="fa-solid fa-rotate-right text-sm"></i> Kirim Ulang OTP (' + cd + 's)';
+      updateLabel();
     }
   }, 1000);
 }
 
 // ---- OTP Request ----
-document.getElementById("request-otp-btn").addEventListener("click", async () => {
+async function doRequestOtp() {
   const btn = document.getElementById("request-otp-btn");
+  if (btn.disabled) return;
+  if (autoOtpTimeout) { clearTimeout(autoOtpTimeout); autoOtpTimeout = null; }
   btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:12px"></i> Memproses...';
   hideError();
   try {
-    const res = await apiFetch("/api/orders/" + activeOrderId + "/request-otp", { method: "POST" });
+    const res  = await apiFetch("/api/orders/" + activeOrderId + "/request-otp", { method: "POST" });
     const data = await safeJson(res);
     if (!res.ok) {
       showError(data.message || "Gagal meminta OTP.");
       btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
       return;
     }
-    // Show resend button, locked for 30 seconds first
     btn.classList.add("hidden");
-    const resendBtn = document.getElementById("resend-otp-btn");
-    resendBtn.classList.remove("hidden");
-    startResendCooldown(30);
+    document.getElementById("resend-otp-btn").classList.remove("hidden");
+    startResendCooldown(120);
   } catch {
     showError("Koneksi bermasalah.");
     btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane" style="font-size:12px"></i> Request OTP';
   }
-});
+}
+
+document.getElementById("request-otp-btn").addEventListener("click", doRequestOtp);
 
 // ---- Resend OTP ----
 document.getElementById("resend-otp-btn").addEventListener("click", async () => {
@@ -497,15 +508,14 @@ document.getElementById("resend-otp-btn").addEventListener("click", async () => 
   btn.disabled = true;
   hideError();
   try {
-    const res = await apiFetch("/api/orders/" + activeOrderId + "/resend-otp", { method: "POST" });
+    const res  = await apiFetch("/api/orders/" + activeOrderId + "/resend-otp", { method: "POST" });
     const data = await safeJson(res);
     if (!res.ok) {
       showError(data.message || "Gagal kirim ulang OTP.");
       btn.disabled = false;
       return;
     }
-    // After each resend, lock for 60 seconds
-    startResendCooldown(60);
+    startResendCooldown(120);
   } catch {
     showError("Koneksi bermasalah.");
     btn.disabled = false;
