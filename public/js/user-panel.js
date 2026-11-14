@@ -573,10 +573,15 @@ window.selectDepositAmount = function(amount) {
 
 window.proceedToMethod = async function() {
   const amount = parseInt(document.getElementById('deposit-amount-input').value);
+  const alertEl = document.getElementById('deposit-amount-alert');
   if (!amount || amount < 10000) {
-    showError('Minimal deposit Rp 10.000');
+    const msg = !amount ? 'Masukkan nominal deposit terlebih dahulu.' : 'Minimal deposit adalah Rp 10.000.';
+    alertEl.querySelector('span').textContent = msg;
+    alertEl.style.display = 'flex';
+    document.getElementById('deposit-amount-input').focus();
     return;
   }
+  alertEl.style.display = 'none';
   
   document.getElementById('deposit-step-amount').style.display = 'none';
   document.getElementById('deposit-step-method').style.display = 'block';
