@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // USER PANEL
 // =============================================
 
@@ -203,7 +203,7 @@ async function apiFetch(url, opts = {}) {
   });
 }
 
-// Safe JSON parse — returns {} if body is empty or not valid JSON
+// Safe JSON parse � returns {} if body is empty or not valid JSON
 async function safeJson(res) {
   const text = await res.text();
   if (!text || !text.trim()) return {};
@@ -336,7 +336,7 @@ window.buyNokos = async function(countryKey, countryName, price) {
 };
 
 // ---- Multi-Order State ----
-// Map: orderId → { listenerRef, timerInterval, cooldownInterval, autoOtpTimeout }
+// Map: orderId ? { listenerRef, timerInterval, cooldownInterval, autoOtpTimeout }
 const orderStates = {};
 
 function checkForActiveOrder() {
@@ -380,7 +380,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
         '</div>' +
       '</div>' +
     '</div>' +
-    // Kotak OTP — selalu tampil, berubah saat OTP masuk
+    // Kotak OTP � selalu tampil, berubah saat OTP masuk
     '<div id="otp-display-' + orderId + '" style="background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
       '<span class="tl" style="white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>' +
       '<span id="otp-val-' + orderId + '" style="font-size:.8125rem;color:#334155;font-style:italic">' +
@@ -584,8 +584,8 @@ function listenOrderById(orderId) {
   });
 }
 
-// ---- Cancel (dari timeout modal — ambil order pertama yang ada) ----
-function startTimer() {} // stub — tidak dipakai lagi
+// ---- Cancel (dari timeout modal � ambil order pertama yang ada) ----
+function startTimer() {} // stub � tidak dipakai lagi
 function listenOrder() {} // stub
 
 // ---- Cancel per order ----
@@ -630,9 +630,9 @@ window.copyPhoneNumber = function() {
 };
 
 
-// ══════════════════════════════════════════════════════
+// ------------------------------------------------------
 // DEPOSIT SYSTEM
-// ══════════════════════════════════════════════════════
+// ------------------------------------------------------
 
 let currentDeposit = null;
 let depositCheckInterval = null;
@@ -669,8 +669,8 @@ window.selectDepositAmount = function(amount) {
 window.proceedToMethod = async function() {
   const amount = parseInt(document.getElementById('deposit-amount-input').value);
   const alertEl = document.getElementById('deposit-amount-alert');
-  if (!amount || amount < 10000) {
-    const msg = !amount ? 'Masukkan nominal deposit terlebih dahulu.' : 'Minimal deposit adalah Rp 10.000.';
+  if (!amount || amount < 20000) {
+    const msg = !amount ? 'Masukkan nominal deposit terlebih dahulu.' : 'Minimal deposit adalah Rp 20.000.';
     alertEl.querySelector('span').textContent = msg;
     alertEl.style.display = 'flex';
     document.getElementById('deposit-amount-input').focus();
@@ -721,7 +721,7 @@ function renderPaymentInstructions(deposit) {
   const container = document.getElementById('deposit-payment-instructions');
   
   if (deposit.payment_method === 'payment_link') {
-    // Payment Link — arahkan ke halaman Pakasir
+    // Payment Link � arahkan ke halaman Pakasir
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
         <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">Klik tombol di bawah untuk melanjutkan pembayaran</div>
@@ -834,9 +834,9 @@ window.backToMethodSelect = function() {
   }
 };
 
-// ══════════════════════════════════════════════════════
+// ------------------------------------------------------
 // NOTIFICATIONS
-// ══════════════════════════════════════════════════════
+// ------------------------------------------------------
 
 function setupNotificationsListener() {
   const typeCfg = {
