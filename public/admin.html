@@ -295,24 +295,24 @@
                 <input class="inp" type="text" id="c-name" required placeholder="cth: Indonesia - WA Reguler"/>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:80px 1fr;gap:8px">
+            <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:end">
               <div>
                 <div class="tl" style="margin-bottom:5px">Bendera</div>
                 <input class="inp inp-no-icon" type="text" id="c-flag" placeholder="&#127470;&#127465;" maxlength="4" style="text-align:center;font-size:1.25rem"/>
               </div>
               <div>
-                <div class="tl" style="margin-bottom:5px">Harga (Rp)</div>
-                <div class="inp-wrap"><i class="inp-ico fa-solid fa-tag"></i>
-                  <input class="inp" type="number" id="c-price" required placeholder="5000" min="0"/>
+                <div class="tl" style="margin-bottom:5px">ID Key</div>
+                <div class="inp-wrap"><i class="inp-ico fa-solid fa-key"></i>
+                  <input class="inp" type="text" id="c-key" required placeholder="cth: indonesia_reguler" style="font-family:'JetBrains Mono',monospace;font-size:.8125rem"/>
                 </div>
               </div>
             </div>
+            <div class="tb" style="margin-top:-4px;font-size:.6875rem">ID Key: huruf kecil, angka, underscore</div>
             <div>
-              <div class="tl" style="margin-bottom:5px">ID Key</div>
-              <div class="inp-wrap"><i class="inp-ico fa-solid fa-key"></i>
-                <input class="inp" type="text" id="c-key" required placeholder="cth: indonesia_reguler" style="font-family:'JetBrains Mono',monospace;font-size:.8125rem"/>
+              <div class="tl" style="margin-bottom:5px">Harga (Rp)</div>
+              <div class="inp-wrap"><i class="inp-ico fa-solid fa-tag"></i>
+                <input class="inp" type="number" id="c-price" required placeholder="5000" min="0"/>
               </div>
-              <div class="tb" style="margin-top:4px;font-size:.6875rem">Huruf kecil, angka, underscore</div>
             </div>
             <button type="submit" class="btn btn-purple btn-full btn-h" style="margin-top:2px">
               <i class="fa-solid fa-floppy-disk" style="font-size:12px"></i> Simpan Negara

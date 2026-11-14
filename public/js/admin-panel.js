@@ -398,6 +398,8 @@ window.deleteCountry = async function(key) {
     const data = await safeJson(res);
     if (!res.ok) {
       await Dialog.alert("error", "Gagal Hapus", data.message || "Tidak bisa menghapus negara.");
+    } else {
+      await Dialog.alert("success", "Berhasil", "Negara berhasil dihapus.");
     }
   } catch {
     await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet.");
