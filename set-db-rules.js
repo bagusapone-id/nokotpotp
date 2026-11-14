@@ -20,7 +20,7 @@ if (getApps().length === 0) {
   });
 }
 
-// Firebase Admin SDK bypasses rules — no need to set rules via SDK.
+// Firebase Admin SDK bypasses rules ï¿½ no need to set rules via SDK.
 // Rules must be set via Firebase Console or CLI.
 
 console.log('='.repeat(60));
@@ -47,6 +47,16 @@ console.log(JSON.stringify({
     orders: {
       ".read": "auth !== null",
       ".write": "false"
+    },
+    notifications: {
+      ".read": "auth !== null",
+      ".write": "false"
+    },
+    deposits: {
+      "$depositId": {
+        ".read": "auth !== null && data.child('user_id').val() === auth.uid",
+        ".write": "false"
+      }
     }
   }
 }, null, 2));
