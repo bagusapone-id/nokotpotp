@@ -632,16 +632,29 @@ function renderPaymentInstructions(deposit) {
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
         <div style="font-size:.875rem;color:#64748b;margin-bottom:12px">Scan QRIS dengan aplikasi pembayaran Anda</div>
-        <div id="qris-code" style="background:#fff;padding:16px;border-radius:12px;display:inline-block"></div>
-        <div style="font-size:.75rem;color:#334155;margin-top:10px">
-          Total: <strong class="tm" style="color:#f1f5f9">${formatRupiah(deposit.total_payment)}</strong>
+        <div style="background:#fff;padding:12px;border-radius:14px;display:inline-block;margin-bottom:10px">
+          <canvas id="qris-canvas"></canvas>
+        </div>
+        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Total Bayar</div>
+        <div class="tm" style="font-size:1.125rem;color:#34d399">${formatRupiah(deposit.total_payment)}</div>
+        <div style="font-size:.7rem;color:#334155;margin-top:8px">
+          <i class="fa-solid fa-clock" style="margin-right:3px"></i>
+          Berlaku hingga ${new Date(deposit.expired_at).toLocaleString('id-ID')}
         </div>
       </div>
     `;
-    // Generate QR code using library or show string
-    const qrEl = document.getElementById('qris-code');
-    qrEl.textContent = deposit.qr_string.substring(0, 30) + '...';
-    
+    // Generate QR image dari qr_string
+    const canvas = document.getElementById('qris-canvas');
+    if (typeof QRCode !== 'undefined') {
+      QRCode.toCanvas(canvas, deposit.qr_string, {
+        width: 220,
+        margin: 1,
+        color: { dark: '#000000', light: '#ffffff' },
+      }, err => { if (err) console.error('[QRIS]', err); });
+    } else {
+      canvas.parentElement.innerHTML = '<div style="color:#ef4444;font-size:.75rem">Gagal load QR library</div>';
+    }
+
   } else {
     // Virtual Account
     const bankName = {
