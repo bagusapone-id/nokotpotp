@@ -1,7 +1,9 @@
 const express = require('express');
+const express = require('express');
 const router = express.Router();
 const authUser = require('../middleware/authUser');
 const authAdmin = require('../middleware/authAdmin');
+const { db } = require('../config/firebase');
 const { requestOtp, resendOtp, submitOtp, completeOrder, OrderError } = require('../services/orderService');
 
 /**
@@ -88,6 +90,29 @@ router.post('/:id/complete', authAdmin, async (req, res) => {
     }
     console.error('[orderRoutes] complete error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: 'Terjadi kesalahan server.' });
+  }
+});
+
+/**
+ * GET /api/orders/history
+ * Get current user's order history
+ */
+router.get('/history', authUser, async (req, res) => {
+  const uid = req.user.uid;
+  try {
+    const snap = await db.ref('orders')
+      .orderByChild('user_id').equalTo(uid)
+      .limitToLast(50)
+      .once('value');
+    const orders = [];
+    if (snap.exists()) {
+      snap.forEach(child => orders.push({ order_id: child.key, ...child.val() }));
+    }
+    orders.sort((a, b) => b.created_at - a.created_at);
+    return res.status(200).json({ success: true, orders });
+  } catch (err) {
+    console.error('[orderRoutes] history error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat riwayat.' });
   }
 });
 
