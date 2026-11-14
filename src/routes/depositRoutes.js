@@ -13,7 +13,9 @@ const WEBHOOK_SECRET_HEADER = 'x-secret';
 
 /** POST/GET to Pakasir v2 */
 async function pakasirFetch(method, path, body) {
-  const res = await fetch(`${PAKASIR_BASE}${path}`, {
+  const url = `${PAKASIR_BASE}${path}`;
+  console.log(`[pakasir] ${method} ${url}`, body ? JSON.stringify(body) : '');
+  const res = await fetch(url, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -22,6 +24,7 @@ async function pakasirFetch(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json().catch(() => ({}));
+  console.log(`[pakasir] response ${res.status}:`, JSON.stringify(json));
   if (!res.ok) {
     const msg = json?.message || json?.error || `HTTP ${res.status}`;
     const err = new Error(msg);
