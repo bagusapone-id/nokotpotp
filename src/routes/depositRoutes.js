@@ -97,7 +97,7 @@ router.post('/create', authUser, async (req, res) => {
       );
       txData = {
         txn_id:         tx.txn_id,
-        payment_link:   tx.txn_id ? `${PAKASIR_BASE}/pay-v2/${tx.txn_id}` : '',
+        payment_link:   '',  // kosong untuk non-payment_link
         payment_method: tx.payment_method || payment_method,
         qr_string:      tx.qr_string  || '',
         va_number:      tx.va_number  || '',

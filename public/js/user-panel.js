@@ -617,8 +617,8 @@ window.selectPaymentMethod = async function(method) {
 function renderPaymentInstructions(deposit) {
   const container = document.getElementById('deposit-payment-instructions');
   
-  if (deposit.payment_link) {
-    // Payment Link
+  if (deposit.payment_method === 'payment_link') {
+    // Payment Link — arahkan ke halaman Pakasir
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
         <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">Klik tombol di bawah untuk melanjutkan pembayaran</div>
@@ -627,7 +627,7 @@ function renderPaymentInstructions(deposit) {
         </a>
       </div>
     `;
-  } else if (deposit.qr_string) {
+  } else if (deposit.payment_method === 'qris') {
     // QRIS
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
@@ -642,7 +642,7 @@ function renderPaymentInstructions(deposit) {
     const qrEl = document.getElementById('qris-code');
     qrEl.textContent = deposit.qr_string.substring(0, 30) + '...';
     
-  } else if (deposit.va_number) {
+  } else {
     // Virtual Account
     const bankName = {
       'bni_va':       'BNI',
