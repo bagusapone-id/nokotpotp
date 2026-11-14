@@ -190,7 +190,7 @@ function hideError() {
 }
 
 async function apiFetch(url, opts = {}) {
-  if (currentUser) idToken = await currentUser.getIdToken(false);
+  if (currentUser) idToken = await currentUser.getIdToken(true);
   return fetch(url, {
     ...opts,
     headers: {
@@ -267,7 +267,6 @@ function getStockCount(countryKey) {
 
 window.switchTab = function(tab) {
   currentTab = tab;
-      currentTab = tab;
   const indo = document.getElementById("tab-indo");
   const luar = document.getElementById("tab-luar");
   if (tab === "indo") {
@@ -408,8 +407,9 @@ function startTimer(expiresAt) {
     if (el) {
       el.textContent = m + ":" + s;
       if (rem <= 60) {
-        el.className = "font-mono font-bold text-rose-400 text-lg tracking-widest";
-      document.getElementById('timer-wrap').className = 'flex items-center gap-2 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-1.5';
+        el.style.color = "#fb7185";
+        const pill = document.getElementById('timer-pill');
+        if (pill) { pill.style.background = "rgba(244,63,94,.12)"; pill.style.borderColor = "rgba(244,63,94,.25)"; }
       }
     }
     if (rem <= 0) {

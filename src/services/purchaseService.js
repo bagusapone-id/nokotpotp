@@ -122,7 +122,7 @@ async function purchase(uid, username, countryKey) {
     });
   });
 
-  return { orderId, phoneNumber: availableStockNumber, expiresAt };
+  return { orderId, phoneNumber: availableStockNumber, expiresAt, countryName: country.country_name };
 }
 
 module.exports = { purchase, PurchaseError };
