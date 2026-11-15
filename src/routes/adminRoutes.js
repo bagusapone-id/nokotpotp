@@ -269,8 +269,10 @@ router.get('/users', authAdmin, async (req, res) => {
     const snap = await db.ref('users').once('value');
     const users = [];
     if (snap.exists()) snap.forEach(c => users.push({ uid: c.key, ...c.val() }));
+    console.log('[adminRoutes] users count:', users.length);
     return res.status(200).json({ success: true, users });
   } catch (err) {
+    console.error('[adminRoutes] users error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
