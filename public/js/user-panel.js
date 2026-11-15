@@ -391,6 +391,8 @@ window.buyNokos = async function(countryKey, countryName, price) {
     if (!res.ok) {
       if (data.error === 'COUNTRY_OFFLINE') {
         await Dialog.alert("error", "Stok Tidak Tersedia", data.message || "Stok sedang tidak tersedia sementara.");
+      } else if (data.error === 'INSUFFICIENT_BALANCE') {
+        await Dialog.alert("error", "Saldo Tidak Cukup", data.message || "Saldo kamu tidak mencukupi untuk pembelian ini. Silakan top-up terlebih dahulu.");
       } else {
         await Dialog.alert("error", "Pembelian Gagal", data.message || ERROR_MAP[data.error] || "Gagal membeli.");
       }
