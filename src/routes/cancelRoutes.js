@@ -27,6 +27,41 @@ router.post('/:id/cancel', authUser, async (req, res) => {
 });
 
 /**
+ * POST /api/orders/:id/auto-cancel
+ * Auto-cancel when timer expires (30 min) — called by frontend timer
+ * Bypasses OTP check since 30 min has passed
+ */
+router.post('/:id/auto-cancel', authUser, async (req, res) => {
+  const orderId = req.params.id;
+  const uid = req.user.uid;
+  try {
+    const snap = await db.ref(`orders/${orderId}`).once('value');
+    if (!snap.exists()) return res.status(404).json({ error: 'NOT_FOUND' });
+    const order = snap.val();
+
+    if (order.user_id !== uid) return res.status(403).json({ error: 'FORBIDDEN' });
+    if (['COMPLETED','CANCELLED'].includes(order.status)) {
+      return res.status(409).json({ error: 'INVALID_STATUS', message: 'Order sudah selesai.' });
+    }
+    // Verify timer actually expired
+    if (order.expires_at > Date.now()) {
+      return res.status(403).json({ error: 'NOT_EXPIRED', message: 'Order belum expired.' });
+    }
+
+    const price    = order.price || 0;
+    const stockKey = order.stock_key;
+
+    if (price) await db.ref(`users/${uid}/balance`).transaction(bal => (Number(bal) || 0) + price);
+    if (stockKey) await db.ref(`phone_stocks/${stockKey}/status`).set('AVAILABLE');
+    await db.ref(`orders/${orderId}`).update({ status: 'CANCELLED', is_refunded: true });
+
+    return res.status(200).json({ success: true, refunded_amount: price });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
  * POST /api/orders/:id/admin-cancel
  * Admin: force cancel any order regardless of status/otp
  */
