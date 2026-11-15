@@ -71,7 +71,7 @@ async function purchase(uid, username, countryKey) {
 
   const orderId = generateOrderId();
   const createdAt = Date.now();
-  const expiresAt = createdAt + 300000;
+  const expiresAt = createdAt + 900000; // 15 menit
 
   // 4. Atomic: deduct balance + lock stock + create order
   await retryTransaction(async () => {
