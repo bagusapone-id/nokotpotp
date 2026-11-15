@@ -16,10 +16,12 @@ async function authUser(req, res, next) {
     const decoded = await auth.verifyIdToken(token);
     const uid = decoded.uid;
 
-    // Check if user is banned
-    const userSnap = await db.ref(`users/${uid}/banned`).once('value');
-    if (userSnap.val() === true) {
-      return res.status(403).json({ error: 'BANNED', message: 'Akun Anda telah diblokir. Hubungi admin.' });
+    // Skip ban check for admin routes (authAdmin sets req._isAdmin)
+    if (!req._skipBanCheck) {
+      const userSnap = await db.ref(`users/${uid}/banned`).once('value');
+      if (userSnap.val() === true) {
+        return res.status(403).json({ error: 'BANNED', message: 'Akun Anda telah diblokir. Hubungi admin.' });
+      }
     }
 
     req.user = decoded;
