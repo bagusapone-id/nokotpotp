@@ -474,6 +474,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   if (initialStatus === "OTP_REQUESTED") {
     document.getElementById("req-btn-" + orderId).style.display = "none";
     document.getElementById("resend-btn-" + orderId).style.display = "flex";
+    startResendCooldownFor(orderId, 120);
   } else {
     startAutoOtpCountdown(orderId);
   }
@@ -584,6 +585,7 @@ window.doRequestOtpFor = async function(orderId) {
         btn.style.display = "none";
         const resendBtn = document.getElementById("resend-btn-" + orderId);
         if (resendBtn) resendBtn.style.display = "flex";
+        startResendCooldownFor(orderId, 120);
         return;
       }
       showError(data.message || "Gagal meminta OTP.");
