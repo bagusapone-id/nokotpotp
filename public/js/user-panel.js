@@ -1019,22 +1019,53 @@ function setupNotificationsListener() {
     success: { icon:'fa-circle-check',         color:'#34d399', bg:'rgba(16,185,129,.1)',  bdr:'rgba(16,185,129,.2)'  },
     warning: { icon:'fa-triangle-exclamation', color:'#fbbf24', bg:'rgba(245,158,11,.1)',  bdr:'rgba(245,158,11,.2)'  },
   };
-  firebaseDB.ref("notifications").on("value", (snap) => {
+
+  let _notifItems = [];
+  let _notifIndex = 0;
+  let _notifTimer = null;
+
+  function renderNotifCarousel() {
     const container = document.getElementById("notif-banners");
-    if (!container) return;
-    if (!snap.exists()) { container.innerHTML = ""; return; }
-    const items = [];
-    snap.forEach(c => items.push({ id: c.key, ...c.val() }));
-    items.sort((a, b) => b.created_at - a.created_at);
-    container.innerHTML = items.map(n => {
-      const cfg = typeCfg[n.type] || typeCfg.info;
-      return '<div class="fu" style="display:flex;align-items:flex-start;gap:10px;background:'+cfg.bg+';border:1px solid '+cfg.bdr+';border-radius:10px;padding:10px 12px">' +
+    if (!container || !_notifItems.length) {
+      if (container) container.innerHTML = "";
+      return;
+    }
+    const n   = _notifItems[_notifIndex];
+    const cfg = typeCfg[n.type] || typeCfg.info;
+    const dots = _notifItems.length > 1
+      ? '<div style="display:flex;gap:4px;align-items:center;margin-top:6px">' +
+          _notifItems.map((_, i) =>
+            '<span style="width:'+(i===_notifIndex?'16':'6')+'px;height:6px;border-radius:3px;background:'+(i===_notifIndex?cfg.color:'rgba(255,255,255,.12)')+';transition:width .3s"></span>'
+          ).join('') +
+        '</div>'
+      : '';
+    container.innerHTML =
+      '<div class="fu" style="display:flex;align-items:flex-start;gap:10px;background:'+cfg.bg+';border:1px solid '+cfg.bdr+';border-radius:10px;padding:10px 12px">' +
         '<i class="fa-solid '+cfg.icon+'" style="color:'+cfg.color+';font-size:14px;margin-top:1px;flex-shrink:0"></i>' +
         '<div style="min-width:0;flex:1">' +
           '<div style="font-size:.8125rem;font-weight:700;color:#e2e8f0;margin-bottom:2px">'+n.title+'</div>' +
           '<div style="font-size:.75rem;color:#94a3b8;line-height:1.45">'+n.message+'</div>' +
+          dots +
         '</div>' +
       '</div>';
-    }).join("");
+  }
+
+  firebaseDB.ref("notifications").on("value", (snap) => {
+    const container = document.getElementById("notif-banners");
+    if (!container) return;
+    if (_notifTimer) { clearInterval(_notifTimer); _notifTimer = null; }
+    if (!snap.exists()) { container.innerHTML = ""; _notifItems = []; return; }
+    _notifItems = [];
+    snap.forEach(c => _notifItems.push({ id: c.key, ...c.val() }));
+    _notifItems.sort((a, b) => b.created_at - a.created_at);
+    _notifIndex = 0;
+    renderNotifCarousel();
+    // Auto-rotate tiap 4 detik kalau lebih dari 1
+    if (_notifItems.length > 1) {
+      _notifTimer = setInterval(() => {
+        _notifIndex = (_notifIndex + 1) % _notifItems.length;
+        renderNotifCarousel();
+      }, 4000);
+    }
   });
 }
