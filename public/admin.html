@@ -405,8 +405,16 @@
     <!-- ── TAB USERS ── -->
     <div id="tab-users" style="display:none">
       <div class="card" style="padding:16px">
-        <div class="tt3" style="margin-bottom:12px;display:flex;align-items:center;gap:7px">
-          <i class="fa-solid fa-users" style="color:#a855f7;font-size:12px"></i> Daftar User
+        <!-- Appeal requests -->
+        <div id="appeals-section" style="margin-bottom:16px;display:none">
+          <div class="tt3" style="margin-bottom:10px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-flag" style="color:#fbbf24;font-size:12px"></i> Permintaan Banding
+            <span id="appeal-count" style="background:rgba(245,158,11,.2);color:#fbbf24;font-size:.625rem;font-weight:700;padding:1px 6px;border-radius:20px">0</span>
+          </div>
+          <div id="appeals-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px"></div>
+        </div>
+        <div class="tt3" style="margin-bottom:10px;display:flex;align-items:center;gap:7px">
+          <i class="fa-solid fa-users" style="color:#a855f7;font-size:12px"></i> Semua User
         </div>
         <div id="users-list" style="display:flex;flex-direction:column;gap:7px">
           <div class="sk" style="height:52px"></div>

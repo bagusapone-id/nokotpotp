@@ -10,6 +10,7 @@ const cancelRoutes   = require('./src/routes/cancelRoutes');
 const adminRoutes    = require('./src/routes/adminRoutes');
 const registerRoutes = require('./src/routes/registerRoutes');
 const depositRoutes  = require('./src/routes/depositRoutes');
+const userRoutes     = require('./src/routes/userRoutes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use('/api/orders',   orderRoutes);
 app.use('/api/orders',   cancelRoutes);
 app.use('/api/admin',    adminRoutes);
 app.use('/api/deposit',  depositRoutes);
+app.use('/api/user',     userRoutes);
 
 app.use((req, res) => {
   if (req.path.startsWith('/admin')) {
