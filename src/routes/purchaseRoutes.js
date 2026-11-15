@@ -15,13 +15,6 @@ router.post('/', authUser, async (req, res) => {
     return res.status(400).json({ error: 'INVALID_REQUEST', message: 'country_key diperlukan.' });
   }
 
-  // Cek apakah negara sedang offline
-  const countrySnap = await db.ref(`countries/${country_key}`).once('value');
-  if (countrySnap.exists() && countrySnap.val().offline === true) {
-    const reason = countrySnap.val().offline_reason || 'Stok sedang tidak tersedia sementara.';
-    return res.status(503).json({ error: 'COUNTRY_OFFLINE', message: reason });
-  }
-
   const uid = req.user.uid;
 
   // Get username from DB, fallback to token display name or email
@@ -46,6 +39,9 @@ router.post('/', authUser, async (req, res) => {
       }
       if (err.code === 'OUT_OF_STOCK' || err.code === 'INVALID_COUNTRY') {
         return res.status(409).json({ error: err.code, message: err.message });
+      }
+      if (err.code === 'COUNTRY_OFFLINE') {
+        return res.status(503).json({ error: err.code, message: err.message });
       }
     }
     console.error('[purchaseRoute] Error:', err.message);
