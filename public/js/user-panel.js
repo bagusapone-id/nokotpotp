@@ -466,7 +466,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
   // Init state
-  orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null, hasOtp: false };
+  orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null, hasOtp: false, resendCount: 0 };
 
   startOrderTimer(orderId, expiresAt);
   listenOrderById(orderId);
@@ -474,7 +474,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   if (initialStatus === "OTP_REQUESTED") {
     document.getElementById("req-btn-" + orderId).style.display = "none";
     document.getElementById("resend-btn-" + orderId).style.display = "flex";
-    startResendCooldownFor(orderId, 120);
+    startResendCooldownFor(orderId, 300);
   } else {
     startAutoOtpCountdown(orderId);
   }
@@ -585,7 +585,7 @@ window.doRequestOtpFor = async function(orderId) {
         btn.style.display = "none";
         const resendBtn = document.getElementById("resend-btn-" + orderId);
         if (resendBtn) resendBtn.style.display = "flex";
-        startResendCooldownFor(orderId, 120);
+        startResendCooldownFor(orderId, 300);
         return;
       }
       showError(data.message || "Gagal meminta OTP.");
@@ -596,7 +596,7 @@ window.doRequestOtpFor = async function(orderId) {
     btn.style.display = "none";
     const resendBtn = document.getElementById("resend-btn-" + orderId);
     if (resendBtn) resendBtn.style.display = "flex";
-    startResendCooldownFor(orderId, 120);
+    startResendCooldownFor(orderId, 300);
   } catch {
     showError("Koneksi bermasalah.");
     btn.disabled = false;
@@ -607,13 +607,22 @@ window.doRequestOtpFor = async function(orderId) {
 // ---- Resend OTP per order ----
 window.doResendOtpFor = async function(orderId) {
   const btn = document.getElementById("resend-btn-" + orderId);
+  const s = orderStates[orderId];
   if (!btn || btn.disabled) return;
+  // Maksimal 1x resend
+  if (s && s.resendCount >= 1) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-ban" style="font-size:10px"></i> Batas kirim ulang tercapai';
+    return;
+  }
   btn.disabled = true;
   try {
     const res = await apiFetch("/api/orders/" + orderId + "/resend-otp", { method: "POST" });
     const data = await safeJson(res);
     if (!res.ok) { showError(data.message || "Gagal kirim ulang OTP."); btn.disabled = false; return; }
-    startResendCooldownFor(orderId, 120);
+    if (s) s.resendCount = (s.resendCount || 0) + 1;
+    // Setelah 1x resend, disable permanen setelah cooldown habis
+    startResendCooldownFor(orderId, 300, true);
   } catch {
     showError("Koneksi bermasalah.");
     btn.disabled = false;
@@ -622,6 +631,7 @@ window.doResendOtpFor = async function(orderId) {
 
 // ---- Resend cooldown per order ----
 function startResendCooldownFor(orderId, seconds) {
+function startResendCooldownFor(orderId, seconds, permanent = false) {
   const s = orderStates[orderId];
   const btn = document.getElementById("resend-btn-" + orderId);
   const sp  = document.getElementById("resend-txt-" + orderId);
@@ -629,12 +639,27 @@ function startResendCooldownFor(orderId, seconds) {
   btn.disabled = true;
   if (s && s.cooldownInterval) clearInterval(s.cooldownInterval);
   let cd = seconds;
-  function upd() { if (sp) sp.textContent = "Kirim Ulang OTP (" + cd + "s)"; }
+  function upd() {
+    const m = String(Math.floor(cd / 60)).padStart(2, "0");
+    const sec = String(cd % 60).padStart(2, "0");
+    if (sp) sp.textContent = "Kirim Ulang OTP (" + m + ":" + sec + ")";
+  }
   upd();
   const iv = setInterval(() => {
     cd--;
-    if (cd <= 0) { clearInterval(iv); if (sp) sp.textContent = "Kirim Ulang OTP"; btn.disabled = false; }
-    else upd();
+    if (cd <= 0) {
+      clearInterval(iv);
+      if (permanent) {
+        // Sudah 1x resend, disable permanen
+        btn.disabled = true;
+        if (sp) sp.textContent = "Batas kirim ulang tercapai";
+        btn.style.opacity = "0.4";
+        btn.style.cursor = "not-allowed";
+      } else {
+        if (sp) sp.textContent = "Kirim Ulang OTP";
+        btn.disabled = false;
+      }
+    } else upd();
   }, 1000);
   if (s) s.cooldownInterval = iv;
 }
