@@ -150,9 +150,9 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 });
 
 // ---- Screens ----
-window.doBannedLogout = async function() {
+window.logoutBanned = async function() {
+  cleanupListeners();
   await firebaseAuth.signOut();
-  document.getElementById('banned-modal').style.display = 'none';
 };
 
 function showSuccessModal(message) {
@@ -202,17 +202,14 @@ function initApp() {
   checkForActiveOrder();
   // Realtime ban listener — auto sign-out if banned
   if (currentUser) {
-    firebaseDB.ref('users/' + currentUser.uid).on('value', (snap) => {
-      if (!snap.exists()) return;
-      const u = snap.val();
-      if (u.banned === true) {
-        // Tampilkan modal banned, jangan langsung logout
-        const reasonEl = document.getElementById('banned-reason');
-        if (reasonEl) reasonEl.textContent = u.ban_reason || 'Pelanggaran kebijakan.';
-        const modal = document.getElementById('banned-modal');
-        if (modal) modal.style.display = 'flex';
-        // Disable semua interaksi
-        cleanupListeners();
+    firebaseDB.ref('users/' + currentUser.uid + '/banned').on('value', async (snap) => {
+      if (snap.val() === true) {
+        // Ambil reason
+        const reasonSnap = await firebaseDB.ref('users/' + currentUser.uid + '/ban_reason').once('value');
+        const reason = reasonSnap.val() || 'Pelanggaran kebijakan.';
+        // Tampilkan modal banned
+        document.getElementById('banned-reason').textContent = reason;
+        document.getElementById('banned-modal').style.display = 'flex';
       }
     });
   }
