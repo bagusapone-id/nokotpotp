@@ -417,7 +417,6 @@ function checkForActiveOrder() {
 function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initialStatus, price) {
   // Jangan duplikat
   if (document.getElementById("order-card-" + orderId)) return;
-
   const container = document.getElementById("active-orders-container");
   const card = document.createElement("div");
   card.id = "order-card-" + orderId;
@@ -467,7 +466,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
   // Init state
-  orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null };
+  orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null, hasOtp: false };
 
   startOrderTimer(orderId, expiresAt);
   listenOrderById(orderId);
@@ -513,10 +512,8 @@ function startOrderTimer(orderId, expiresAt) {
     if (rem <= 60 && el) {
       el.style.color = "#fb7185";
       if (pill) { pill.style.background = "rgba(244,63,94,.12)"; pill.style.borderColor = "rgba(244,63,94,.25)"; }
-      // Tampilkan cancel hanya kalau OTP belum masuk
-      const otpVal = document.getElementById("otp-val-" + orderId);
-      const hasOtp = otpVal && otpVal.style.fontStyle !== "italic" && otpVal.textContent.trim().length > 0;
-      if (!hasOtp) {
+      // Tampilkan cancel kalau OTP belum masuk
+      if (!s.hasOtp) {
         const cancelBtn = document.getElementById("cancel-btn-" + orderId);
         if (cancelBtn) cancelBtn.style.display = "flex";
       }
@@ -529,16 +526,19 @@ function startOrderTimer(orderId, expiresAt) {
           if (!b.id.startsWith("cancel-btn-")) b.disabled = true;
         });
       }
-      // Tampilkan cancel hanya kalau OTP belum masuk
-      const otpValEl = document.getElementById("otp-val-" + orderId);
-      const hasOtpNow = otpValEl && otpValEl.style.fontStyle !== "italic" && otpValEl.textContent.trim().length > 0;
+      // Tampilkan cancel kalau OTP belum masuk, tombol lebih menonjol
       const cancelBtn = document.getElementById("cancel-btn-" + orderId);
-      if (cancelBtn && !hasOtpNow) {
+      if (cancelBtn && !s.hasOtp) {
         cancelBtn.style.display = "flex";
         cancelBtn.disabled = false;
         cancelBtn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Waktu Habis — Batalkan & Refund';
         cancelBtn.style.background = "rgba(244,63,94,.15)";
         cancelBtn.style.border = "1px solid rgba(244,63,94,.3)";
+      } else if (cancelBtn && s.hasOtp) {
+        // OTP sudah ada, tetap tampilkan cancel tapi label berbeda
+        cancelBtn.style.display = "flex";
+        cancelBtn.disabled = false;
+        cancelBtn.innerHTML = '<i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Batalkan & Refund';
       }
     }
   }
@@ -662,7 +662,8 @@ function listenOrderById(orderId) {
         otpVal.style.fontStyle = "normal";
         otpVal.textContent = o.otp_code;
       }
-      // OTP sudah masuk → sembunyikan tombol cancel, hanya admin yang bisa cancel
+      // Simpan state hasOtp, sembunyikan cancel
+      if (orderStates[orderId]) orderStates[orderId].hasOtp = true;
       const cancelBtn = document.getElementById("cancel-btn-" + orderId);
       if (cancelBtn) cancelBtn.style.display = "none";
     }
