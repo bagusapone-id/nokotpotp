@@ -1058,7 +1058,11 @@ function setupNotificationsListener() {
     if (_notifTimer) { clearInterval(_notifTimer); _notifTimer = null; }
     _notifItems = [];
     if (snap.exists()) {
-      snap.forEach(c => _notifItems.push({ id: c.key, ...c.val() }));
+      snap.forEach(c => {
+        const val = c.val();
+        console.log('[notif] item:', c.key, val);
+        _notifItems.push({ id: c.key, ...val });
+      });
       _notifItems.sort((a, b) => b.created_at - a.created_at);
     }
     console.log('[notif] total items:', _notifItems.length, _notifItems.map(n=>n.title));
