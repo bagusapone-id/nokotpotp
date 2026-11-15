@@ -77,7 +77,8 @@ function listenOrders() {
     ordersData = {};
     if (snap.exists()) snap.forEach(c => {
       const o = c.val();
-      if (o.status === "WAITING_OTP" || o.status === "OTP_REQUESTED") ordersData[c.key] = o;
+      // Tampilkan semua kecuali yang sudah COMPLETED atau CANCELLED
+      if (o.status !== "COMPLETED" && o.status !== "CANCELLED") ordersData[c.key] = o;
     });
     renderOrders();
   });
@@ -144,8 +145,18 @@ function renderOrders() {
           ' style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:9px;height:38px;font-size:.8125rem;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
           '<i class="fa-solid fa-circle-check" style="font-size:12px"></i> Done / Selesai' +
         '</button>' +
+        '<button onclick="adminCancelOrder(\''+id+'\')"' +
+          ' style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:9px;height:34px;font-size:.8125rem;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
+          '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batalkan & Refund' +
+        '</button>' +
       '</div>'
-    ) : '<div style="font-size:.75rem;color:#334155;margin-top:8px;font-style:italic">Menunggu user klik minta OTP...</div>';
+    ) : '<div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">' +
+        '<div style="font-size:.75rem;color:#334155;font-style:italic">Menunggu user klik minta OTP...</div>' +
+        '<button onclick="adminCancelOrder(\''+id+'\')"' +
+          ' style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:9px;height:34px;font-size:.8125rem;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
+          '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batalkan & Refund' +
+        '</button>' +
+      '</div>';
 
     return '<div class="card fu" style="padding:12px 14px" id="card-'+id+'">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">' +
@@ -205,6 +216,21 @@ window.completeOrder = async function(orderId) {
     const res  = await adminFetch("/api/orders/"+orderId+"/complete", { method:"POST" });
     const data = await safeJson(res);
     if (!res.ok) await Dialog.alert("error","Gagal",data.message||"Gagal menyelesaikan order.");
+  } catch { await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet."); }
+};
+
+window.adminCancelOrder = async function(orderId) {
+  const ok = await Dialog.confirmDanger(
+    "Batalkan Order?",
+    "Order <strong style='color:#e2e8f0'>"+orderId+"</strong> akan dibatalkan dan saldo user di-refund penuh.",
+    "Ya, Batalkan"
+  );
+  if (!ok) return;
+  try {
+    const res  = await adminFetch("/api/orders/"+orderId+"/admin-cancel", { method:"POST" });
+    const data = await safeJson(res);
+    if (!res.ok) await Dialog.alert("error","Gagal Batalkan", data.message||"Gagal membatalkan order.");
+    else await Dialog.alert("success","Berhasil","Order dibatalkan dan saldo user sudah di-refund.");
   } catch { await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet."); }
 };
 
