@@ -77,8 +77,8 @@ function listenOrders() {
     ordersData = {};
     if (snap.exists()) snap.forEach(c => {
       const o = c.val();
-      // Tampilkan semua kecuali yang sudah COMPLETED atau CANCELLED
-      if (o.status !== "COMPLETED" && o.status !== "CANCELLED") ordersData[c.key] = o;
+      // Hanya tampilkan yang masih aktif
+      if (o.status === "WAITING_OTP" || o.status === "OTP_REQUESTED") ordersData[c.key] = o;
     });
     renderOrders();
   });
