@@ -403,6 +403,9 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
     '</div>';
   container.appendChild(card);
 
+  // Scroll ke card order yang baru
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
   // Init state
   orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null };
 
