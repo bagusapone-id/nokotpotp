@@ -1061,6 +1061,7 @@ function setupNotificationsListener() {
       snap.forEach(c => _notifItems.push({ id: c.key, ...c.val() }));
       _notifItems.sort((a, b) => b.created_at - a.created_at);
     }
+    console.log('[notif] total items:', _notifItems.length, _notifItems.map(n=>n.title));
     _notifIndex = 0;
     renderNotifCarousel();
     if (_notifItems.length > 1) {
