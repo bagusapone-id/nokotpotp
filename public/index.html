@@ -303,11 +303,28 @@
         <div class="tb" style="margin-bottom:14px">Pilih atau masukkan nominal top-up:</div>
 
         <!-- Event banner (muncul kalau event aktif) -->
-        <div id="deposit-event-banner" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-          <i class="fa-solid fa-bolt" style="color:#fbbf24;font-size:14px;flex-shrink:0"></i>
-          <div>
-            <div style="font-size:.8125rem;font-weight:700;color:#fbbf24">🎉 Event Deposit 2x!</div>
-            <div style="font-size:.75rem;color:#92400e">Deposit ≥ Rp 25.000 → saldo 2x. 1x per akun.</div>
+        <div id="deposit-event-banner" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <i class="fa-solid fa-bolt" style="color:#fbbf24;font-size:13px"></i>
+            <span style="font-size:.8125rem;font-weight:700;color:#fbbf24">🎉 Event Spesial — Deposit Bonus 2x!</span>
+          </div>
+          <div style="font-size:.75rem;color:#a16207;line-height:1.6">
+            Deposit <strong style="color:#fbbf24">Rp 25.000 ke atas</strong> dan saldo kamu langsung <strong style="color:#fbbf24">DOUBLE</strong>!<br>
+            Contoh: deposit 25k → dapat <strong style="color:#fbbf24">50k</strong> &nbsp;·&nbsp; deposit 100k → dapat <strong style="color:#fbbf24">200k</strong>
+          </div>
+          <div style="font-size:.6875rem;color:#78350f;margin-top:5px;display:flex;align-items:center;gap:4px">
+            <i class="fa-solid fa-circle-info" style="font-size:10px"></i> Hanya 1x per akun. Gunakan sebelum event berakhir!
+          </div>
+        </div>
+
+        <!-- Preview saldo (muncul saat event aktif + nominal diisi) -->
+        <div id="deposit-preview" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:11px 13px;margin-bottom:12px">
+          <div style="font-size:.75rem;color:#334155;margin-bottom:4px">Saldo yang akan kamu terima</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="deposit-preview-orig" style="font-size:.875rem;color:#475569;text-decoration:line-through"></span>
+            <i class="fa-solid fa-arrow-right" style="font-size:10px;color:#334155"></i>
+            <span id="deposit-preview-final" style="font-size:1.125rem;font-weight:700;color:#34d399"></span>
+            <span style="background:rgba(245,158,11,.2);color:#fbbf24;font-size:.625rem;font-weight:700;padding:2px 6px;border-radius:20px">2x</span>
           </div>
         </div>
         
@@ -322,7 +339,7 @@
         <!-- Manual input -->
         <div class="inp-wrap" style="margin-bottom:12px">
           <i class="inp-ico fa-solid fa-wallet"></i>
-          <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="15000" step="1000" oninput="document.getElementById('deposit-amount-alert').style.display='none'"/>
+          <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="15000" step="1000" oninput="onDepositAmountInput(this.value)"/>
         </div>
 
         <!-- Alert -->

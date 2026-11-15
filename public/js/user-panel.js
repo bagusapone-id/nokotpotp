@@ -771,14 +771,21 @@ window.openDepositModal = function() {
   document.getElementById('deposit-step-payment').style.display = 'none';
   document.getElementById('deposit-amount-input').value = '';
   selectDepositAmount(null);
+  updateDepositPreview(0);
   // Cek event aktif
   const banner = document.getElementById('deposit-event-banner');
   if (banner) {
     firebaseDB.ref('events/deposit_double').once('value').then(snap => {
       const ev = snap.val();
-      if (ev && ev.active) banner.style.display = 'flex';
+      window._depositEventActive = ev && ev.active;
+      window._depositEventMin = ev ? (ev.min_amount || 25000) : 25000;
+      if (ev && ev.active) banner.style.display = 'block';
       else banner.style.display = 'none';
-    }).catch(() => { banner.style.display = 'none'; });
+      updateDepositPreview(parseInt(document.getElementById('deposit-amount-input').value) || 0);
+    }).catch(() => {
+      window._depositEventActive = false;
+      banner.style.display = 'none';
+    });
   }
 };
 
@@ -800,7 +807,32 @@ window.selectDepositAmount = function(amount) {
   document.querySelectorAll('.deposit-chip').forEach(chip => {
     chip.classList.toggle('active', chip.dataset.amount == input.value);
   });
+  updateDepositPreview(parseInt(input.value) || 0);
 };
+
+window.onDepositAmountInput = function(val) {
+  document.getElementById('deposit-amount-alert').style.display = 'none';
+  document.querySelectorAll('.deposit-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.amount == val);
+  });
+  updateDepositPreview(parseInt(val) || 0);
+};
+
+function updateDepositPreview(amount) {
+  const preview = document.getElementById('deposit-preview');
+  const origEl  = document.getElementById('deposit-preview-orig');
+  const finalEl = document.getElementById('deposit-preview-final');
+  if (!preview || !origEl || !finalEl) return;
+  const eventActive = window._depositEventActive;
+  const eventMin    = window._depositEventMin || 25000;
+  if (eventActive && amount >= eventMin) {
+    origEl.textContent  = formatRupiah(amount);
+    finalEl.textContent = formatRupiah(amount * 2);
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
 
 window.proceedToMethod = async function() {
   const amount = parseInt(document.getElementById('deposit-amount-input').value);
