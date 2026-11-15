@@ -266,10 +266,18 @@ router.delete('/notifications/:id', authAdmin, async (req, res) => {
 // GET /api/admin/users — list all users from Firebase users/{uid}
 router.get('/users', authAdmin, async (req, res) => {
   try {
-    const snap = await db.ref('users').once('value');
+    // Gunakan Firebase REST API untuk read semua users — lebih reliable di serverless
+    const dbUrl = process.env.FIREBASE_DATABASE_URL;
+    const accessToken = await db.app.options.credential.getAccessToken();
+    const fetchRes = await fetch(`${dbUrl}/users.json?access_token=${accessToken.access_token}`);
+    const data = await fetchRes.json();
     const users = [];
-    if (snap.exists()) snap.forEach(c => users.push({ uid: c.key, ...c.val() }));
-    console.log('[adminRoutes] users count:', users.length);
+    if (data && typeof data === 'object') {
+      Object.entries(data).forEach(([uid, val]) => {
+        if (val && typeof val === 'object') users.push({ uid, ...val });
+      });
+    }
+    console.log('[adminRoutes] users count via REST:', users.length);
     return res.status(200).json({ success: true, users });
   } catch (err) {
     console.error('[adminRoutes] users error:', err.message);
