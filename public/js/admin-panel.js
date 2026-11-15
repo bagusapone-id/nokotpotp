@@ -12,8 +12,8 @@ async function verifyAdmin() {
   try {
     const res = await adminFetch("/api/admin/verify");
     if (res.ok) showApp();
-    else { hide("login-screen"); show("access-denied","flex"); }
-  } catch { hide("login-screen"); show("access-denied","flex"); }
+    else { document.getElementById("splash-screen")?.remove(); hide("login-screen"); show("access-denied","flex"); }
+  } catch { document.getElementById("splash-screen")?.remove(); hide("login-screen"); show("access-denied","flex"); }
 }
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
@@ -47,9 +47,13 @@ async function safeJson(res) {
 function hide(id) { const el=document.getElementById(id); if(el) el.style.display="none"; }
 function show(id,d="block") { const el=document.getElementById(id); if(el) el.style.display=d; }
 
-function showLoginScreen() { show("login-screen","flex"); hide("app-screen"); }
+function showLoginScreen() {
+  document.getElementById("splash-screen")?.remove();
+  show("login-screen","flex"); hide("app-screen");
+}
 
 function showApp() {
+  document.getElementById("splash-screen")?.remove();
   hide("login-screen"); hide("access-denied"); show("app-screen","flex");
   document.getElementById("admin-username").textContent = adminUser.email;
   initAdmin();

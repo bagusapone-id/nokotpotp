@@ -88,6 +88,19 @@
 </head>
 <body>
 
+<!-- Loading splash — hilang setelah Firebase auth selesai -->
+<div id="splash-screen" style="position:fixed;inset:0;z-index:999;background:#020617;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+  <div style="font-size:1.125rem;font-weight:800;color:#f1f5f9;letter-spacing:-.02em">NOKOTPOTP</div>
+  <div style="display:flex;gap:5px">
+    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:sp .9s ease-in-out infinite"></span>
+    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:sp .9s ease-in-out .2s infinite"></span>
+    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:sp .9s ease-in-out .4s infinite"></span>
+  </div>
+</div>
+<style>
+  @keyframes sp{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+</style>
+
 <div style="display:flex;flex-direction:column;align-items:center;min-height:100dvh">
 <div style="width:100%;max-width:400px;height:100dvh;display:flex;flex-direction:column">
 
@@ -448,7 +461,7 @@ window.Dialog = Dialog;
   bridge("connection-banner","flex",true);
   bridge("balance-stale","inline-block",true);
   bridge("app-screen","flex",true);
-  bridge("login-screen","flex",false);
+  bridge("login-screen","flex",true);
 })();
 </script>
 </body>
