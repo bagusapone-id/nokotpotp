@@ -35,10 +35,15 @@ window.showAuthTab = function(tab) {
 // ---- Login ----
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("login-email").value.trim();
+  const email    = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
-  const errEl = document.getElementById("auth-error");
+  const errEl    = document.getElementById("auth-error");
   errEl.classList.add("hidden");
+  if (!email || !password) {
+    errEl.textContent = "Email dan password wajib diisi.";
+    errEl.classList.remove("hidden");
+    return;
+  }
   try {
     await firebaseAuth.signInWithEmailAndPassword(email, password);
   } catch (err) {
@@ -152,12 +157,12 @@ function showSuccessModal(message) {
 
 function showLoginScreen() {
   document.getElementById("splash-screen")?.remove();
+  // Sembunyikan semua alert DULU
+  document.getElementById("auth-error").classList.add("hidden");
+  document.getElementById("auth-success").classList.add("hidden");
   // Reset form
   document.getElementById("login-form").reset();
   document.getElementById("register-form").reset();
-  // Sembunyikan semua alert
-  document.getElementById("auth-error").classList.add("hidden");
-  document.getElementById("auth-success").classList.add("hidden");
   // Pastikan tab login aktif
   showAuthTab("login");
   const ls = document.getElementById("login-screen");
