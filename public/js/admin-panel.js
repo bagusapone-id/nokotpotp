@@ -59,11 +59,11 @@ function showApp() {
   initAdmin();
 }
 
-function initAdmin() { listenOrders(); listenStock(); listenCountries(); listenNotifications(); }
+function initAdmin() { listenOrders(); listenStock(); listenCountries(); listenNotifications(); listenUsers(); }
 
 // ── Nav tabs ──
 window.showAdminTab = function(tab) {
-  ["orders","stock","countries","notifications"].forEach(t => {
+  ["orders","stock","countries","notifications","users"].forEach(t => {
     const el = document.getElementById("tab-"+t);
     if (el) el.style.display = "none";
     const nav = document.getElementById("nav-"+t);
@@ -73,6 +73,7 @@ window.showAdminTab = function(tab) {
   if (tabEl) tabEl.style.display = "block";
   const navEl = document.getElementById("nav-"+tab);
   if (navEl) navEl.classList.add("active");
+  if (tab === 'users') loadUsers();
 };
 
 // ── Orders ──
@@ -547,4 +548,85 @@ window.deleteNotif = async function(id) {
     const res = await adminFetch("/api/admin/notifications/"+id, { method:"DELETE" });
     if (!res.ok) { const d = await safeJson(res); await Dialog.alert("error","Gagal",d.message||"Gagal hapus."); }
   } catch { await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet."); }
+};
+
+// ── Users ──
+let usersData = {};
+
+function listenUsers() {
+  loadUsers();
+}
+
+async function loadUsers() {
+  const container = document.getElementById("users-list");
+  if (!container) return;
+  try {
+    const res = await adminFetch('/api/admin/users');
+    const data = await safeJson(res);
+    if (data.success) {
+      usersData = {};
+      data.users.forEach(u => { usersData[u.uid] = u; });
+      renderUsers();
+    }
+  } catch {}
+}
+
+function renderUsers() {
+  const container = document.getElementById("users-list");
+  if (!container) return;
+  const entries = Object.entries(usersData).sort((a,b) => (a[1].username||'').localeCompare(b[1].username||''));
+  if (!entries.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">Belum ada user.</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([uid, u]) => {
+    const isBanned = u.banned === true;
+    return '<div style="display:flex;align-items:center;gap:10px;background:rgba(2,6,23,.55);border:1px solid '+(isBanned?'rgba(244,63,94,.2)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px">' +
+      '<div style="width:34px;height:34px;border-radius:9px;background:'+(isBanned?'rgba(244,63,94,.15)':'rgba(168,85,247,.1)')+';border:1px solid '+(isBanned?'rgba(244,63,94,.25)':'rgba(168,85,247,.2)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+        '<i class="fa-solid '+(isBanned?'fa-ban':'fa-user')+'" style="font-size:13px;color:'+(isBanned?'#fb7185':'#c084fc')+'"></i>' +
+      '</div>' +
+      '<div style="min-width:0;flex:1">' +
+        '<div style="font-size:.875rem;font-weight:700;color:'+(isBanned?'#fb7185':'#e2e8f0')+'">'+(u.username||uid)+'</div>' +
+        '<div style="font-size:.6875rem;color:#334155;margin-top:1px">' +
+          'Saldo: <span style="color:#34d399;font-weight:600">'+formatRupiah(u.balance||0)+'</span>' +
+          (isBanned ? ' &nbsp;·&nbsp; <span style="color:#fb7185">Banned: '+(u.ban_reason||'-')+'</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<button onclick="'+(isBanned?'unbanUser':'banUser')+'(\''+uid+'\')" style="background:'+(isBanned?'rgba(16,185,129,.1)':'rgba(244,63,94,.1)')+';border:1px solid '+(isBanned?'rgba(16,185,129,.2)':'rgba(244,63,94,.2)')+';color:'+(isBanned?'#34d399':'#fb7185')+';border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
+        '<i class="fa-solid '+(isBanned?'fa-unlock':'fa-ban')+'" style="font-size:10px"></i>'+(isBanned?'Unban':'Ban')+
+      '</button>' +
+    '</div>';
+  }).join('');
+}
+
+window.banUser = async function(uid) {
+  const user = usersData[uid];
+  if (!user) return;
+  const ok = await Dialog.confirmDanger(
+    "Ban User?",
+    '<div style="margin-bottom:10px">User: <strong style="color:#e2e8f0">'+(user.username||uid)+'</strong></div>' +
+    '<textarea id="ban-reason-input" placeholder="Alasan ban..." style="width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e2e8f0;font-family:inherit;font-size:.8125rem;padding:10px;resize:none;outline:none;height:72px;box-sizing:border-box;margin-top:4px"></textarea>',
+    "Ya, Ban"
+  );
+  if (!ok) return;
+  const reason = document.getElementById('ban-reason-input')?.value?.trim() || 'Pelanggaran kebijakan';
+  try {
+    const res = await adminFetch('/api/admin/users/'+uid+'/ban', { method:'POST', body:JSON.stringify({ reason }) });
+    const data = await safeJson(res);
+    if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal ban user.');
+    else loadUsers();
+  } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
+};
+
+window.unbanUser = async function(uid) {
+  const user = usersData[uid];
+  if (!user) return;
+  const ok = await Dialog.confirm('Unban User?', 'User <strong style="color:#e2e8f0">'+(user.username||uid)+'</strong> akan di-unban dan bisa login kembali.');
+  if (!ok) return;
+  try {
+    const res = await adminFetch('/api/admin/users/'+uid+'/unban', { method:'POST' });
+    const data = await safeJson(res);
+    if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal unban user.');
+    else loadUsers();
+  } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
 };

@@ -168,6 +168,9 @@
     <button onclick="showAdminTab('notifications')" id="nav-notifications" class="nav-tab">
       <i class="fa-solid fa-bell" style="font-size:12px"></i> Notif
     </button>
+    <button onclick="showAdminTab('users')" id="nav-users" class="nav-tab">
+      <i class="fa-solid fa-users" style="font-size:12px"></i> Users
+    </button>
   </div>
 
   <!-- Content -->
@@ -396,6 +399,19 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- ── TAB USERS ── -->
+    <div id="tab-users" style="display:none">
+      <div class="card" style="padding:16px">
+        <div class="tt3" style="margin-bottom:12px;display:flex;align-items:center;gap:7px">
+          <i class="fa-solid fa-users" style="color:#a855f7;font-size:12px"></i> Daftar User
+        </div>
+        <div id="users-list" style="display:flex;flex-direction:column;gap:7px">
+          <div class="sk" style="height:52px"></div>
+          <div class="sk" style="height:52px"></div>
+        </div>
       </div>
     </div>
 

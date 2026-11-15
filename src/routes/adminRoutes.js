@@ -263,4 +263,38 @@ router.delete('/notifications/:id', authAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/users — list all users from Firebase users/{uid}
+router.get('/users', authAdmin, async (req, res) => {
+  try {
+    const snap = await db.ref('users').once('value');
+    const users = [];
+    if (snap.exists()) snap.forEach(c => users.push({ uid: c.key, ...c.val() }));
+    return res.status(200).json({ success: true, users });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+// POST /api/admin/users/:uid/ban — ban a user
+router.post('/users/:uid/ban', authAdmin, async (req, res) => {
+  const { reason } = req.body;
+  if (!reason) return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Reason wajib diisi.' });
+  try {
+    await db.ref(`users/${req.params.uid}`).update({ banned: true, ban_reason: reason, banned_at: Date.now() });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+// POST /api/admin/users/:uid/unban — unban a user
+router.post('/users/:uid/unban', authAdmin, async (req, res) => {
+  try {
+    await db.ref(`users/${req.params.uid}`).update({ banned: false, ban_reason: null, banned_at: null });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
 module.exports = router;
