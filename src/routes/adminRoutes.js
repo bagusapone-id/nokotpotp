@@ -307,4 +307,53 @@ router.post('/users/:uid/unban', authAdmin, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/events
+ */
+router.get('/events', authAdmin, async (req, res) => {
+  try {
+    const snap = await db.ref('events').once('value');
+    return res.status(200).json({ success: true, events: snap.val() || {} });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/events/deposit_double
+ * Body: { active: boolean, min_amount: number }
+ */
+router.post('/events/deposit_double', authAdmin, async (req, res) => {
+  const { active, min_amount = 25000 } = req.body;
+  if (typeof active !== 'boolean') {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'active harus boolean.' });
+  }
+  try {
+    await db.ref('events/deposit_double').set({ active, min_amount });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/events/deposit_double/reset-users
+ * Reset semua user event usage (untuk mulai event baru)
+ */
+router.post('/events/deposit_double/reset-users', authAdmin, async (req, res) => {
+  try {
+    const snap = await db.ref('users').once('value');
+    const updates = {};
+    if (snap.exists()) {
+      snap.forEach(c => {
+        updates[`users/${c.key}/events/deposit_double_used`] = null;
+      });
+    }
+    await db.ref('/').update(updates);
+    return res.status(200).json({ success: true, message: 'Reset berhasil.' });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
 module.exports = router;
