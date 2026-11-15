@@ -155,6 +155,28 @@ window.logoutBanned = async function() {
   await firebaseAuth.signOut();
 };
 
+window.submitAppeal = async function() {
+  const btn = document.getElementById('appeal-btn');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:11px"></i> Mengirim...';
+  try {
+    const res = await apiFetch('/api/user/appeal', { method: 'POST' });
+    const data = await safeJson(res);
+    if (res.ok) {
+      btn.style.display = 'none';
+      document.getElementById('appeal-sent-info').style.display = 'block';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-flag" style="font-size:11px"></i> Ajukan Banding';
+      showError(data.message || 'Gagal mengirim banding.');
+    }
+  } catch {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-flag" style="font-size:11px"></i> Ajukan Banding';
+  }
+};
+
 function showSuccessModal(message) {
   document.getElementById("success-message").textContent = message;
   document.getElementById("success-modal").classList.remove("hidden");

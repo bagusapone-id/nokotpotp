@@ -228,20 +228,27 @@
 
 <!-- ══ BANNED MODAL ══ -->
 <div id="banned-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(2,6,23,.97);backdrop-filter:blur(12px);padding:24px">
-  <div class="card fu" style="width:100%;max-width:360px;padding:28px 24px;text-align:center">
-    <div style="width:52px;height:52px;border-radius:14px;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
-      <i class="fa-solid fa-ban" style="color:#fb7185;font-size:22px"></i>
+  <div class="card fu" style="width:100%;max-width:340px;padding:24px;text-align:center">
+    <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24;font-size:18px"></i>
     </div>
-    <div class="tt2" style="margin-bottom:8px;color:#fb7185">Akun Diblokir</div>
-    <div class="tb" style="margin-bottom:8px;line-height:1.6">Akun Anda telah diblokir oleh admin.</div>
-    <div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.15);border-radius:10px;padding:12px;margin-bottom:20px">
-      <div style="font-size:.6875rem;color:#64748b;margin-bottom:4px">Alasan:</div>
-      <div id="banned-reason" style="font-size:.875rem;color:#fca5a5;font-weight:600">-</div>
+    <div style="font-size:.9375rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">Akun Dibatasi</div>
+    <div style="font-size:.8125rem;color:#64748b;margin-bottom:12px;line-height:1.55">Akun Anda sedang dibatasi oleh admin.</div>
+    <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:9px;padding:11px;margin-bottom:16px;text-align:left">
+      <div style="font-size:.6875rem;color:#334155;margin-bottom:3px">Alasan</div>
+      <div id="banned-reason" style="font-size:.8125rem;color:#e2e8f0;font-weight:600">-</div>
     </div>
-    <div class="tb" style="margin-bottom:20px;font-size:.8125rem">Jika Anda merasa ini adalah kesalahan, hubungi admin melalui WhatsApp atau email.</div>
-    <button onclick="logoutBanned()" class="btn btn-rose btn-full btn-h">
-      <i class="fa-solid fa-right-from-bracket" style="font-size:12px"></i> Keluar
-    </button>
+    <div id="appeal-sent-info" style="display:none;background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:9px;padding:10px;margin-bottom:14px;font-size:.8125rem;color:#34d399">
+      <i class="fa-solid fa-circle-check" style="margin-right:5px"></i>Banding sudah dikirim. Tunggu review admin.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button id="appeal-btn" onclick="submitAppeal()" class="btn btn-primary btn-full" style="height:42px;font-size:.8125rem">
+        <i class="fa-solid fa-flag" style="font-size:11px"></i> Ajukan Banding
+      </button>
+      <button onclick="logoutBanned()" class="btn btn-ghost btn-full" style="height:38px;font-size:.8125rem;color:#64748b">
+        <i class="fa-solid fa-right-from-bracket" style="font-size:11px"></i> Keluar
+      </button>
+    </div>
   </div>
 </div>
 

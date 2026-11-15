@@ -586,6 +586,33 @@ function renderUsers() {
     container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">Belum ada user.</div>';
     return;
   }
+
+  // Render appeals section
+  const appeals = entries.filter(([,u]) => u.banned && u.appeal_pending);
+  const appealsSection = document.getElementById('appeals-section');
+  const appealsList = document.getElementById('appeals-list');
+  const appealCount = document.getElementById('appeal-count');
+  if (appealsSection && appealsList) {
+    if (appeals.length > 0) {
+      appealsSection.style.display = 'block';
+      if (appealCount) appealCount.textContent = appeals.length;
+      appealsList.innerHTML = appeals.map(([uid, u]) =>
+        '<div style="display:flex;align-items:center;gap:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px">' +
+          '<i class="fa-solid fa-flag" style="color:#fbbf24;font-size:14px;flex-shrink:0"></i>' +
+          '<div style="min-width:0;flex:1">' +
+            '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0">'+(u.username||uid)+'</div>' +
+            '<div style="font-size:.6875rem;color:#334155">Alasan ban: '+(u.ban_reason||'-')+'</div>' +
+          '</div>' +
+          '<button onclick="unbanUser(\''+uid+'\')" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
+            '<i class="fa-solid fa-unlock" style="font-size:10px"></i>Unbatasi' +
+          '</button>' +
+        '</div>'
+      ).join('');
+    } else {
+      appealsSection.style.display = 'none';
+    }
+  }
+
   container.innerHTML = entries.map(([uid, u]) => {
     const isBanned = u.banned === true;
     return '<div style="display:flex;align-items:center;gap:10px;background:rgba(2,6,23,.55);border:1px solid '+(isBanned?'rgba(244,63,94,.2)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px">' +

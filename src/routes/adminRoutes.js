@@ -300,7 +300,7 @@ router.post('/users/:uid/ban', authAdmin, async (req, res) => {
 // POST /api/admin/users/:uid/unban — unban a user
 router.post('/users/:uid/unban', authAdmin, async (req, res) => {
   try {
-    await db.ref(`users/${req.params.uid}`).update({ banned: false, ban_reason: null, banned_at: null });
+    await db.ref(`users/${req.params.uid}`).update({ banned: false, ban_reason: null, banned_at: null, appeal_pending: false, appeal_at: null });
     return res.status(200).json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
