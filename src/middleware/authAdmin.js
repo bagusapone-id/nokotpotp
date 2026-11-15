@@ -5,6 +5,8 @@ const authUser = require('./authUser');
  * Requires authUser to pass first, then checks admin: true claim.
  */
 async function authAdmin(req, res, next) {
+  // Skip ban check for admin
+  req._skipBanCheck = true;
   // Run user auth first
   await new Promise((resolve) => authUser(req, res, resolve));
 
