@@ -1062,6 +1062,7 @@ function setupNotificationsListener() {
       _notifItems.sort((a, b) => b.created_at - a.created_at);
     }
     console.log('[notif] total items:', _notifItems.length, _notifItems.map(n=>n.title));
+    console.log('[notif] raw snap size:', snap.numChildren());
     _notifIndex = 0;
     renderNotifCarousel();
     if (_notifItems.length > 1) {
