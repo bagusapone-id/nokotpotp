@@ -1,4 +1,4 @@
-const { auth } = require('../config/firebase');
+const { auth, db } = require('../config/firebase');
 
 /**
  * Middleware: verify Firebase ID token for regular users.
@@ -14,6 +14,14 @@ async function authUser(req, res, next) {
 
   try {
     const decoded = await auth.verifyIdToken(token);
+    const uid = decoded.uid;
+
+    // Check if user is banned
+    const userSnap = await db.ref(`users/${uid}/banned`).once('value');
+    if (userSnap.val() === true) {
+      return res.status(403).json({ error: 'BANNED', message: 'Akun Anda telah diblokir. Hubungi admin.' });
+    }
+
     req.user = decoded;
     next();
   } catch (err) {

@@ -195,6 +195,15 @@ function initApp() {
   setupCountriesAndStockListener();
   setupNotificationsListener();
   checkForActiveOrder();
+  // Realtime ban listener — auto sign-out if banned
+  if (currentUser) {
+    firebaseDB.ref('users/' + currentUser.uid + '/banned').on('value', (snap) => {
+      if (snap.val() === true) {
+        cleanupListeners();
+        firebaseAuth.signOut();
+      }
+    });
+  }
 }
 
 // ---- Helpers ----
@@ -238,6 +247,7 @@ const ERROR_MAP = {
   TRANSACTION_FAILED: "Transaksi gagal, coba lagi.",
   SERVER_ERROR: "Kesalahan server, coba lagi.",
   CANCEL_FAILED: "Pembatalan gagal, hubungi admin.",
+  BANNED: "Akun Anda telah diblokir. Hubungi admin.",
 };
 
 // ---- Connection ----
