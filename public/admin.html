@@ -356,6 +356,36 @@
     <div id="tab-notifications" style="display:none">
       <div style="display:grid;grid-template-columns:1fr;gap:14px">
 
+        <!-- Event Deposit Double -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-bolt" style="color:#fbbf24;font-size:12px"></i> Event Deposit 2x
+          </div>
+          <div style="background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div>
+                <div style="font-size:.875rem;font-weight:700;color:#e2e8f0">Status Event</div>
+                <div id="event-status-text" style="font-size:.75rem;color:#334155;margin-top:2px">Memuat...</div>
+              </div>
+              <div id="event-status-badge" style="padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700">-</div>
+            </div>
+            <div style="font-size:.75rem;color:#64748b;line-height:1.5;margin-bottom:12px">
+              Deposit ≥ Rp 25.000 → saldo 2x (1x per user). Contoh: deposit 25k → dapat 50k, deposit 100k → dapat 200k.
+            </div>
+            <div style="display:flex;gap:8px">
+              <button onclick="toggleEvent(true)" class="btn btn-primary" style="flex:1;height:38px;font-size:.8125rem">
+                <i class="fa-solid fa-bolt" style="font-size:11px"></i> Aktifkan
+              </button>
+              <button onclick="toggleEvent(false)" class="btn btn-ghost" style="flex:1;height:38px;font-size:.8125rem;color:#fb7185">
+                <i class="fa-solid fa-stop" style="font-size:11px"></i> Nonaktifkan
+              </button>
+            </div>
+            <button onclick="resetEventUsers()" class="btn btn-ghost btn-full" style="height:34px;font-size:.75rem;margin-top:8px;color:#fbbf24">
+              <i class="fa-solid fa-rotate-left" style="font-size:10px"></i> Reset (mulai event baru)
+            </button>
+          </div>
+        </div>
+
         <!-- Form kirim notifikasi -->
         <div class="card" style="padding:16px">
           <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">

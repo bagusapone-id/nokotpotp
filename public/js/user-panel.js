@@ -771,6 +771,15 @@ window.openDepositModal = function() {
   document.getElementById('deposit-step-payment').style.display = 'none';
   document.getElementById('deposit-amount-input').value = '';
   selectDepositAmount(null);
+  // Cek event aktif
+  const banner = document.getElementById('deposit-event-banner');
+  if (banner) {
+    firebaseDB.ref('events/deposit_double').once('value').then(snap => {
+      const ev = snap.val();
+      if (ev && ev.active) banner.style.display = 'flex';
+      else banner.style.display = 'none';
+    }).catch(() => { banner.style.display = 'none'; });
+  }
 };
 
 window.closeDepositModal = function() {

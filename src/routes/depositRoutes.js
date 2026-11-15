@@ -242,12 +242,34 @@ router.post('/webhook', express.json(), async (req, res) => {
 
 // ── Helper ───────────────────────────────────────────────────────────────────
 async function processSuccessfulDeposit(depositId, deposit, detail) {
-  await db.ref(`users/${deposit.user_id}/balance`).transaction(bal => (bal || 0) + deposit.amount);
+  const amount = deposit.amount;
+
+  // Cek event double deposit
+  let creditAmount = amount;
+  let eventApplied = false;
+
+  const eventSnap = await db.ref('events/deposit_double').once('value');
+  const event = eventSnap.val();
+
+  if (event && event.active === true && amount >= (event.min_amount || 25000)) {
+    // Cek apakah user sudah pernah dapat event ini
+    const userEventSnap = await db.ref(`users/${deposit.user_id}/events/deposit_double_used`).once('value');
+    if (!userEventSnap.val()) {
+      creditAmount = amount * 2;
+      eventApplied = true;
+      // Tandai user sudah pakai event
+      await db.ref(`users/${deposit.user_id}/events/deposit_double_used`).set(true);
+    }
+  }
+
+  await db.ref(`users/${deposit.user_id}/balance`).transaction(bal => (bal || 0) + creditAmount);
   await db.ref(`deposits/${depositId}`).update({
-    status:       'SUCCESS',
-    completed_at: detail.completed_at || Date.now(),
+    status:        'SUCCESS',
+    completed_at:  detail.completed_at || Date.now(),
+    credited:      creditAmount,
+    event_applied: eventApplied,
   });
-  console.log(`[depositRoutes] ✅ +Rp${deposit.amount} → user ${deposit.user_id}`);
+  console.log(`[depositRoutes] ✅ +Rp${creditAmount} → user ${deposit.user_id}${eventApplied ? ' (EVENT 2x)' : ''}`);
 }
 
 module.exports = router;

@@ -53,6 +53,10 @@ console.log(JSON.stringify({
       ".read": "auth !== null",
       ".write": "false"
     },
+    events: {
+      ".read": "auth !== null",
+      ".write": "false"
+    },
     deposits: {
       "$depositId": {
         ".read": "auth !== null && data.child('user_id').val() === auth.uid",

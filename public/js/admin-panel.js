@@ -74,6 +74,7 @@ window.showAdminTab = function(tab) {
   const navEl = document.getElementById("nav-"+tab);
   if (navEl) navEl.classList.add("active");
   if (tab === 'users') loadUsers();
+  if (tab === 'notifications') loadEventStatus();
 };
 
 // ── Orders ──
@@ -474,6 +475,62 @@ window.startLongPress = function(type, id) {
 window.cancelLongPress = function() {
   if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
   if (_lpBarEl) { _lpBarEl.style.transition = 'none'; _lpBarEl.style.width = '0'; _lpBarEl = null; }
+};
+
+// ── Events ──
+async function loadEventStatus() {
+  try {
+    const res  = await adminFetch('/api/admin/events');
+    const data = await safeJson(res);
+    const ev = data.events?.deposit_double;
+    const badge = document.getElementById('event-status-badge');
+    const text  = document.getElementById('event-status-text');
+    if (badge && text) {
+      if (ev && ev.active) {
+        badge.textContent = 'AKTIF';
+        badge.style.cssText = 'padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);color:#34d399';
+        text.textContent = 'Deposit ≥ Rp ' + Number(ev.min_amount||25000).toLocaleString('id-ID') + ' → 2x saldo';
+      } else {
+        badge.textContent = 'NONAKTIF';
+        badge.style.cssText = 'padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700;background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.2);color:#334155';
+        text.textContent = 'Event tidak aktif';
+      }
+    }
+  } catch {}
+}
+
+window.toggleEvent = async function(active) {
+  const ok = await Dialog.confirm(
+    active ? 'Aktifkan Event?' : 'Nonaktifkan Event?',
+    active
+      ? 'Event deposit 2x akan diaktifkan. Semua user yang deposit ≥ Rp 25.000 mendapat saldo 2x (1x per user).'
+      : 'Event deposit 2x akan dinonaktifkan. User tidak akan mendapat bonus.'
+  );
+  if (!ok) return;
+  try {
+    const res = await adminFetch('/api/admin/events/deposit_double', {
+      method: 'POST',
+      body: JSON.stringify({ active, min_amount: 25000 })
+    });
+    const data = await safeJson(res);
+    if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal update event.');
+    else { await loadEventStatus(); }
+  } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi.'); }
+};
+
+window.resetEventUsers = async function() {
+  const ok = await Dialog.confirmDanger(
+    'Reset Event?',
+    'Semua user akan bisa mendapat bonus deposit 2x lagi. Gunakan ini saat memulai periode event baru.',
+    'Ya, Reset'
+  );
+  if (!ok) return;
+  try {
+    const res = await adminFetch('/api/admin/events/deposit_double/reset-users', { method: 'POST' });
+    const data = await safeJson(res);
+    if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal reset.');
+    else await Dialog.alert('success','Berhasil','Event berhasil direset. Semua user bisa dapat bonus lagi.');
+  } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi.'); }
 };
 
 // ── Notifications ──

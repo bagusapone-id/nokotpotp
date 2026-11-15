@@ -301,6 +301,15 @@
       <!-- Step 1: Amount -->
       <div id="deposit-step-amount">
         <div class="tb" style="margin-bottom:14px">Pilih atau masukkan nominal top-up:</div>
+
+        <!-- Event banner (muncul kalau event aktif) -->
+        <div id="deposit-event-banner" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+          <i class="fa-solid fa-bolt" style="color:#fbbf24;font-size:14px;flex-shrink:0"></i>
+          <div>
+            <div style="font-size:.8125rem;font-weight:700;color:#fbbf24">🎉 Event Deposit 2x!</div>
+            <div style="font-size:.75rem;color:#92400e">Deposit ≥ Rp 25.000 → saldo 2x. 1x per akun.</div>
+          </div>
+        </div>
         
         <!-- Quick chips -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
