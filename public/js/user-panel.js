@@ -134,6 +134,12 @@ firebaseAuth.onIdTokenChanged(async (user) => {
 });
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
+  const ok = await Dialog.confirmDanger(
+    "Keluar?",
+    "Anda akan keluar dari akun ini.",
+    "Ya, Keluar"
+  );
+  if (!ok) return;
   cleanupListeners();
   await firebaseAuth.signOut();
 });
@@ -146,6 +152,14 @@ function showSuccessModal(message) {
 
 function showLoginScreen() {
   document.getElementById("splash-screen")?.remove();
+  // Reset form
+  document.getElementById("login-form").reset();
+  document.getElementById("register-form").reset();
+  // Sembunyikan semua alert
+  document.getElementById("auth-error").classList.add("hidden");
+  document.getElementById("auth-success").classList.add("hidden");
+  // Pastikan tab login aktif
+  showAuthTab("login");
   const ls = document.getElementById("login-screen");
   ls.classList.remove("hidden");
   ls.style.display = "flex";
