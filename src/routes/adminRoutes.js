@@ -308,6 +308,29 @@ router.post('/users/:uid/unban', authAdmin, async (req, res) => {
 });
 
 /**
+ * POST /api/admin/country/:key/offline
+ * Body: { offline: boolean, reason?: string }
+ */
+router.post('/country/:key/offline', authAdmin, async (req, res) => {
+  const { key } = req.params;
+  const { offline, reason = '' } = req.body;
+  if (typeof offline !== 'boolean') {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'offline harus boolean.' });
+  }
+  try {
+    const snap = await db.ref(`countries/${key}`).once('value');
+    if (!snap.exists()) return res.status(404).json({ error: 'NOT_FOUND', message: 'Negara tidak ditemukan.' });
+    await db.ref(`countries/${key}`).update({
+      offline,
+      offline_reason: offline ? (reason || 'Stok sedang tidak tersedia sementara.') : null,
+    });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
  * GET /api/admin/events
  */
 router.get('/events', authAdmin, async (req, res) => {

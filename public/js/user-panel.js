@@ -279,6 +279,7 @@ const ERROR_MAP = {
   SERVER_ERROR: "Kesalahan server, coba lagi.",
   CANCEL_FAILED: "Pembatalan gagal, hubungi admin.",
   BANNED: "Akun Anda telah diblokir. Hubungi admin.",
+  COUNTRY_OFFLINE: "Stok sedang tidak tersedia.",
 };
 
 // ---- Connection ----
@@ -388,7 +389,11 @@ window.buyNokos = async function(countryKey, countryName, price) {
     });
     const data = await safeJson(res);
     if (!res.ok) {
-      await Dialog.alert("error", "Pembelian Gagal", data.message || ERROR_MAP[data.error] || "Gagal membeli.");
+      if (data.error === 'COUNTRY_OFFLINE') {
+        await Dialog.alert("error", "Stok Tidak Tersedia", data.message || "Stok sedang tidak tersedia sementara.");
+      } else {
+        await Dialog.alert("error", "Pembelian Gagal", data.message || ERROR_MAP[data.error] || "Gagal membeli.");
+      }
       return;
     }
     addActiveOrderCard(data.order_id, data.phone_number, data.expires_at, countryName, undefined, price);

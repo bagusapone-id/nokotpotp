@@ -357,23 +357,34 @@ function renderCountriesList() {
   }
   c.innerHTML = entries.map(([k,v]) => {
     const avail = Object.values(stockData).filter(s=>s.country_key===k&&s.status==="AVAILABLE").length;
+    const isOffline = v.offline === true;
     const tb = v.tab==="indo"
       ? '<span style="background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.18);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">Indo</span>'
       : '<span style="background:rgba(14,165,233,.1);color:#38bdf8;border:1px solid rgba(14,165,233,.18);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">Luar</span>';
-    return '<div id="ci-'+k+'" onmousedown="startLongPress(\'country\',\''+k+'\')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'country\',\''+k+'\')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()" style="display:flex;align-items:center;justify-content:space-between;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
+    const offlineBadge = isOffline
+      ? '<span style="background:rgba(244,63,94,.12);color:#fb7185;border:1px solid rgba(244,63,94,.2);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:2px"></i>Offline</span>'
+      : '';
+    const toggleBtn = isOffline
+      ? '<button onclick="event.stopPropagation();toggleCountryOffline(\''+k+'\',false)" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Online-kan"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:3px"></i>Online-kan</button>'
+      : '<button onclick="event.stopPropagation();toggleCountryOffline(\''+k+'\',true)" style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.18);color:#fb7185;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Offline-kan"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:3px"></i>Offline-kan</button>';
+    return '<div id="ci-'+k+'" onmousedown="startLongPress(\'country\',\''+k+'\')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'country\',\''+k+'\')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()" style="display:flex;align-items:center;justify-content:space-between;background:'+(isOffline?'rgba(244,63,94,.05)':'rgba(2,6,23,.55)')+';border:1px solid '+(isOffline?'rgba(244,63,94,.15)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
       '<div id="lp-'+k+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
       '<div style="display:flex;align-items:center;gap:10px;min-width:0;position:relative">' +
-        '<span style="font-size:1.375rem;line-height:1;flex-shrink:0">'+(v.flag||"")+'</span>' +
+        '<span style="font-size:1.375rem;line-height:1;flex-shrink:0;opacity:'+(isOffline?'.4':'1')+'">'+(v.flag||"")+'</span>' +
         '<div style="min-width:0">' +
-          '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">' +
-            '<span style="font-size:.875rem;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.country_name+'</span>'+tb+
+          '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;flex-wrap:wrap">' +
+            '<span style="font-size:.875rem;font-weight:700;color:'+(isOffline?'#64748b':'#e2e8f0')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.country_name+'</span>'+tb+offlineBadge+
           '</div>' +
           '<span style="font-family:\'Geist Mono\',monospace;font-size:.625rem;color:#334155">'+k+'</span>' +
+          (isOffline && v.offline_reason ? '<div style="font-size:.625rem;color:#ef4444;margin-top:2px"><i class="fa-solid fa-circle-info" style="font-size:9px;margin-right:2px"></i>'+v.offline_reason+'</div>' : '') +
         '</div>' +
       '</div>' +
-      '<div style="text-align:right;flex-shrink:0;position:relative">' +
-        '<div style="font-family:\'Geist Mono\',monospace;font-weight:700;font-size:.875rem;color:#34d399">'+formatRupiah(v.price)+'</div>' +
-        '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative">' +
+        '<div style="text-align:right">' +
+          '<div style="font-family:\'Geist Mono\',monospace;font-weight:700;font-size:.875rem;color:#34d399">'+formatRupiah(v.price)+'</div>' +
+          '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
+        '</div>' +
+        toggleBtn +
       '</div>' +
     '</div>';
   }).join("");
@@ -421,6 +432,36 @@ window.deleteStock = async function(stockId) {
     }
   } catch {
     await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet.");
+  }
+};
+
+// ── Toggle Country Offline ──
+window.toggleCountryOffline = async function(key, goOffline) {
+  const country = countriesData[key];
+  if (!country) return;
+  if (goOffline) {
+    // Minta reason
+    const ok = await Dialog.confirmDanger(
+      "Offline-kan Negara?",
+      '<div style="margin-bottom:8px">Negara <strong style="color:#e2e8f0">'+(country.flag||"")+" "+country.country_name+'</strong> tidak bisa dibeli user.</div>' +
+      '<textarea id="offline-reason-input" placeholder="Alasan (contoh: Sedang maintenance, stok habis sementara...)" style="width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e2e8f0;font-family:inherit;font-size:.8125rem;padding:10px;resize:none;outline:none;height:72px;box-sizing:border-box;margin-top:4px"></textarea>',
+      "Ya, Offline-kan"
+    );
+    if (!ok) return;
+    const reason = document.getElementById('offline-reason-input')?.value?.trim() || 'Stok sedang tidak tersedia sementara.';
+    try {
+      const res = await adminFetch('/api/admin/country/'+key+'/offline', { method:'POST', body:JSON.stringify({ offline:true, reason }) });
+      const data = await safeJson(res);
+      if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal offline-kan negara.');
+    } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
+  } else {
+    const ok = await Dialog.confirm('Online-kan Negara?', 'Negara <strong style="color:#e2e8f0">'+(country.flag||"")+" "+country.country_name+'</strong> bisa dibeli kembali oleh user.');
+    if (!ok) return;
+    try {
+      const res = await adminFetch('/api/admin/country/'+key+'/offline', { method:'POST', body:JSON.stringify({ offline:false }) });
+      const data = await safeJson(res);
+      if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal online-kan negara.');
+    } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
   }
 };
 
