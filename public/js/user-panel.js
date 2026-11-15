@@ -630,7 +630,6 @@ window.doResendOtpFor = async function(orderId) {
 };
 
 // ---- Resend cooldown per order ----
-function startResendCooldownFor(orderId, seconds) {
 function startResendCooldownFor(orderId, seconds, permanent = false) {
   const s = orderStates[orderId];
   const btn = document.getElementById("resend-btn-" + orderId);
