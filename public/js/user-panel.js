@@ -388,7 +388,7 @@ window.buyNokos = async function(countryKey, countryName, price) {
     });
     const data = await safeJson(res);
     if (!res.ok) {
-      showError(ERROR_MAP[data.error] || data.message || "Gagal membeli.");
+      await Dialog.alert("error", "Pembelian Gagal", data.message || ERROR_MAP[data.error] || "Gagal membeli.");
       return;
     }
     addActiveOrderCard(data.order_id, data.phone_number, data.expires_at, countryName, undefined, price);
