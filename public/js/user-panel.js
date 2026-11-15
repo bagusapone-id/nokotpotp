@@ -145,14 +145,16 @@ function showSuccessModal(message) {
 }
 
 function showLoginScreen() {
+  document.getElementById("splash-screen")?.remove();
   const ls = document.getElementById("login-screen");
   ls.classList.remove("hidden");
-  ls.style.display = "flex"; // harus flex agar align-items & justify-content bekerja
+  ls.style.display = "flex";
   document.getElementById("app-screen").classList.add("hidden");
   document.getElementById("app-screen").style.display = "none";
 }
 
 function showApp() {
+  document.getElementById("splash-screen")?.remove();
   document.getElementById("login-screen").classList.add("hidden");
   document.getElementById("app-screen").classList.remove("hidden");
   initApp();
