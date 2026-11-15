@@ -58,8 +58,8 @@ router.post('/create', authUser, async (req, res) => {
   const { amount, payment_method = 'payment_link' } = req.body;
   const userId = req.user.uid;
 
-  if (!amount || typeof amount !== 'number' || !Number.isInteger(amount) || amount < 25000) {
-    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Minimal deposit Rp 25.000' });
+  if (!amount || typeof amount !== 'number' || !Number.isInteger(amount) || amount < 10000) {
+    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Minimal deposit Rp 10.000' });
   }
   if (!VALID_METHODS.includes(payment_method)) {
     return res.status(400).json({ error: 'INVALID_METHOD', message: 'Metode pembayaran tidak valid' });
