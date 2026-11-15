@@ -46,7 +46,13 @@ async function purchase(uid, username, countryKey) {
     );
   }
 
-  // 3. Find one AVAILABLE stock entry
+  // 3. Cek apakah negara offline (setelah cek saldo)
+  if (country.offline === true) {
+    const reason = country.offline_reason || 'Stok sedang tidak tersedia sementara.';
+    throw new PurchaseError('COUNTRY_OFFLINE', reason);
+  }
+
+  // 4. Find one AVAILABLE stock entry
   const stockSnap = await db
     .ref('phone_stocks')
     .orderByChild('country_key')
