@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api
 
-Sitemap: https://nokotpotp.neru.web.id/sitemap.xml
+Sitemap: https://nokosotp.neru.web.id/sitemap.xml
