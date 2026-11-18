@@ -1,6 +1,7 @@
 // ADMIN PANEL
 let adminUser = null, adminToken = null, currentStockTab = "indo";
 let stockData = {}, countriesData = {}, ordersData = {};
+let countrySearchQueryAdmin = "";
 
 // ── Auth ──
 firebaseAuth.onAuthStateChanged(async (user) => {
@@ -348,11 +349,34 @@ function listenCountries() {
   });
 }
 
+window.searchCountriesAdmin = function(query) {
+  countrySearchQueryAdmin = query.trim();
+  renderCountriesList();
+};
+
+function normalizeCountrySearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 function renderCountriesList() {
   const c = document.getElementById("countries-list");
-  const entries = Object.entries(countriesData);
+  const search = normalizeCountrySearch(countrySearchQueryAdmin);
+  const entries = Object.entries(countriesData).filter(([key, value]) => {
+    if (!search) return true;
+    return normalizeCountrySearch([
+      key,
+      value.country_name,
+      value.flag,
+      value.tab
+    ].join(" ")).includes(search);
+  });
   if (!entries.length) {
-    c.innerHTML = '<div style="text-align:center;padding:28px 0;color:#334155;font-size:.8125rem">Belum ada negara.</div>';
+    c.innerHTML = search
+      ? '<div style="text-align:center;padding:28px 0;color:#334155;font-size:.8125rem"><i class="fa-solid fa-magnifying-glass" style="display:block;font-size:18px;margin-bottom:8px"></i>Negara tidak ditemukan.</div>'
+      : '<div style="text-align:center;padding:28px 0;color:#334155;font-size:.8125rem">Belum ada negara.</div>';
     return;
   }
   c.innerHTML = entries.map(([k,v]) => {

@@ -310,6 +310,7 @@ function setupBalanceListener() {
 // ---- Countries + Stock ----
 let countriesData = {};
 let stockData = {};
+let countrySearchQuery = "";
 
 function setupCountriesAndStockListener() {
   firebaseDB.ref("countries").on("value", (snap) => {
@@ -339,14 +340,41 @@ window.switchTab = function(tab) {
   } else {
     luar.classList.add("active"); indo.classList.remove("active");
   }
+  countrySearchQuery = "";
+  const searchInput = document.getElementById("country-search");
+  if (searchInput) searchInput.value = "";
   renderCountryList();
 };
 
+window.searchCountries = function(query) {
+  countrySearchQuery = query.trim();
+  renderCountryList();
+};
+
+function normalizeCountrySearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 function renderCountryList() {
   const container = document.getElementById("country-list");
-  const entries = Object.entries(countriesData).filter(([, c]) => c.tab === currentTab);
+  const search = normalizeCountrySearch(countrySearchQuery);
+  const entries = Object.entries(countriesData).filter(([key, c]) => {
+    if (c.tab !== currentTab) return false;
+    if (!search) return true;
+    const searchable = normalizeCountrySearch([
+      key,
+      c.country_name,
+      c.flag
+    ].join(" "));
+    return searchable.includes(search);
+  });
   if (entries.length === 0) {
-    container.innerHTML = '<div class="text-center py-12 text-slate-600"><i class="fa-solid fa-box-open text-3xl mb-3 block text-slate-700"></i><p class="text-sm">Belum ada layanan tersedia.</p></div>';
+    container.innerHTML = search
+      ? '<div style="text-align:center;padding:28px 12px;color:#64748b;font-size:.8125rem"><i class="fa-solid fa-magnifying-glass" style="display:block;font-size:20px;margin-bottom:8px;color:#334155"></i>Negara atau layanan tidak ditemukan.</div>'
+      : '<div style="text-align:center;padding:28px 12px;color:#64748b;font-size:.8125rem"><i class="fa-solid fa-box-open" style="display:block;font-size:20px;margin-bottom:8px;color:#334155"></i>Belum ada layanan tersedia.</div>';
     return;
   }
   container.innerHTML = entries.map(([key, c]) => {
