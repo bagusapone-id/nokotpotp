@@ -244,6 +244,12 @@
         <button id="tab-luar" onclick="switchTab('luar')" class="tab-pill"><i class="fa-solid fa-earth-asia" style="font-size:13px"></i> Nokos Luar</button>
       </div>
 
+      <!-- Country search -->
+      <div class="inp-wrap" style="margin-bottom:12px">
+        <i class="inp-ico fa-solid fa-magnifying-glass"></i>
+        <input id="country-search" class="inp" type="search" placeholder="Cari negara atau layanan..." autocomplete="off" oninput="searchCountries(this.value)" aria-label="Cari negara atau layanan"/>
+      </div>
+
       <!-- Country list -->
       <div id="country-list" style="display:flex;flex-direction:column;gap:8px">
         <div class="sk" style="height:62px"></div>
