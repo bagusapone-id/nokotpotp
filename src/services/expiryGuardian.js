@@ -1,5 +1,6 @@
 const { db } = require('../config/firebase');
 const { retryTransaction } = require('../utils/retryTransaction');
+const { refundOrderBalance } = require('./balanceService');
 
 const GUARDIAN_INTERVAL_MS = 30000;
 
@@ -15,9 +16,16 @@ async function processExpiredOrder(orderId, order) {
 
     // Refund balance if not already refunded
     if (!order.is_refunded && order.price && order.user_id) {
-      await db.ref(`users/${order.user_id}/balance`).transaction((bal) => {
-        return (Number(bal) || 0) + order.price;
+      const userRef = db.ref(`users/${order.user_id}`);
+      const refundResult = await userRef.transaction(user => {
+        if (user === null) return null;
+        if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+        refundOrderBalance(user, orderId, order);
+        return user;
       });
+      if (!refundResult.snapshot.child(`order_refunds/${orderId}`).exists()) {
+        throw new Error(`Could not refund expired order ${orderId}`);
+      }
       await db.ref(`orders/${orderId}/is_refunded`).set(true);
     }
   }, 3).catch((err) => {

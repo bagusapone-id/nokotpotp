@@ -1,5 +1,6 @@
 const { db } = require('../config/firebase');
 const { retryTransaction } = require('../utils/retryTransaction');
+const { refundOrderBalance } = require('./balanceService');
 
 class CancelError extends Error {
   constructor(code, message) {
@@ -25,6 +26,9 @@ async function cancelOrder(orderId, uid) {
   if (!['WAITING_OTP', 'OTP_REQUESTED', 'EXPIRED'].includes(order.status)) {
     throw new CancelError('INVALID_STATUS', 'Order tidak dapat dibatalkan pada status ini.');
   }
+  if (order.is_refunded) {
+    throw new CancelError('INVALID_STATUS', 'Saldo order ini sudah dikembalikan.');
+  }
 
   // Kalau OTP sudah dikirim admin, user tidak bisa cancel — harus admin
   if (order.otp_code && order.otp_code.length > 0) {
@@ -41,11 +45,17 @@ async function cancelOrder(orderId, uid) {
       is_refunded: true,
     });
 
-    // 2. Restore user balance
-    await db.ref(`users/${uid}/balance`).transaction((bal) => {
-      // bal === null means node doesn't exist yet — initialize with the refund amount
-      return (Number(bal) || 0) + price;
+    // 2. Restore the same balance portions used by the purchase
+    const userRef = db.ref(`users/${uid}`);
+    const refundResult = await userRef.transaction(user => {
+      if (user === null) return null;
+      if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+      refundOrderBalance(user, orderId, order);
+      return user;
     });
+    if (!refundResult.snapshot.child(`order_refunds/${orderId}`).exists()) {
+      throw new Error(`Could not refund order ${orderId}`);
+    }
 
     // 3. Return stock to AVAILABLE so the number can be reused
     if (stockKey) {

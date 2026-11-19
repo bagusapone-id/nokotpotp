@@ -87,6 +87,7 @@ router.post('/', async (req, res) => {
       [`users/${uid}`]: {
         username: String(username).trim(),
         balance: 0,
+        withdrawable_balance: 0,
         referral_code: ownReferralCode,
       },
     };

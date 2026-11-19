@@ -4,6 +4,20 @@ const authUser = require('../middleware/authUser');
 const authAdmin = require('../middleware/authAdmin');
 const { db } = require('../config/firebase');
 const { cancelOrder, CancelError } = require('../services/cancelService');
+const { refundOrderBalance } = require('../services/balanceService');
+
+async function refundOrderToUser(uid, orderId, order) {
+  const userRef = db.ref(`users/${uid}`);
+  const result = await userRef.transaction(user => {
+    if (user === null) return null;
+    if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+    refundOrderBalance(user, orderId, order);
+    return user;
+  });
+  if (!result.snapshot.child(`order_refunds/${orderId}`).exists()) {
+    throw new Error(`Could not refund order ${orderId}`);
+  }
+}
 
 /**
  * POST /api/orders/:id/cancel
@@ -40,7 +54,7 @@ router.post('/:id/auto-cancel', authUser, async (req, res) => {
     const order = snap.val();
 
     if (order.user_id !== uid) return res.status(403).json({ error: 'FORBIDDEN' });
-    if (['COMPLETED','CANCELLED'].includes(order.status)) {
+    if (['COMPLETED','CANCELLED'].includes(order.status) || order.is_refunded) {
       return res.status(409).json({ error: 'INVALID_STATUS', message: 'Order sudah selesai.' });
     }
     // Verify timer actually expired
@@ -51,7 +65,7 @@ router.post('/:id/auto-cancel', authUser, async (req, res) => {
     const price    = order.price || 0;
     const stockKey = order.stock_key;
 
-    if (price) await db.ref(`users/${uid}/balance`).transaction(bal => (Number(bal) || 0) + price);
+    if (price) await refundOrderToUser(uid, orderId, order);
     if (stockKey) await db.ref(`phone_stocks/${stockKey}/status`).set('AVAILABLE');
     await db.ref(`orders/${orderId}`).update({ status: 'CANCELLED', is_refunded: true });
 
@@ -73,7 +87,7 @@ router.post('/:id/admin-cancel', authAdmin, async (req, res) => {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Order tidak ditemukan.' });
     }
     const order = snap.val();
-    if (['COMPLETED','CANCELLED'].includes(order.status)) {
+    if (['COMPLETED','CANCELLED'].includes(order.status) || order.is_refunded) {
       return res.status(409).json({ error: 'INVALID_STATUS', message: 'Order sudah selesai atau dibatalkan.' });
     }
 
@@ -83,7 +97,7 @@ router.post('/:id/admin-cancel', authAdmin, async (req, res) => {
 
     // Refund balance
     if (price && uid) {
-      await db.ref(`users/${uid}/balance`).transaction(bal => (Number(bal) || 0) + price);
+      await refundOrderToUser(uid, orderId, order);
     }
     // Return stock
     if (stockKey) {

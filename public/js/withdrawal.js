@@ -32,11 +32,12 @@ function selectBank(bank) {
   });
 }
 
-function showWithdrawalAccess(state) {
+function showWithdrawalAccess(state, message) {
   document.getElementById('withdrawal-loading').hidden = state !== 'loading';
   document.getElementById('withdrawal-locked').hidden = state !== 'locked';
   document.getElementById('withdrawal-page').hidden = state !== 'available';
   document.getElementById('withdrawal-nav').hidden = state !== 'available';
+  if (message) document.getElementById('withdrawal-locked-message').textContent = message;
 }
 
 firebase.auth().onAuthStateChanged(user => {
@@ -88,8 +89,8 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
     document.querySelectorAll('.amount-preset').forEach(preset => preset.classList.remove('active'));
     await loadWithdrawalHistory();
   } catch (error) {
-    if (error.code === 'MINIMUM_BALANCE_REQUIRED') {
-      showWithdrawalAccess('locked');
+    if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS'].includes(error.code)) {
+      showWithdrawalAccess('locked', error.message);
       return;
     }
     showMessage(error.message || 'Terjadi kesalahan saat mengirim permintaan.', true);
@@ -111,8 +112,8 @@ async function loadWithdrawalHistory() {
     document.getElementById('available-balance').textContent = formatRupiah(currentBalance);
     renderHistory(Array.isArray(data.withdrawals) ? data.withdrawals : []);
   } catch (error) {
-    if (error.code === 'MINIMUM_BALANCE_REQUIRED') {
-      showWithdrawalAccess('locked');
+    if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS'].includes(error.code)) {
+      showWithdrawalAccess('locked', error.message);
       return;
     }
     showWithdrawalAccess('available');

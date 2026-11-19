@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authAdmin = require('../middleware/authAdmin');
 const { db } = require('../config/firebase');
+const { addWithdrawableCredit, getBalanceBuckets, adjustBalance } = require('../services/balanceService');
 
 /**
  * GET /api/admin/verify
@@ -102,7 +103,7 @@ router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res
       }
       if (user.withdrawal_refunds[withdrawalId]) return user;
 
-      user.balance = (Number(user.balance) || 0) + Number(request.amount);
+      addWithdrawableCredit(user, Number(request.amount));
       user.withdrawal_refunds[withdrawalId] = Date.now();
       return user;
     });
@@ -436,13 +437,6 @@ router.post('/users/:uid/balance-adjustments', authAdmin, async (req, res) => {
       if (user === null) return null;
       if (!user || typeof user !== 'object' || Array.isArray(user)) return;
 
-      const balanceBefore = Number(user.balance || 0);
-      if (!Number.isSafeInteger(balanceBefore) || balanceBefore < 0) return;
-      if (type === 'subtract' && balanceBefore < amount) return;
-
-      const balanceAfter = type === 'add' ? balanceBefore + amount : balanceBefore - amount;
-      if (!Number.isSafeInteger(balanceAfter) || balanceAfter < 0) return;
-
       if (!user.admin_balance_adjustments ||
           typeof user.admin_balance_adjustments !== 'object' ||
           Array.isArray(user.admin_balance_adjustments)) {
@@ -450,12 +444,13 @@ router.post('/users/:uid/balance-adjustments', authAdmin, async (req, res) => {
       }
       if (user.admin_balance_adjustments[adjustmentId]) return user;
 
-      user.balance = balanceAfter;
+      const adjustment = adjustBalance(user, type, amount);
+      if (!adjustment) return;
+
       user.admin_balance_adjustments[adjustmentId] = {
         type,
         amount,
-        balance_before: balanceBefore,
-        balance_after: balanceAfter,
+        ...adjustment,
         reason,
         admin_uid: req.user.uid,
         created_at: createdAt,
@@ -469,7 +464,7 @@ router.post('/users/:uid/balance-adjustments', authAdmin, async (req, res) => {
       if (!currentUser.exists()) {
         return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'User tidak ditemukan.' });
       }
-      const balance = Number(currentUser.child('balance').val()) || 0;
+      const balance = getBalanceBuckets(currentUser.val()).balance;
       if (type === 'subtract' && balance < amount) {
         return res.status(400).json({ error: 'INSUFFICIENT_BALANCE', message: 'Saldo user tidak mencukupi.' });
       }
@@ -482,6 +477,7 @@ router.post('/users/:uid/balance-adjustments', authAdmin, async (req, res) => {
       message: type === 'add' ? 'Saldo user berhasil ditambahkan.' : 'Saldo user berhasil dikurangi.',
       adjustment_id: adjustmentId,
       balance: adjustment.balance_after,
+      withdrawable_balance: adjustment.withdrawable_after,
     });
   } catch (err) {
     console.error('[adminRoutes] user balance adjustment error:', err.message);
