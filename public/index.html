@@ -45,6 +45,21 @@
     .bottom-nav a{min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#64748b;text-decoration:none;font-size:.625rem;font-weight:600}
     .bottom-nav a i{font-size:16px}
     .bottom-nav a.active{color:#34d399}
+    .promo-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.84);backdrop-filter:blur(10px)}
+    .promo-overlay.hidden{display:none}
+    .promo-dialog{position:relative;width:100%;max-width:380px;padding:26px 22px 22px;border:1px solid rgba(148,163,184,.16);border-radius:20px;background:linear-gradient(160deg,#111c2c,#0b1220 75%);box-shadow:0 28px 80px rgba(0,0,0,.48)}
+    .promo-close{position:absolute;top:14px;right:14px;color:#94a3b8}
+    .promo-title{max-width:290px;margin:0 28px 8px 0;color:#f8fafc;font-size:1.25rem;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+    .promo-description{margin:0;color:#94a3b8;font-size:.8125rem;line-height:1.6}
+    .promo-options{display:grid;gap:10px;margin-top:20px}
+    .promo-option{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid rgba(148,163,184,.15);border-radius:13px;background:rgba(15,23,42,.72);color:inherit;text-decoration:none;transition:border-color .15s,background .15s,transform .15s}
+    .promo-option:hover,.promo-option:focus-visible{border-color:rgba(52,211,153,.45);background:rgba(16,185,129,.08);outline:none}
+    .promo-option:active{transform:scale(.99)}
+    .promo-option-icon{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(16,185,129,.1);color:#34d399;font-size:15px}
+    .promo-option-copy{flex:1}
+    .promo-option-title{margin-bottom:3px;color:#f1f5f9;font-size:.8125rem;font-weight:700}
+    .promo-option-description{color:#94a3b8;font-size:.6875rem;line-height:1.45}
+    .promo-option-arrow{color:#64748b;font-size:11px}
     .tm, .tt1, .tt2, .tt3{font-family:'Geist',system-ui,sans-serif}
     .mono, code, [style*="Geist Mono"]{font-family:'Geist Mono',monospace!important}
     ::-webkit-scrollbar{width:0}
@@ -276,6 +291,34 @@
   </nav>
 </div>
 
+<!-- ══ FEATURE PROMO MODAL ══ -->
+<div id="feature-promo-modal" class="promo-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="feature-promo-title" aria-hidden="true" onclick="if(event.target===this)closeFeaturePromoModal()">
+  <div class="promo-dialog fu">
+    <button id="feature-promo-close" type="button" class="btn btn-icon btn-ghost promo-close" aria-label="Tutup promosi" onclick="closeFeaturePromoModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <h2 id="feature-promo-title" class="promo-title">Tarik saldo, kumpulkan komisi</h2>
+    <p class="promo-description">Tarik saldo utama dengan minimal Rp1.000 bisa ditarik. Undang teman dan dapatkan komisi 50% dari deposit berhasil ( saldo bisa di tarik ).</p>
+    <div class="promo-options">
+      <a href="/withdrawal" class="promo-option">
+        <span class="promo-option-icon"><i class="fa-solid fa-wallet"></i></span>
+        <span class="promo-option-copy">
+          <span class="promo-option-title" style="display:block">Tarik Saldo</span>
+          <span class="promo-option-description">Ajukan pencairan saldo ke DANA, GoPay, atau SeaBank.</span>
+        </span>
+        <i class="promo-option-arrow fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="/referral" class="promo-option">
+        <span class="promo-option-icon"><i class="fa-solid fa-user-group"></i></span>
+        <span class="promo-option-copy">
+          <span class="promo-option-title" style="display:block">Undang Teman</span>
+          <span class="promo-option-description">Dapatkan komisi 50% dari setiap deposit teman yang berhasil.</span>
+        </span>
+        <i class="promo-option-arrow fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- ══ BANNED MODAL ══ -->
 <div id="banned-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(2,6,23,.97);backdrop-filter:blur(12px);padding:24px">
