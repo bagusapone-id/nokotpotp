@@ -18,6 +18,19 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.get(['/login', '/daftar'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/withdrawal', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'withdrawal.html'));
+});
+
+app.get('/referral', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'referral.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/healthz', (req, res) => {

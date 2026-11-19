@@ -56,9 +56,11 @@ npm start
 Server berjalan di `http://localhost:3000`
 
 - **User Panel:** `http://localhost:3000`
+- **Login:** `http://localhost:3000/login`
+- **Daftar:** `http://localhost:3000/daftar`
 - **Admin Panel:** `http://localhost:3000/admin.html`
-- **Referral / Undang Teman:** `http://localhost:3000/referral.html`
-- **Tarik Saldo:** `http://localhost:3000/withdrawal.html`
+- **Referral / Undang Teman:** `http://localhost:3000/referral`
+- **Tarik Saldo:** `http://localhost:3000/withdrawal`
 - **Health Check:** `http://localhost:3000/healthz`
 
 Penarikan minimum Rp 1.000, tanpa biaya, ke DANA, GoPay, atau SeaBank. Fitur dapat diakses jika saldo yang bisa ditarik minimal Rp 25.000. Bonus event deposit 2x tetap bisa dipakai membeli layanan tetapi tidak dapat ditarik; bonus dipakai lebih dahulu sebelum saldo deposit. Komisi referral, refund, dan saldo tambahan admin tetap bisa ditarik. Saldo yang sudah ada sebelum pemisahan ini tetap dianggap sebagai saldo utama. Saldo dicadangkan saat permintaan diajukan dan dikembalikan jika admin menolak. Setelah mengubah Firebase Database Rules, salin rules terbaru dari `node set-db-rules.js` ke Firebase Console; penulisan data akun dan permintaan penarikan hanya dilakukan server.
