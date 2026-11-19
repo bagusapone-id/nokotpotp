@@ -9,7 +9,7 @@ const { getBalanceBuckets } = require('../services/balanceService');
 
 const MIN_WITHDRAWAL = 1000;
 const MINIMUM_BALANCE_TO_WITHDRAW = 25000;
-const MINIMUM_BALANCE_MESSAGE = 'Saldo utama harus minimal Rp 25.000 dan minimal penarikan Rp 1.000. Bonus event tidak dihitung.';
+const MINIMUM_BALANCE_MESSAGE = 'Saldo utama harus minimal Rp 25.000 dan minimal penarikan Rp 1.000. Saldo komisi undang teman bisa di tarik.';
 const NO_TRANSACTIONS_MESSAGE = 'Tidak dapat mengakses fitur tarik saldo karena belum melakukan transaksi apa pun.';
 const BANKS = {
   dana: 'DANA',
