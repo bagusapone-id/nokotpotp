@@ -298,7 +298,28 @@ function showApp() {
     window.history.replaceState(null, "", "/");
   }
   initApp();
+  openFeaturePromoModal();
 }
+
+function openFeaturePromoModal() {
+  const modal = document.getElementById("feature-promo-modal");
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  document.getElementById("feature-promo-close").focus();
+}
+
+window.closeFeaturePromoModal = function() {
+  const modal = document.getElementById("feature-promo-modal");
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+};
+
+document.addEventListener("keydown", event => {
+  const modal = document.getElementById("feature-promo-modal");
+  if (event.key === "Escape" && !modal.classList.contains("hidden")) {
+    window.closeFeaturePromoModal();
+  }
+});
 
 function cleanupListeners() {
   if (balanceListenerRef) { balanceListenerRef.off(); balanceListenerRef = null; }
