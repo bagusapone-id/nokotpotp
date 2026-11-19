@@ -6,9 +6,9 @@ const { db } = require('../config/firebase');
 const authUser = require('../middleware/authUser');
 const { sendWithdrawalNotification } = require('../services/telegramService');
 
-const MIN_WITHDRAWAL = 15000;
-const MINIMUM_BALANCE_TO_WITHDRAW = 25000;
-const MINIMUM_BALANCE_MESSAGE = 'Saldo minimal Rp 25.000 diperlukan untuk menggunakan fitur tarik saldo.';
+const MIN_WITHDRAWAL = 25000;
+const MINIMUM_BALANCE_TO_WITHDRAW = 50000;
+const MINIMUM_BALANCE_MESSAGE = 'Saldo minimal Rp 50.000 diperlukan untuk menggunakan fitur tarik saldo.';
 const BANKS = {
   dana: 'DANA',
   gopay: 'GoPay',
@@ -57,7 +57,7 @@ router.post('/', authUser, async (req, res) => {
   if (!Number.isSafeInteger(amount) || amount < MIN_WITHDRAWAL) {
     return res.status(400).json({
       error: 'INVALID_AMOUNT',
-      message: 'Minimal penarikan adalah Rp 15.000.',
+      message: 'Minimal penarikan adalah Rp 25.000.',
     });
   }
   if (!BANKS[bankKey]) {

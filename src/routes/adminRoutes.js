@@ -405,6 +405,90 @@ router.get('/users', authAdmin, async (req, res) => {
   }
 });
 
+router.post('/users/:uid/balance-adjustments', authAdmin, async (req, res) => {
+  const { uid } = req.params;
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const type = typeof body.type === 'string' ? body.type.trim().toLowerCase() : '';
+  const amount = Number(body.amount);
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+
+  if (!['add', 'subtract'].includes(type)) {
+    return res.status(400).json({ error: 'INVALID_TYPE', message: 'Pilih tambah atau kurangi saldo.' });
+  }
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Nominal harus bilangan bulat positif.' });
+  }
+  if (!reason || reason.length > 300) {
+    return res.status(400).json({ error: 'INVALID_REASON', message: 'Alasan wajib diisi, maksimal 300 karakter.' });
+  }
+
+  const userRef = db.ref(`users/${uid}`);
+  const adjustmentId = db.ref(`users/${uid}/admin_balance_adjustments`).push().key;
+  const createdAt = Date.now();
+
+  try {
+    const userSnap = await userRef.once('value');
+    if (!userSnap.exists()) {
+      return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'User tidak ditemukan.' });
+    }
+
+    const result = await userRef.transaction(user => {
+      if (user === null) return null;
+      if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+
+      const balanceBefore = Number(user.balance || 0);
+      if (!Number.isSafeInteger(balanceBefore) || balanceBefore < 0) return;
+      if (type === 'subtract' && balanceBefore < amount) return;
+
+      const balanceAfter = type === 'add' ? balanceBefore + amount : balanceBefore - amount;
+      if (!Number.isSafeInteger(balanceAfter) || balanceAfter < 0) return;
+
+      if (!user.admin_balance_adjustments ||
+          typeof user.admin_balance_adjustments !== 'object' ||
+          Array.isArray(user.admin_balance_adjustments)) {
+        user.admin_balance_adjustments = {};
+      }
+      if (user.admin_balance_adjustments[adjustmentId]) return user;
+
+      user.balance = balanceAfter;
+      user.admin_balance_adjustments[adjustmentId] = {
+        type,
+        amount,
+        balance_before: balanceBefore,
+        balance_after: balanceAfter,
+        reason,
+        admin_uid: req.user.uid,
+        created_at: createdAt,
+      };
+      return user;
+    });
+
+    const adjustmentExists = result.snapshot.child(`admin_balance_adjustments/${adjustmentId}`).exists();
+    if (!result.committed || !adjustmentExists) {
+      const currentUser = await userRef.once('value');
+      if (!currentUser.exists()) {
+        return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'User tidak ditemukan.' });
+      }
+      const balance = Number(currentUser.child('balance').val()) || 0;
+      if (type === 'subtract' && balance < amount) {
+        return res.status(400).json({ error: 'INSUFFICIENT_BALANCE', message: 'Saldo user tidak mencukupi.' });
+      }
+      return res.status(409).json({ error: 'BALANCE_ADJUSTMENT_FAILED', message: 'Saldo tidak berhasil diperbarui. Coba muat ulang data user.' });
+    }
+
+    const adjustment = result.snapshot.child(`admin_balance_adjustments/${adjustmentId}`).val();
+    return res.status(200).json({
+      success: true,
+      message: type === 'add' ? 'Saldo user berhasil ditambahkan.' : 'Saldo user berhasil dikurangi.',
+      adjustment_id: adjustmentId,
+      balance: adjustment.balance_after,
+    });
+  } catch (err) {
+    console.error('[adminRoutes] user balance adjustment error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memperbarui saldo user.' });
+  }
+});
+
 // POST /api/admin/users/:uid/ban — ban a user
 router.post('/users/:uid/ban', authAdmin, async (req, res) => {
   const { reason } = req.body;
