@@ -10,6 +10,77 @@ let timerInterval = null;
 let resendCooldownInterval = null;
 let orderListenerRef = null;
 let balanceListenerRef = null;
+const referralCodeFromLink = new URLSearchParams(window.location.search).get("ref");
+let referralValidationStatus = "empty";
+let referralValidationSequence = 0;
+let referralValidationTimer = null;
+let registrationInProgress = false;
+
+if (referralCodeFromLink) {
+  document.getElementById("reg-referral-code").value = referralCodeFromLink.trim().toUpperCase();
+}
+
+function updateRegisterSubmitState() {
+  const submitButton = document.querySelector("#register-form button[type=submit]");
+  const hasCode = Boolean(document.getElementById("reg-referral-code").value.trim());
+  submitButton.disabled = registrationInProgress || (hasCode && referralValidationStatus !== "valid");
+}
+
+window.validateReferralCodeInput = function() {
+  const input = document.getElementById("reg-referral-code");
+  const statusEl = document.getElementById("reg-referral-code-status");
+  const code = input.value.trim().toUpperCase();
+  input.value = code;
+  const requestId = ++referralValidationSequence;
+  clearTimeout(referralValidationTimer);
+
+  if (!code) {
+    referralValidationStatus = "empty";
+    statusEl.style.display = "none";
+    statusEl.textContent = "";
+    updateRegisterSubmitState();
+    return;
+  }
+
+  if (!/^NOKOTP[A-HJ-NP-Z2-9]{5}$/.test(code)) {
+    referralValidationStatus = "invalid";
+    statusEl.textContent = "Format kode harus NOKOTP + 5 karakter.";
+    statusEl.style.color = "#fb7185";
+    statusEl.style.display = "block";
+    updateRegisterSubmitState();
+    return;
+  }
+
+  referralValidationStatus = "checking";
+  statusEl.textContent = "Memeriksa kode referral...";
+  statusEl.style.color = "#fbbf24";
+  statusEl.style.display = "block";
+  updateRegisterSubmitState();
+
+  referralValidationTimer = setTimeout(async () => {
+    try {
+      const response = await fetch("/api/register/validate-referral-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ referralCode: code }),
+      });
+      const data = await safeJson(response);
+      if (requestId !== referralValidationSequence) return;
+      if (!response.ok) throw new Error(data.message || "Gagal memeriksa kode referral.");
+
+      referralValidationStatus = data.valid ? "valid" : "invalid";
+      statusEl.textContent = data.message;
+      statusEl.style.color = data.valid ? "#34d399" : "#fb7185";
+    } catch (error) {
+      if (requestId !== referralValidationSequence) return;
+      referralValidationStatus = "invalid";
+      statusEl.textContent = error.message || "Gagal memeriksa kode. Coba lagi atau kosongkan kolom.";
+      statusEl.style.color = "#fb7185";
+    }
+    statusEl.style.display = "block";
+    updateRegisterSubmitState();
+  }, 300);
+};
 
 // ---- Auth tab switch ----
 window.showAuthTab = function(tab) {
@@ -56,12 +127,22 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 document.getElementById("register-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const username = document.getElementById("reg-username").value.trim();
+  const referralCode = document.getElementById("reg-referral-code").value.trim().toUpperCase();
   const email = document.getElementById("reg-email").value.trim();
   const password = document.getElementById("reg-password").value;
   const errEl = document.getElementById("auth-error");
   const successEl = document.getElementById("auth-success");
   errEl.classList.add("hidden");
   successEl.classList.add("hidden");
+
+  if (referralCode && referralValidationStatus !== "valid") {
+    errEl.textContent = referralValidationStatus === "checking"
+      ? "Tunggu sampai kode referral selesai diperiksa."
+      : "Kode referral tidak valid. Hapus atau ganti kode untuk melanjutkan.";
+    errEl.classList.remove("hidden");
+    window.validateReferralCodeInput();
+    return;
+  }
 
   if (!username) {
     errEl.textContent = "Username tidak boleh kosong.";
@@ -70,7 +151,8 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
   }
 
   const submitBtn = e.target.querySelector("button[type=submit]");
-  submitBtn.disabled = true;
+  registrationInProgress = true;
+  updateRegisterSubmitState();
   submitBtn.textContent = "Mendaftar...";
 
   try {
@@ -85,8 +167,9 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token, username: username }),
+      body: JSON.stringify({ idToken: token, username: username, referralCode: referralCode }),
     });
+
     const data = await safeJson(res);
     if (!res.ok) {
       errEl.textContent = "Daftar gagal: " + (data.message || "Kesalahan server.");
@@ -103,8 +186,9 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     errEl.textContent = "Daftar gagal: " + mapAuthError(err.code);
     errEl.classList.remove("hidden");
   } finally {
-    submitBtn.disabled = false;
+    registrationInProgress = false;
     submitBtn.textContent = "Buat Akun";
+    updateRegisterSubmitState();
   }
 });
 
@@ -190,6 +274,10 @@ function showLoginScreen() {
   // Reset form
   document.getElementById("login-form").reset();
   document.getElementById("register-form").reset();
+  if (referralCodeFromLink) {
+    document.getElementById("reg-referral-code").value = referralCodeFromLink.trim().toUpperCase();
+  }
+  window.validateReferralCodeInput();
   // Pastikan tab login aktif
   showAuthTab("login");
   const ls = document.getElementById("login-screen");

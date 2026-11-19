@@ -17,43 +17,61 @@ function buildMessage(type, payload) {
   return lines.join('\n');
 }
 
-/**
- * Send Telegram notification. Never throws.
- */
-async function sendNotification(type, payload) {
+function escapeHtml(value) {
+  return String(value || '-').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[character]));
+}
+
+async function sendTelegramMessage(text, context = {}) {
   if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
     console.warn('[Telegram] BOT_TOKEN or ADMIN_CHAT_ID not configured.');
     return;
   }
 
-  const text = buildMessage(type, payload);
   const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: ADMIN_CHAT_ID,
-        text,
-        parse_mode: 'HTML',
-      }),
+      body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text, parse_mode: 'HTML' }),
     });
 
     if (!response.ok) {
       const body = await response.text();
       console.error('[Telegram] Notification failed:', {
-        order_id: payload.order_id,
+        ...context,
         http_status: response.status,
         response_body: body,
       });
     }
   } catch (err) {
-    console.error('[Telegram] Network error:', {
-      order_id: payload.order_id,
-      error: err.message,
-    });
+    console.error('[Telegram] Network error:', { ...context, error: err.message });
   }
 }
 
-module.exports = { sendNotification };
+/**
+ * Send Telegram notification. Never throws.
+ */
+async function sendNotification(type, payload) {
+  await sendTelegramMessage(buildMessage(type, payload), { order_id: payload.order_id });
+}
+
+async function sendWithdrawalNotification(payload) {
+  const text = [
+    '&#128176; <b>Permintaan Penarikan Saldo</b>',
+    `&#128203; <b>ID:</b> <code>${escapeHtml(payload.withdrawal_id)}</code>`,
+    `&#128100; <b>Username:</b> ${escapeHtml(payload.username)}`,
+    `&#128181; <b>Nominal:</b> ${escapeHtml(payload.amount.toLocaleString('id-ID'))}`,
+    `&#127974; <b>Bank/E-wallet:</b> ${escapeHtml(payload.bank)}`,
+    `&#128179; <b>Nomor rekening:</b> <code>${escapeHtml(payload.account_number)}</code>`,
+    '&#128176; <b>Biaya:</b> Gratis',
+  ].join('\n');
+  await sendTelegramMessage(text, { withdrawal_id: payload.withdrawal_id });
+}
+
+module.exports = { sendNotification, sendWithdrawalNotification };

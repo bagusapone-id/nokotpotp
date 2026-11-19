@@ -57,7 +57,19 @@ Server berjalan di `http://localhost:3000`
 
 - **User Panel:** `http://localhost:3000`
 - **Admin Panel:** `http://localhost:3000/admin.html`
+- **Referral / Undang Teman:** `http://localhost:3000/referral.html`
+- **Tarik Saldo:** `http://localhost:3000/withdrawal.html`
 - **Health Check:** `http://localhost:3000/healthz`
+
+Penarikan minimum Rp 15.000, tanpa biaya, ke DANA, GoPay, atau SeaBank. Saldo dicadangkan saat permintaan diajukan dan dikembalikan jika admin menolak. Setelah mengubah Firebase Database Rules, salin rules terbaru dari `node set-db-rules.js` ke Firebase Console; penulisan data akun dan permintaan penarikan hanya dilakukan server.
+
+Untuk membuat kode referral unik bagi semua akun yang sudah ada, jalankan sekali setelah konfigurasi `.env` terisi:
+
+```bash
+node scripts/migrateReferralCodes.js
+```
+
+Script aman dijalankan ulang; kode referral lama yang berupa UID akan diganti.
 
 ### 3. Seed Data Firebase (Manual)
 
@@ -129,3 +141,5 @@ Lalu tambah stok nomor dari **Admin Panel ? Tambah Stok**.
 - ?? **Resend OTP** � Cooldown 60 detik anti-spam
 - ?? **Auto-Refund** � Cancel order = saldo kembali 100%
 - ? **Expiry Guardian** � Background job expire order macet otomatis setiap 30 detik
+- **Referral** � Kode undangan unik berformat `NOKOTPXXXXX`; pengundang mendapat komisi 20% tanpa batas jumlah deposit sukses. Akun yang terlanjur mendaftar tanpa kode dapat mengaitkannya sekali dari halaman Undang Teman.
+- **Tarik Saldo** � Permintaan manual DANA, GoPay, dan SeaBank; biaya gratis, minimum Rp 15.000, saldo dikembalikan jika admin menolak. Permintaan tampil di dashboard admin dan dikirim melalui Telegram.

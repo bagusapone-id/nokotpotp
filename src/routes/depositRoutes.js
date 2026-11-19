@@ -69,6 +69,12 @@ router.post('/create', authUser, async (req, res) => {
     const depositRef = db.ref('deposits').push();
     const depositId  = depositRef.key;
     const orderId    = `DEP-${depositId}`;
+    const [attributionSnap, userSnap] = await Promise.all([
+      db.ref(`referral_attributions/${userId}`).once('value'),
+      db.ref(`users/${userId}`).once('value'),
+    ]);
+    const attribution = attributionSnap.val();
+    const username = userSnap.child('username').val() || '';
 
     let txData;
 
@@ -111,6 +117,8 @@ router.post('/create', authUser, async (req, res) => {
       deposit_id:     depositId,
       order_id:       orderId,
       user_id:        userId,
+      username,
+      referrer_id:    attribution ? attribution.referrer_id : null,
       amount,
       status:         'PENDING',
       ...txData,
@@ -243,33 +251,64 @@ router.post('/webhook', express.json(), async (req, res) => {
 // ── Helper ───────────────────────────────────────────────────────────────────
 async function processSuccessfulDeposit(depositId, deposit, detail) {
   const amount = deposit.amount;
-
-  // Cek event double deposit
-  let creditAmount = amount;
-  let eventApplied = false;
+  const completedAt = detail.completed_at || Date.now();
+  const completedAtTimestamp = typeof completedAt === 'number' || /^\d+$/.test(String(completedAt))
+    ? Number(completedAt)
+    : Date.parse(completedAt);
+  const referralCreatedAt = Number.isFinite(completedAtTimestamp) ? completedAtTimestamp : Date.now();
 
   const eventSnap = await db.ref('events/deposit_double').once('value');
   const event = eventSnap.val();
+  const eligibleForDouble = event && event.active === true && amount >= (event.min_amount || 25000);
+  const userRef = db.ref(`users/${deposit.user_id}`);
+  const userResult = await userRef.transaction(user => {
+    if (!user || typeof user !== 'object') return;
+    if (user.deposit_credits && user.deposit_credits[depositId]) return;
 
-  if (event && event.active === true && amount >= (event.min_amount || 25000)) {
-    // Cek apakah user sudah pernah dapat event ini
-    const userEventSnap = await db.ref(`users/${deposit.user_id}/events/deposit_double_used`).once('value');
-    if (!userEventSnap.val()) {
-      creditAmount = amount * 2;
-      eventApplied = true;
-      // Tandai user sudah pakai event
-      await db.ref(`users/${deposit.user_id}/events/deposit_double_used`).set(true);
+    const eventApplied = Boolean(eligibleForDouble && !(user.events && user.events.deposit_double_used));
+    const creditAmount = eventApplied ? amount * 2 : amount;
+    user.balance = (Number(user.balance) || 0) + creditAmount;
+    if (eventApplied) {
+      user.events = user.events || {};
+      user.events.deposit_double_used = true;
     }
+    user.deposit_credits = user.deposit_credits || {};
+    user.deposit_credits[depositId] = { credited: creditAmount, event_applied: eventApplied };
+    return user;
+  });
+  const credit = userResult.snapshot.child(`deposit_credits/${depositId}`).val();
+  if (!credit) throw new Error(`Could not credit deposit ${depositId} to user ${deposit.user_id}`);
+
+  const referralCommission = Math.floor(amount / 5);
+  if (deposit.referrer_id && referralCommission > 0) {
+    const referrerRef = db.ref(`users/${deposit.referrer_id}`);
+    const referralResult = await referrerRef.transaction(user => {
+      if (!user || typeof user !== 'object') return;
+      if (user.referral_earnings && user.referral_earnings[depositId]) return;
+
+      user.balance = (Number(user.balance) || 0) + referralCommission;
+      user.referral_earnings = user.referral_earnings || {};
+      user.referral_earnings[depositId] = {
+        referred_user_id: deposit.user_id,
+        referred_username: deposit.username || deposit.user_id,
+        deposit_amount: amount,
+        commission: referralCommission,
+        created_at: referralCreatedAt,
+      };
+      return user;
+    });
+    const earning = referralResult.snapshot.child(`referral_earnings/${depositId}`).val();
+    if (!earning) throw new Error(`Could not credit referral commission for deposit ${depositId}`);
   }
 
-  await db.ref(`users/${deposit.user_id}/balance`).transaction(bal => (bal || 0) + creditAmount);
   await db.ref(`deposits/${depositId}`).update({
     status:        'SUCCESS',
     completed_at:  detail.completed_at || Date.now(),
-    credited:      creditAmount,
-    event_applied: eventApplied,
+    credited:      credit.credited,
+    event_applied: credit.event_applied,
+    referral_commission: referralCommission,
   });
-  console.log(`[depositRoutes] ✅ +Rp${creditAmount} → user ${deposit.user_id}${eventApplied ? ' (EVENT 2x)' : ''}`);
+  console.log(`[depositRoutes] ✅ +Rp${credit.credited} → user ${deposit.user_id}; referral +Rp${referralCommission} → ${deposit.referrer_id || 'none'}`);
 }
 
 module.exports = router;

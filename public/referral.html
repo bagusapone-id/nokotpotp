@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <title>Undang Teman - NOKOTPOTP</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    :root{--accent:#c084fc;--accent-bright:#d8b4fe;--accent-dim:rgba(192,132,252,.1);--accent-line:rgba(192,132,252,.22);--surface:#191326;--muted:#a59ab4;--line:rgba(235,219,255,.1)}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% -18%,rgba(106,62,151,.32),transparent 48%),#100b18;color:#f5eefb;font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button,input{font:inherit}
+    .page{width:min(100%,400px);margin:0 auto;padding:16px 16px 112px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .back-link{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;color:#e3d8ed;text-decoration:none;background:rgba(255,255,255,.035)}
+    .brand{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:800;letter-spacing:.04em;color:#e8dff0}
+    .brand img{width:25px;height:25px}
+    .page-label{padding:5px 8px;border:1px solid var(--accent-line);border-radius:20px;color:var(--accent-bright);font-size:.5625rem;font-weight:800;letter-spacing:.12em}
+    .hero{position:relative;overflow:hidden;padding:20px;border:1px solid rgba(216,180,254,.18);border-radius:22px;background:linear-gradient(145deg,#39204f,#21152f 62%,#21162e);margin-bottom:13px}
+    .hero:after{content:"";position:absolute;width:190px;height:190px;right:-110px;top:-105px;border:1px solid rgba(216,180,254,.17);border-radius:50%;box-shadow:0 0 0 23px rgba(216,180,254,.035),0 0 0 46px rgba(216,180,254,.025)}
+    .hero-kicker{display:flex;align-items:center;gap:7px;color:#d4b8ec;font-size:.625rem;font-weight:800;letter-spacing:.14em}
+    .hero-title{position:relative;z-index:1;margin:13px 0 8px;font-size:clamp(1.7rem,8vw,2.1rem);font-weight:800;letter-spacing:-.06em;line-height:1.04;color:#fff}
+    .hero-title em{color:var(--accent-bright);font-style:normal}
+    .hero-copy{position:relative;z-index:1;max-width:290px;margin:0;color:#d0c0dc;font-size:.78rem;line-height:1.55}
+    .limit-pill{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:7px 10px;border:1px solid rgba(216,180,254,.2);border-radius:30px;background:rgba(255,255,255,.055);color:#e4caff;font-size:.65rem;font-weight:700}
+    .card{padding:16px;border:1px solid var(--line);border-radius:18px;background:rgba(25,19,38,.92);box-shadow:0 12px 30px rgba(0,0,0,.14);margin-bottom:12px}
+    .card-heading{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:.92rem;font-weight:800;color:#f5eefb}
+    .card-heading i{color:var(--accent);font-size:.85rem}
+    .muted{color:var(--muted);font-size:.75rem;line-height:1.55}
+    .invite-code-box{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#120d1b}
+    .overline{margin-bottom:5px;color:#988aa7;font-size:.625rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .referral-code{color:var(--accent-bright);font:700 1rem 'Geist Mono',monospace;letter-spacing:.03em}
+    .link-box{overflow-wrap:anywhere;margin:9px 0;padding:11px 12px;border:1px dashed rgba(216,180,254,.24);border-radius:12px;background:rgba(12,8,18,.65);color:#e8dff0;font:500 .68rem 'Geist Mono',monospace}
+    .btn{min-height:39px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid var(--accent-line);border-radius:11px;background:var(--accent-dim);color:var(--accent-bright);font-size:.72rem;font-weight:800;text-decoration:none;cursor:pointer;transition:transform .12s,opacity .12s}
+    .btn:active{transform:scale(.97)}
+    .btn:disabled{opacity:.42;cursor:not-allowed}
+    .btn-primary{width:100%;min-height:44px;background:var(--accent);border-color:transparent;color:#241033}
+    .btn-compact{min-height:32px;padding:0 9px;font-size:.65rem}
+    .copy-feedback{min-height:16px;margin-top:7px;text-align:center;color:#b9a8c8;font-size:.66rem}
+    .stats{display:grid;grid-template-columns:1fr 1.25fr;gap:9px;margin-bottom:12px}
+    .stat-card{padding:13px;border:1px solid var(--line);border-radius:15px;background:rgba(25,19,38,.92)}
+    .stat-label{display:flex;align-items:center;gap:6px;margin-bottom:7px;color:#ab9db8;font-size:.64rem;font-weight:700}
+    .stat-label i{color:var(--accent)}
+    .stat-value{color:#f2e7fb;font:700 1.05rem 'Geist Mono',monospace;letter-spacing:-.03em}
+    .stat-value.accent{color:var(--accent-bright);font-size:.94rem}
+    .section-note{margin:-4px 0 9px;color:#a59ab4;font-size:.68rem}
+    .history-list-item{padding:11px 0;border-bottom:1px solid var(--line)}
+    .history-list-item:last-child{padding-bottom:0;border-bottom:0}
+    .empty{text-align:center;padding:17px 8px;color:#9386a0;font-size:.72rem}
+    .error{display:none;margin:0 0 12px;padding:11px 12px;border:1px solid rgba(251,113,133,.25);border-radius:12px;background:rgba(251,113,133,.08);color:#fecdd3;font-size:.78rem}
+    .code-input{width:100%;height:44px;padding:0 12px;border:1px solid var(--line);border-radius:11px;outline:0;background:#120d1b;color:#f5eefb;font:600 .85rem 'Geist Mono',monospace;text-transform:uppercase}
+    .code-input:focus{border-color:var(--accent)}
+    .earnings-table{width:100%;border-collapse:collapse;font-size:.7rem;text-align:left}
+    .earnings-table th,.earnings-table td{padding:9px 6px;border-bottom:1px solid var(--line)}
+    .earnings-table th{color:#a99bb5;font-weight:700}
+    .earnings-table td:last-child{color:var(--accent-bright);font-weight:800;text-align:right}
+    .disclaimer{margin:9px 0 0;color:#9e90aa;font-size:.64rem;line-height:1.5}
+    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);display:flex;justify-content:space-around;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:rgba(16,11,24,.96);border-top:1px solid var(--line);backdrop-filter:blur(14px)}
+    .bottom-nav a{min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#867a91;text-decoration:none;font-size:.625rem;font-weight:600}
+    .bottom-nav a i{font-size:16px}
+    .bottom-nav a.active{color:var(--accent-bright)}
+    @media(max-width:360px){.page{padding-left:12px;padding-right:12px}.hero{padding:17px}.card{padding:13px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a href="/" class="back-link" aria-label="Kembali ke beranda"><i class="fa-solid fa-arrow-left"></i></a>
+      <div class="brand"><img src="/logo.svg" alt=""/> NOKOTPOTP</div>
+      <span class="page-label">REFERRAL</span>
+    </header>
+
+    <section class="hero">
+      <div class="hero-kicker"><i class="fa-solid fa-sparkles"></i> REFERRAL CLUB</div>
+      <h1 class="hero-title">Ajak teman.<br/>Dapat <em>20%</em>.</h1>
+      <p class="hero-copy">Setiap deposit teman yang berhasil memberimu komisi ke saldo. Makin banyak teman, makin banyak kesempatan.</p>
+      <span class="limit-pill"><i class="fa-solid fa-infinity"></i> Tanpa batas jumlah deposit</span>
+    </section>
+
+    <section class="card">
+      <h2 class="card-heading"><i class="fa-solid fa-ticket"></i> Kode undanganmu</h2>
+      <div class="invite-code-box">
+        <div>
+          <div class="overline">Kode referral</div>
+          <strong id="referral-code-display" class="referral-code">Memuat...</strong>
+        </div>
+        <button id="copy-code-btn" class="btn btn-compact" type="button" disabled><i class="fa-regular fa-copy"></i> Salin kode</button>
+      </div>
+      <div id="invite-link" class="link-box">Memuat link undangan...</div>
+      <button id="copy-link-btn" class="btn btn-primary" type="button" disabled><i class="fa-solid fa-link"></i> Salin link undangan</button>
+      <div id="copy-message" class="copy-feedback" role="status"></div>
+    </section>
+
+    <section id="claim-referral-card" class="card" style="display:none">
+      <h2 class="card-heading"><i class="fa-solid fa-link"></i>Sudah daftar tanpa kode?</h2>
+      <p class="muted" style="margin:0 0 11px">Kaitkan kode teman satu kali. Komisi berlaku untuk deposit sukses setelah kode terhubung.</p>
+      <form id="claim-referral-form" style="display:flex;flex-direction:column;gap:9px">
+        <input id="claim-referral-code" class="code-input" type="text" placeholder="NOKOTPXXXXX" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateClaimReferralCode()"/>
+        <div id="claim-referral-status" role="status" style="display:none;font-size:.72rem"></div>
+        <button id="claim-referral-submit" class="btn btn-primary" type="submit" disabled><i class="fa-solid fa-check"></i> Kaitkan kode</button>
+      </form>
+    </section>
+
+    <div id="error-message" class="error" role="alert"></div>
+
+    <section class="stats" aria-label="Statistik referral">
+      <div class="stat-card">
+        <div class="stat-label"><i class="fa-solid fa-user-group"></i> Teman bergabung</div>
+        <div id="invited-count" class="stat-value">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fa-solid fa-coins"></i> Total komisi</div>
+        <div id="total-earned" class="stat-value accent">-</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-heading"><i class="fa-solid fa-arrow-trend-up"></i> Komisi terbaru</h2>
+      <p class="section-note">Komisi tercatat setelah deposit teman berhasil.</p>
+      <div id="commission-history" class="muted">Memuat riwayat...</div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-heading"><i class="fa-solid fa-people-group"></i> Temanmu</h2>
+      <div id="referral-list" class="muted">Memuat daftar teman...</div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-heading"><i class="fa-solid fa-calculator"></i> Simulasi komisi</h2>
+      <table class="earnings-table">
+        <thead><tr><th>Deposit sukses</th><th style="text-align:right">Komisi 20%</th></tr></thead>
+        <tbody>
+          <tr><td>Rp 5.000</td><td>Rp 1.000</td></tr>
+          <tr><td>Rp 25.000</td><td>Rp 5.000</td></tr>
+          <tr><td>Rp 50.000</td><td>Rp 10.000</td></tr>
+          <tr><td>Rp 100.000</td><td>Rp 20.000</td></tr>
+          <tr><td>Dan seterusnya</td><td>20% dari deposit</td></tr>
+        </tbody>
+      </table>
+      <p class="disclaimer">Contoh di atas hanya simulasi. Semua nominal deposit teman yang sukses mendapat komisi 20%, tanpa batas jumlah deposit.</p>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+    <a href="/"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
+    <a href="/withdrawal.html"><i class="fa-solid fa-wallet"></i><span>Tarik Saldo</span></a>
+    <a href="/referral.html" class="active" aria-current="page"><i class="fa-solid fa-user-group"></i><span>Undang Teman</span></a>
+  </nav>
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/referral.js"></script>
+</body>
+</html>

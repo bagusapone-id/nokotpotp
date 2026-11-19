@@ -33,7 +33,13 @@ console.log(JSON.stringify({
     users: {
       "$uid": {
         ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
+        ".write": "false"
+      }
+    },
+    withdrawal_requests: {
+      "$uid": {
+        ".read": "auth !== null && auth.uid === $uid",
+        ".write": "false"
       }
     },
     countries: {
