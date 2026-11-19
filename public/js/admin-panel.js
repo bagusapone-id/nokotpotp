@@ -792,6 +792,9 @@ window.deleteNotif = async function(id) {
 // ── Users ──
 let usersData = {};
 const balanceAdjustmentsInProgress = new Set();
+const userSearchInput = document.getElementById("user-search");
+
+if (userSearchInput) userSearchInput.addEventListener("input", renderUsers);
 
 function listenUsers() {
   loadUsers();
@@ -821,14 +824,17 @@ async function loadUsers() {
 function renderUsers() {
   const container = document.getElementById("users-list");
   if (!container) return;
-  const entries = Object.entries(usersData).sort((a,b) => (a[1].username||'').localeCompare(b[1].username||''));
-  if (!entries.length) {
-    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">Belum ada user.</div>';
-    return;
-  }
+  const allEntries = Object.entries(usersData).sort((a,b) => (a[1].username||'').localeCompare(b[1].username||''));
+  const query = userSearchInput ? userSearchInput.value.trim().toLowerCase() : "";
+  const entries = query
+    ? allEntries.filter(([uid, user]) =>
+        [uid, user.username, user.referral_code]
+          .some(value => String(value || "").toLowerCase().includes(query))
+      )
+    : allEntries;
 
   // Render appeals section
-  const appeals = entries.filter(([,u]) => u.banned && u.appeal_pending);
+  const appeals = allEntries.filter(([,u]) => u.banned && u.appeal_pending);
   const appealsSection = document.getElementById('appeals-section');
   const appealsList = document.getElementById('appeals-list');
   const appealCount = document.getElementById('appeal-count');
@@ -851,6 +857,12 @@ function renderUsers() {
     } else {
       appealsSection.style.display = 'none';
     }
+  }
+
+  if (!entries.length) {
+    const message = query ? "Tidak ada user yang cocok dengan pencarian." : "Belum ada user.";
+    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">' + message + '</div>';
+    return;
   }
 
   container.innerHTML = entries.map(([uid, u]) => {
