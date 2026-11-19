@@ -29,7 +29,7 @@ async function loadReferralData(user) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Gagal memuat data referral.');
 
-    const inviteLink = `${window.location.origin}/?ref=${encodeURIComponent(data.referral_code)}`;
+    const inviteLink = `${window.location.origin}/daftar?ref=${encodeURIComponent(data.referral_code)}`;
     referralCodeDisplay.textContent = data.referral_code;
     inviteLinkEl.textContent = inviteLink;
     copyButton.disabled = false;

@@ -8,6 +8,14 @@
   ],
   "routes": [
     {
+      "src": "/withdrawal",
+      "dest": "/public/withdrawal.html"
+    },
+    {
+      "src": "/referral",
+      "dest": "/public/referral.html"
+    },
+    {
       "src": "/public/(.*)",
       "dest": "/public/$1"
     },

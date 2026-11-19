@@ -88,6 +88,10 @@ window.showAuthTab = function(tab) {
   const regForm   = document.getElementById("register-form");
   const loginBtn  = document.getElementById("tab-login-btn");
   const regBtn    = document.getElementById("tab-register-btn");
+  const authPath = tab === "login" ? "/login" : "/daftar";
+  if (window.location.pathname !== authPath) {
+    window.history.replaceState(null, "", authPath + window.location.search + window.location.hash);
+  }
   document.getElementById("auth-error").classList.add("hidden");
   document.getElementById("auth-success").classList.add("hidden");
   if (tab === "login") {
@@ -278,8 +282,7 @@ function showLoginScreen() {
     document.getElementById("reg-referral-code").value = referralCodeFromLink.trim().toUpperCase();
   }
   window.validateReferralCodeInput();
-  // Pastikan tab login aktif
-  showAuthTab("login");
+  showAuthTab(window.location.pathname === "/daftar" || referralCodeFromLink ? "register" : "login");
   const ls = document.getElementById("login-screen");
   ls.classList.remove("hidden");
   ls.style.display = "flex";
@@ -291,6 +294,9 @@ function showApp() {
   document.getElementById("splash-screen")?.remove();
   document.getElementById("login-screen").classList.add("hidden");
   document.getElementById("app-screen").classList.remove("hidden");
+  if (window.location.pathname === "/login" || window.location.pathname === "/daftar") {
+    window.history.replaceState(null, "", "/");
+  }
   initApp();
 }
 
