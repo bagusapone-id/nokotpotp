@@ -166,7 +166,7 @@ function renderHistory(withdrawals) {
     PENDING: ['Menunggu', 'status-pending'],
     COMPLETED: ['Selesai', 'status-completed'],
     REJECTING: ['Mengembalikan saldo', 'status-rejecting'],
-    REJECTED: ['Ditolak · saldo dikembalikan', 'status-rejected'],
+    REJECTED: ['Ditolak', 'status-rejected'],
   };
   container.replaceChildren(...withdrawals.map(withdrawal => {
     const item = document.createElement('div');
