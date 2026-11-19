@@ -32,6 +32,13 @@ function selectBank(bank) {
   });
 }
 
+function showWithdrawalAccess(state) {
+  document.getElementById('withdrawal-loading').hidden = state !== 'loading';
+  document.getElementById('withdrawal-locked').hidden = state !== 'locked';
+  document.getElementById('withdrawal-page').hidden = state !== 'available';
+  document.getElementById('withdrawal-nav').hidden = state !== 'available';
+}
+
 firebase.auth().onAuthStateChanged(user => {
   if (!user) {
     window.location.replace('/');
@@ -81,6 +88,10 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
     document.querySelectorAll('.amount-preset').forEach(preset => preset.classList.remove('active'));
     await loadWithdrawalHistory();
   } catch (error) {
+    if (error.code === 'MINIMUM_BALANCE_REQUIRED') {
+      showWithdrawalAccess('locked');
+      return;
+    }
     showMessage(error.message || 'Terjadi kesalahan saat mengirim permintaan.', true);
   } finally {
     button.disabled = false;
@@ -95,10 +106,16 @@ async function loadWithdrawalHistory() {
     const response = await withdrawalFetch('/api/withdrawals');
     const data = await parseWithdrawalResponse(response);
 
+    showWithdrawalAccess('available');
     currentBalance = Number(data.balance) || 0;
     document.getElementById('available-balance').textContent = formatRupiah(currentBalance);
     renderHistory(Array.isArray(data.withdrawals) ? data.withdrawals : []);
   } catch (error) {
+    if (error.code === 'MINIMUM_BALANCE_REQUIRED') {
+      showWithdrawalAccess('locked');
+      return;
+    }
+    showWithdrawalAccess('available');
     historyEl.textContent = error.message || 'Riwayat penarikan tidak dapat dimuat.';
     document.getElementById('available-balance').textContent = 'Tidak tersedia';
   }
@@ -129,7 +146,9 @@ async function parseWithdrawalResponse(response) {
     throw new Error(`Respons server tidak valid (HTTP ${response.status}).`);
   }
   if (!response.ok) {
-    throw new Error(data.message || `Permintaan gagal (HTTP ${response.status}).`);
+    const error = new Error(data.message || `Permintaan gagal (HTTP ${response.status}).`);
+    error.code = data.error;
+    throw error;
   }
   return data;
 }

@@ -7,19 +7,30 @@ const authUser = require('../middleware/authUser');
 const { sendWithdrawalNotification } = require('../services/telegramService');
 
 const MIN_WITHDRAWAL = 15000;
+const MINIMUM_BALANCE_TO_WITHDRAW = 25000;
+const MINIMUM_BALANCE_MESSAGE = 'Saldo minimal Rp 25.000 diperlukan untuk menggunakan fitur tarik saldo.';
 const BANKS = {
   dana: 'DANA',
   gopay: 'GoPay',
   seabank: 'SeaBank',
 };
 
+function respondMinimumBalanceRequired(res) {
+  return res.status(403).json({
+    error: 'MINIMUM_BALANCE_REQUIRED',
+    message: MINIMUM_BALANCE_MESSAGE,
+    minimum_balance: MINIMUM_BALANCE_TO_WITHDRAW,
+  });
+}
+
 router.get('/', authUser, async (req, res) => {
   const uid = req.user.uid;
   try {
-    const [balanceSnap, requestsSnap] = await Promise.all([
-      db.ref(`users/${uid}/balance`).once('value'),
-      db.ref(`withdrawal_requests/${uid}`).once('value'),
-    ]);
+    const balanceSnap = await db.ref(`users/${uid}/balance`).once('value');
+    const balance = Number(balanceSnap.val()) || 0;
+    if (balance < MINIMUM_BALANCE_TO_WITHDRAW) return respondMinimumBalanceRequired(res);
+
+    const requestsSnap = await db.ref(`withdrawal_requests/${uid}`).once('value');
     const withdrawals = Object.entries(requestsSnap.val() || {})
       .map(([withdrawal_id, request]) => ({ withdrawal_id, ...request }))
       .filter(request => request.status !== 'FAILED')
@@ -27,7 +38,7 @@ router.get('/', authUser, async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      balance: Number(balanceSnap.val()) || 0,
+      balance,
       withdrawals,
     });
   } catch (err) {
@@ -81,6 +92,9 @@ router.post('/', authUser, async (req, res) => {
     if (!accountSnap.exists()) {
       return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Akun tidak ditemukan.' });
     }
+    if ((Number(accountSnap.child('balance').val()) || 0) < MINIMUM_BALANCE_TO_WITHDRAW) {
+      return respondMinimumBalanceRequired(res);
+    }
 
     await requestRef.set(request);
     const result = await userRef.transaction(user => {
@@ -93,7 +107,7 @@ router.post('/', authUser, async (req, res) => {
       if (user.withdrawal_reservations[withdrawalId]) return user;
 
       const balance = Number(user.balance) || 0;
-      if (balance < amount) return;
+      if (balance < MINIMUM_BALANCE_TO_WITHDRAW || balance < amount) return;
 
       user.balance = balance - amount;
       user.withdrawal_reservations[withdrawalId] = { amount, created_at: createdAt };
@@ -108,6 +122,7 @@ router.post('/', authUser, async (req, res) => {
         return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Akun tidak ditemukan.' });
       }
       const availableBalance = Number(userSnap.child('balance').val()) || 0;
+      if (availableBalance < MINIMUM_BALANCE_TO_WITHDRAW) return respondMinimumBalanceRequired(res);
       if (availableBalance < amount) {
         return res.status(400).json({ error: 'INSUFFICIENT_BALANCE', message: 'Saldo tidak mencukupi.' });
       }
