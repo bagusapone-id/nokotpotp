@@ -1,5 +1,6 @@
 const { db } = require('../config/firebase');
 const { retryTransaction } = require('../utils/retryTransaction');
+const { getBalanceBuckets, spendBalance } = require('./balanceService');
 
 class PurchaseError extends Error {
   constructor(code, message) {
@@ -21,6 +22,7 @@ async function ensureUserRecord(uid, username) {
     await db.ref(`users/${uid}`).set({
       username: username || uid,
       balance: 0,
+      withdrawable_balance: 0,
     });
   }
 }
@@ -81,30 +83,31 @@ async function purchase(uid, username, countryKey) {
 
   // 4. Atomic: deduct balance + lock stock + create order
   await retryTransaction(async () => {
-    const balanceRef = db.ref(`users/${uid}/balance`);
+    const userRef = db.ref(`users/${uid}`);
+    let spendBreakdown = null;
 
-    const txResult = await balanceRef.transaction((bal) => {
-      // Firebase calls this with null first (optimistic concurrency check).
-      // Returning null tells Firebase "no data here yet, skip" - 
-      // it will retry with the real value.
-      if (bal === null) return null;
-
-      const balance = Number(bal) || 0;
-      if (balance < price) {
-        // Return undefined to ABORT the transaction
-        return undefined;
-      }
-      return balance - price;
+    const txResult = await userRef.transaction(user => {
+      if (user === null) return null;
+      if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+      if (getBalanceBuckets(user).balance < price) return;
+      spendBreakdown = spendBalance(user, price);
+      if (!spendBreakdown) return;
+      return user;
     });
 
     if (!txResult.committed) {
       // Re-read actual balance to give accurate error
-      const freshSnap = await db.ref(`users/${uid}/balance`).once('value');
-      const freshBalance = freshSnap.val() || 0;
+      const freshSnap = await userRef.once('value');
+      const freshBalance = freshSnap.exists()
+        ? getBalanceBuckets(freshSnap.val()).balance
+        : 0;
       throw new PurchaseError(
         'INSUFFICIENT_BALANCE',
         `Saldo tidak mencukupi. Saldo: Rp ${Number(freshBalance).toLocaleString('id-ID')}, Harga: Rp ${Number(price).toLocaleString('id-ID')}.`
       );
+    }
+    if (!spendBreakdown) {
+      throw new Error(`Could not record balance split for order ${orderId}`);
     }
 
     // Lock stock
@@ -125,6 +128,8 @@ async function purchase(uid, username, countryKey) {
       expires_at: expiresAt,
       is_refunded: false,
       price: price,
+      withdrawable_spent: spendBreakdown.withdrawable_spent,
+      bonus_spent: spendBreakdown.bonus_spent,
     });
   });
 

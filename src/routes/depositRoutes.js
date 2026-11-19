@@ -4,6 +4,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const authUser = require('../middleware/authUser');
 const { db } = require('../config/firebase');
+const { addDepositCredit, addWithdrawableCredit } = require('../services/balanceService');
 
 // ── Pakasir API v2 base ──────────────────────────────────────────────────────
 const PAKASIR_BASE = 'https://app.pakasir.com';
@@ -262,18 +263,25 @@ async function processSuccessfulDeposit(depositId, deposit, detail) {
   const eligibleForDouble = event && event.active === true && amount >= (event.min_amount || 25000);
   const userRef = db.ref(`users/${deposit.user_id}`);
   const userResult = await userRef.transaction(user => {
-    if (!user || typeof user !== 'object') return;
+    if (user === null) return null;
+    if (!user || typeof user !== 'object' || Array.isArray(user)) return;
     if (user.deposit_credits && user.deposit_credits[depositId]) return;
 
     const eventApplied = Boolean(eligibleForDouble && !(user.events && user.events.deposit_double_used));
-    const creditAmount = eventApplied ? amount * 2 : amount;
-    user.balance = (Number(user.balance) || 0) + creditAmount;
+    const eventBonus = eventApplied ? amount : 0;
+    const creditAmount = amount + eventBonus;
+    addDepositCredit(user, amount, eventBonus);
     if (eventApplied) {
       user.events = user.events || {};
       user.events.deposit_double_used = true;
     }
     user.deposit_credits = user.deposit_credits || {};
-    user.deposit_credits[depositId] = { credited: creditAmount, event_applied: eventApplied };
+    user.deposit_credits[depositId] = {
+      credited: creditAmount,
+      withdrawable_credit: amount,
+      event_bonus: eventBonus,
+      event_applied: eventApplied,
+    };
     return user;
   });
   const credit = userResult.snapshot.child(`deposit_credits/${depositId}`).val();
@@ -283,10 +291,11 @@ async function processSuccessfulDeposit(depositId, deposit, detail) {
   if (deposit.referrer_id && referralCommission > 0) {
     const referrerRef = db.ref(`users/${deposit.referrer_id}`);
     const referralResult = await referrerRef.transaction(user => {
-      if (!user || typeof user !== 'object') return;
+      if (user === null) return null;
+      if (!user || typeof user !== 'object' || Array.isArray(user)) return;
       if (user.referral_earnings && user.referral_earnings[depositId]) return;
 
-      user.balance = (Number(user.balance) || 0) + referralCommission;
+      addWithdrawableCredit(user, referralCommission);
       user.referral_earnings = user.referral_earnings || {};
       user.referral_earnings[depositId] = {
         referred_user_id: deposit.user_id,
