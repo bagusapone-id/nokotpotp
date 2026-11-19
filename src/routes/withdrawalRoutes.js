@@ -43,14 +43,16 @@ router.get('/', authUser, async (req, res) => {
     const balance = userSnap.exists()
       ? getBalanceBuckets(userSnap.val()).withdrawableBalance
       : 0;
-    const accessDenial = await getWithdrawalAccessDenial(uid, balance);
-    if (accessDenial) return res.status(403).json(accessDenial);
-
     const requestsSnap = await db.ref(`withdrawal_requests/${uid}`).once('value');
     const withdrawals = Object.entries(requestsSnap.val() || {})
       .map(([withdrawal_id, request]) => ({ withdrawal_id, ...request }))
       .filter(request => request.status !== 'FAILED')
       .sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
+
+    if (!withdrawals.length) {
+      const accessDenial = await getWithdrawalAccessDenial(uid, balance);
+      if (accessDenial) return res.status(403).json(accessDenial);
+    }
 
     return res.status(200).json({
       success: true,

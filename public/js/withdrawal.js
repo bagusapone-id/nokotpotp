@@ -90,7 +90,7 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
     await loadWithdrawalHistory();
   } catch (error) {
     if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS'].includes(error.code)) {
-      showWithdrawalAccess('locked', error.message);
+      showMessage(error.message, true);
       return;
     }
     showMessage(error.message || 'Terjadi kesalahan saat mengirim permintaan.', true);
