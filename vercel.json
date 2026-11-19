@@ -3,17 +3,20 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "public/**"
+      }
     }
   ],
   "routes": [
     {
       "src": "/withdrawal",
-      "dest": "/public/withdrawal.html"
+      "dest": "server.js"
     },
     {
       "src": "/referral",
-      "dest": "/public/referral.html"
+      "dest": "server.js"
     },
     {
       "src": "/public/(.*)",
