@@ -74,7 +74,7 @@ router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res
     if (!storedRequest) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Permintaan penarikan tidak ditemukan.' });
     }
-    if (!Number.isSafeInteger(Number(storedRequest.amount)) || Number(storedRequest.amount) < 15000) {
+    if (!Number.isSafeInteger(Number(storedRequest.amount)) || Number(storedRequest.amount) < 1000) {
       return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Nominal penarikan tidak valid.' });
     }
 

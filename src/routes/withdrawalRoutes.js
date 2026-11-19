@@ -7,9 +7,9 @@ const authUser = require('../middleware/authUser');
 const { sendWithdrawalNotification } = require('../services/telegramService');
 const { getBalanceBuckets } = require('../services/balanceService');
 
-const MIN_WITHDRAWAL = 25000;
-const MINIMUM_BALANCE_TO_WITHDRAW = 50000;
-const MINIMUM_BALANCE_MESSAGE = 'Saldo utama yang bisa ditarik minimal Rp 50.000. Bonus event tidak dihitung.';
+const MIN_WITHDRAWAL = 1000;
+const MINIMUM_BALANCE_TO_WITHDRAW = 25000;
+const MINIMUM_BALANCE_MESSAGE = 'Saldo utama harus minimal Rp 25.000 dan minimal penarikan Rp 1.000. Bonus event tidak dihitung.';
 const NO_TRANSACTIONS_MESSAGE = 'Tidak dapat mengakses fitur tarik saldo karena belum melakukan transaksi apa pun.';
 const BANKS = {
   dana: 'DANA',
@@ -73,7 +73,7 @@ router.post('/', authUser, async (req, res) => {
   if (!Number.isSafeInteger(amount) || amount < MIN_WITHDRAWAL) {
     return res.status(400).json({
       error: 'INVALID_AMOUNT',
-      message: 'Minimal penarikan adalah Rp 25.000.',
+      message: 'Minimal penarikan adalah Rp 1.000.',
     });
   }
   if (!BANKS[bankKey]) {
