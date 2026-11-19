@@ -2,6 +2,7 @@
 let adminUser = null, adminToken = null, currentStockTab = "indo";
 let stockData = {}, countriesData = {}, ordersData = {};
 let countrySearchQueryAdmin = "";
+let withdrawalRefreshTimer = null;
 
 // ── Auth ──
 firebaseAuth.onAuthStateChanged(async (user) => {
@@ -60,11 +61,19 @@ function showApp() {
   initAdmin();
 }
 
-function initAdmin() { listenOrders(); listenStock(); listenCountries(); listenNotifications(); listenUsers(); }
+function initAdmin() {
+  listenOrders();
+  listenStock();
+  listenCountries();
+  listenNotifications();
+  listenUsers();
+  loadWithdrawals();
+  if (!withdrawalRefreshTimer) withdrawalRefreshTimer = setInterval(loadWithdrawals, 30000);
+}
 
 // ── Nav tabs ──
 window.showAdminTab = function(tab) {
-  ["orders","stock","countries","notifications","users"].forEach(t => {
+  ["orders","stock","countries","notifications","withdrawals","users"].forEach(t => {
     const el = document.getElementById("tab-"+t);
     if (el) el.style.display = "none";
     const nav = document.getElementById("nav-"+t);
@@ -76,6 +85,7 @@ window.showAdminTab = function(tab) {
   if (navEl) navEl.classList.add("active");
   if (tab === 'users') loadUsers();
   if (tab === 'notifications') loadEventStatus();
+  if (tab === 'withdrawals') loadWithdrawals();
 };
 
 // ── Orders ──
@@ -437,6 +447,113 @@ document.getElementById("country-form").addEventListener("submit", async (e) => 
 });
 
 function formatRupiah(n) { return "Rp " + Number(n||0).toLocaleString("id-ID"); }
+
+async function loadWithdrawals() {
+  const container = document.getElementById("withdrawal-list");
+  if (!container) return;
+  try {
+    const res = await adminFetch("/api/admin/withdrawals");
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.message || "Gagal memuat penarikan.");
+    renderWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
+  } catch (err) {
+    document.getElementById("withdrawal-count").textContent = "!";
+    container.textContent = err.message || "Gagal memuat permintaan penarikan.";
+  }
+}
+
+function renderWithdrawals(withdrawals) {
+  const container = document.getElementById("withdrawal-list");
+  const pendingCount = withdrawals.filter(item => item.status === "PENDING" || item.status === "REJECTING").length;
+  document.getElementById("withdrawal-count").textContent = String(pendingCount);
+  withdrawals.sort((a, b) => {
+    const statusOrder = item => item.status === "PENDING" || item.status === "REJECTING" ? 0 : 1;
+    return statusOrder(a) - statusOrder(b) || Number(b.created_at || 0) - Number(a.created_at || 0);
+  });
+
+  if (!withdrawals.length) {
+    container.innerHTML = '<div class="card" style="padding:24px;text-align:center;color:#64748b;font-size:.8125rem">Belum ada permintaan penarikan.</div>';
+    return;
+  }
+
+  const statusLabels = {
+    PROCESSING: ["Memproses", "#fbbf24"],
+    PENDING: ["Menunggu", "#fbbf24"],
+    COMPLETED: ["Selesai", "#34d399"],
+    REJECTING: ["Refund diproses", "#fbbf24"],
+    REJECTED: ["Ditolak &amp; direfund", "#fb7185"],
+  };
+  container.innerHTML = withdrawals.map(item => {
+    const [statusText, statusColor] = statusLabels[item.status] || ["Status tidak diketahui", "#94a3b8"];
+    const pending = item.status === "PENDING";
+    const rejecting = item.status === "REJECTING";
+    const actions = pending
+      ? '<div style="display:flex;gap:8px;margin-top:12px">' +
+          '<button class="btn btn-primary btn-sm" data-action="complete" data-uid="' + escapeHtml(item.user_id) + '" data-id="' + escapeHtml(item.withdrawal_id) + '" data-amount="' + Number(item.amount || 0) + '" style="flex:1"><i class="fa-solid fa-check"></i> Selesai dibayar</button>' +
+          '<button class="btn btn-ghost btn-sm" data-action="reject" data-uid="' + escapeHtml(item.user_id) + '" data-id="' + escapeHtml(item.withdrawal_id) + '" data-amount="' + Number(item.amount || 0) + '" style="flex:1;color:#fb7185"><i class="fa-solid fa-xmark"></i> Tolak &amp; refund</button>' +
+        '</div>'
+      : rejecting
+        ? '<button class="btn btn-amber btn-sm" data-action="reject" data-uid="' + escapeHtml(item.user_id) + '" data-id="' + escapeHtml(item.withdrawal_id) + '" data-amount="' + Number(item.amount || 0) + '" style="margin-top:12px"><i class="fa-solid fa-rotate-right"></i> Lanjutkan refund</button>'
+        : "";
+    return '<div class="card" style="padding:14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">' +
+        '<div><div style="font-size:.875rem;font-weight:700;color:#e2e8f0">' + escapeHtml(item.username) + '</div>' +
+        '<div style="font-size:.6875rem;color:#64748b;margin-top:3px">' + escapeHtml(formatWithdrawalDate(item.created_at)) + '</div></div>' +
+        '<span style="font-size:.6875rem;font-weight:700;color:' + statusColor + ';white-space:nowrap">' + statusText + '</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.75rem">' +
+        '<div><div style="color:#64748b">Nominal</div><strong style="color:#34d399">' + escapeHtml(formatRupiah(item.amount)) + '</strong></div>' +
+        '<div><div style="color:#64748b">Bank / e-wallet</div><strong style="color:#e2e8f0">' + escapeHtml(item.bank) + '</strong></div>' +
+        '<div><div style="color:#64748b">Nomor rekening</div><strong style="color:#e2e8f0;font-family:monospace">' + escapeHtml(item.account_number) + '</strong></div>' +
+        '<div><div style="color:#64748b">Biaya</div><strong style="color:#e2e8f0">Gratis</strong></div>' +
+      '</div>' + actions +
+    '</div>';
+  }).join("");
+
+  container.onclick = event => {
+    const button = event.target.closest("button[data-action]");
+    if (button) processWithdrawal(button.dataset.uid, button.dataset.id, button.dataset.action, button.dataset.amount);
+  };
+}
+
+window.processWithdrawal = async function(uid, withdrawalId, action, amount) {
+  const amountText = formatRupiah(amount);
+  const complete = action === "complete";
+  const confirmed = complete
+    ? await Dialog.confirm("Konfirmasi penarikan?", "Pastikan transfer sebesar <strong style=\"color:#34d399\">" + amountText + "</strong> sudah dilakukan ke rekening tujuan.")
+    : await Dialog.confirmDanger("Tolak penarikan?", "Saldo sebesar <strong style=\"color:#34d399\">" + amountText + "</strong> akan dikembalikan ke akun user.", "Ya, Tolak & Refund");
+  if (!confirmed) return;
+
+  try {
+    const res = await adminFetch("/api/admin/withdrawals/" + encodeURIComponent(uid) + "/" + encodeURIComponent(withdrawalId) + "/" + action, {
+      method: "POST",
+    });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert("error", "Gagal", data.message || "Permintaan tidak dapat diproses.");
+      return;
+    }
+    await loadWithdrawals();
+    await Dialog.alert("success", "Berhasil", data.message || "Status penarikan diperbarui.");
+  } catch {
+    await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet.");
+  }
+};
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[character]));
+}
+
+function formatWithdrawalDate(timestamp) {
+  const date = new Date(Number(timestamp));
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("id-ID");
+}
 
 // ── Delete Stock ──
 window.deleteStock = async function(stockId) {

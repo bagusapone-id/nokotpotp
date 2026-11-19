@@ -73,7 +73,7 @@
     .alert-g{background:var(--green-dim);border:1px solid var(--green-bdr);color:#6ee7b7}
     .alert i{flex-shrink:0;margin-top:1px;font-size:12px}
     /* Nav tab */
-    .nav-tab{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:.8125rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;color:#475569}
+    .nav-tab{display:inline-flex;flex:0 0 auto;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:.8125rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;color:#475569}
     .nav-tab.active{background:var(--purple-dim);border-color:var(--purple-bdr);color:#c084fc}
     .nav-tab:hover:not(.active){color:#94a3b8;background:rgba(255,255,255,.04)}
     /* Status badge */
@@ -160,7 +160,7 @@
   </header>
 
   <!-- Nav tabs -->
-  <div style="padding:8px 18px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:4px">
+  <div style="padding:8px 18px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:4px;overflow-x:auto;scrollbar-width:none">
     <button onclick="showAdminTab('orders')" id="nav-orders" class="nav-tab active">
       <i class="fa-solid fa-list-check" style="font-size:12px"></i> Order
       <span id="order-count" style="background:rgba(168,85,247,.2);color:#c084fc;font-size:.625rem;font-weight:700;padding:1px 6px;border-radius:20px">0</span>
@@ -173,6 +173,10 @@
     </button>
     <button onclick="showAdminTab('notifications')" id="nav-notifications" class="nav-tab">
       <i class="fa-solid fa-bell" style="font-size:12px"></i> Notif
+    </button>
+    <button onclick="showAdminTab('withdrawals')" id="nav-withdrawals" class="nav-tab">
+      <i class="fa-solid fa-wallet" style="font-size:12px"></i> Tarik
+      <span id="withdrawal-count" style="background:rgba(245,158,11,.16);color:#fbbf24;font-size:.625rem;font-weight:700;padding:1px 6px;border-radius:20px">0</span>
     </button>
     <button onclick="showAdminTab('users')" id="nav-users" class="nav-tab">
       <i class="fa-solid fa-users" style="font-size:12px"></i> Users
@@ -439,6 +443,13 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- ── TAB WITHDRAWALS ── -->
+    <div id="tab-withdrawals" style="display:none">
+      <div id="withdrawal-list" style="display:flex;flex-direction:column;gap:10px">
+        <div class="sk" style="height:100px"></div>
       </div>
     </div>
 

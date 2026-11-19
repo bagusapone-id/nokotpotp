@@ -2,6 +2,94 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
+const authUser = require('../middleware/authUser');
+const { CODE_PATTERN, ensureReferralCode } = require('../services/referralService');
+
+// GET /api/user/referrals — referral link, invited users, and earned commissions
+router.get('/referrals', authUser, async (req, res) => {
+  const uid = req.user.uid;
+  try {
+    const userSnap = await db.ref(`users/${uid}`).once('value');
+    if (!userSnap.exists()) return res.status(404).json({ error: 'NOT_FOUND', message: 'Akun tidak ditemukan.' });
+    const [referralsSnap, referralCode, attributionSnap] = await Promise.all([
+      db.ref(`referrals/${uid}`).once('value'),
+      ensureReferralCode(uid),
+      db.ref(`referral_attributions/${uid}`).once('value'),
+    ]);
+    const referrals = referralsSnap.val() || {};
+    const earnings = (userSnap.val() || {}).referral_earnings || {};
+    const history = Object.entries(earnings)
+      .map(([depositId, earning]) => ({ deposit_id: depositId, ...earning }))
+      .sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
+
+    return res.status(200).json({
+      success: true,
+      referral_code: referralCode,
+      can_claim_referral: !attributionSnap.exists(),
+      invited_count: Object.keys(referrals).length,
+      total_earned: history.reduce((total, earning) => total + (Number(earning.commission) || 0), 0),
+      referrals: Object.entries(referrals)
+        .map(([user_id, referral]) => ({ user_id, ...referral }))
+        .sort((a, b) => Number(b.joined_at || 0) - Number(a.joined_at || 0)),
+      history,
+    });
+  } catch (err) {
+    console.error('[userRoutes] referral history error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat riwayat referral.' });
+  }
+});
+
+router.post('/referrals/claim', authUser, async (req, res) => {
+  const referralCode = typeof req.body.referralCode === 'string'
+    ? req.body.referralCode.trim().toUpperCase()
+    : '';
+  if (!CODE_PATTERN.test(referralCode)) {
+    return res.status(400).json({ error: 'INVALID_REFERRAL_CODE', message: 'Format kode harus NOKOTP + 5 karakter.' });
+  }
+
+  const uid = req.user.uid;
+  try {
+    const codeSnap = await db.ref(`referral_codes/${referralCode}`).once('value');
+    const referrerId = codeSnap.child('user_id').val();
+    if (!referrerId) {
+      return res.status(400).json({ error: 'INVALID_REFERRAL_CODE', message: 'Kode referral tidak ditemukan.' });
+    }
+    if (referrerId === uid) {
+      return res.status(400).json({ error: 'SELF_REFERRAL', message: 'Kode referral sendiri tidak dapat digunakan.' });
+    }
+
+    const [referrerSnap, userSnap] = await Promise.all([
+      db.ref(`users/${referrerId}`).once('value'),
+      db.ref(`users/${uid}`).once('value'),
+    ]);
+    if (!referrerSnap.exists()) {
+      return res.status(400).json({ error: 'INVALID_REFERRAL_CODE', message: 'Kode referral tidak ditemukan.' });
+    }
+    if (!userSnap.exists()) return res.status(404).json({ error: 'NOT_FOUND', message: 'Akun tidak ditemukan.' });
+
+    const attributionRef = db.ref(`referral_attributions/${uid}`);
+    const result = await attributionRef.transaction(current => {
+      if (current === null) return { referrer_id: referrerId, created_at: Date.now(), source: 'post_signup' };
+      return;
+    });
+    const attribution = result.snapshot.val();
+    if (!attribution || attribution.referrer_id !== referrerId) {
+      return res.status(409).json({
+        error: 'REFERRAL_ALREADY_SET',
+        message: 'Kode referral untuk akun ini sudah pernah ditetapkan.',
+      });
+    }
+
+    await db.ref(`referrals/${referrerId}/${uid}`).set({
+      username: userSnap.child('username').val() || uid,
+      joined_at: attribution.created_at,
+    });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[userRoutes] referral claim error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menyimpan kode referral.' });
+  }
+});
 
 // POST /api/user/appeal — banned user submit appeal
 // Note: authUser will check banned but we need to allow this endpoint for banned users

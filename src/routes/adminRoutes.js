@@ -10,6 +10,126 @@ router.get('/verify', authAdmin, (req, res) => {
   return res.status(200).json({ admin: true, uid: req.user.uid });
 });
 
+router.get('/withdrawals', authAdmin, async (req, res) => {
+  try {
+    const snapshot = await db.ref('withdrawal_requests').once('value');
+    const withdrawals = [];
+    const cutoff = Date.now() - 5 * 60 * 1000;
+
+    for (const [uid, userRequests] of Object.entries(snapshot.val() || {})) {
+      for (const [withdrawalId, request] of Object.entries(userRequests || {})) {
+        if (!request || typeof request !== 'object') continue;
+        if (request.status === 'PROCESSING' && Number(request.created_at) < cutoff) {
+          const reservationSnap = await db.ref(`users/${uid}/withdrawal_reservations/${withdrawalId}`).once('value');
+          const status = reservationSnap.exists() ? 'PENDING' : 'FAILED';
+          await db.ref(`withdrawal_requests/${uid}/${withdrawalId}`).update({ status });
+          request.status = status;
+        }
+        if (request.status !== 'FAILED') {
+          withdrawals.push({ ...request, user_id: uid, withdrawal_id: withdrawalId });
+        }
+      }
+    }
+
+    withdrawals.sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
+    return res.status(200).json({ success: true, withdrawals: withdrawals.slice(0, 200) });
+  } catch (err) {
+    console.error('[adminRoutes] withdrawal list error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat permintaan penarikan.' });
+  }
+});
+
+router.post('/withdrawals/:uid/:withdrawalId/complete', authAdmin, async (req, res) => {
+  const { uid, withdrawalId } = req.params;
+  const requestRef = db.ref(`withdrawal_requests/${uid}/${withdrawalId}`);
+  try {
+    const result = await requestRef.transaction(request => {
+      if (request === null) return null;
+      if (!request || request.status !== 'PENDING') return;
+      request.status = 'COMPLETED';
+      request.processed_at = Date.now();
+      request.processed_by = req.user.uid;
+      return request;
+    });
+
+    if (!result.committed) {
+      const request = result.snapshot.val();
+      if (!request) return res.status(404).json({ error: 'NOT_FOUND', message: 'Permintaan penarikan tidak ditemukan.' });
+      return res.status(409).json({ error: 'INVALID_STATUS', message: 'Permintaan ini sudah diproses atau tidak dapat diselesaikan.' });
+    }
+    return res.status(200).json({ success: true, message: 'Penarikan ditandai selesai.' });
+  } catch (err) {
+    console.error('[adminRoutes] complete withdrawal error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menyelesaikan penarikan.' });
+  }
+});
+
+router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res) => {
+  const { uid, withdrawalId } = req.params;
+  const requestRef = db.ref(`withdrawal_requests/${uid}/${withdrawalId}`);
+  try {
+    const requestSnap = await requestRef.once('value');
+    const storedRequest = requestSnap.val();
+    if (!storedRequest) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Permintaan penarikan tidak ditemukan.' });
+    }
+    if (!Number.isSafeInteger(Number(storedRequest.amount)) || Number(storedRequest.amount) < 15000) {
+      return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Nominal penarikan tidak valid.' });
+    }
+
+    const claimResult = await requestRef.transaction(request => {
+      if (request === null) return null;
+      if (!request || !['PENDING', 'REJECTING'].includes(request.status)) return;
+      request.status = 'REJECTING';
+      request.rejection_started_at = request.rejection_started_at || Date.now();
+      return request;
+    });
+
+    if (!claimResult.committed) {
+      const request = claimResult.snapshot.val();
+      if (!request) return res.status(404).json({ error: 'NOT_FOUND', message: 'Permintaan penarikan tidak ditemukan.' });
+      return res.status(409).json({ error: 'INVALID_STATUS', message: 'Permintaan ini sudah diproses atau tidak dapat ditolak.' });
+    }
+
+    const request = claimResult.snapshot.val();
+    const userRef = db.ref(`users/${uid}`);
+    const refundResult = await userRef.transaction(user => {
+      if (user === null) return null;
+      if (typeof user !== 'object') return;
+      if (!user.withdrawal_refunds || typeof user.withdrawal_refunds !== 'object' ||
+          Array.isArray(user.withdrawal_refunds)) {
+        user.withdrawal_refunds = {};
+      }
+      if (user.withdrawal_refunds[withdrawalId]) return user;
+
+      user.balance = (Number(user.balance) || 0) + Number(request.amount);
+      user.withdrawal_refunds[withdrawalId] = Date.now();
+      return user;
+    });
+
+    if (!refundResult.committed) {
+      return res.status(500).json({ error: 'REFUND_FAILED', message: 'Gagal mengembalikan saldo. Permintaan dapat dicoba kembali.' });
+    }
+
+    const finishResult = await requestRef.transaction(current => {
+      if (current === null) return null;
+      if (!current || current.status !== 'REJECTING') return;
+      current.status = 'REJECTED';
+      current.processed_at = Date.now();
+      current.processed_by = req.user.uid;
+      return current;
+    });
+    if (!finishResult.committed && finishResult.snapshot.child('status').val() !== 'REJECTED') {
+      return res.status(500).json({ error: 'STATUS_UPDATE_FAILED', message: 'Saldo sudah dikembalikan tetapi status belum diperbarui. Coba kembali.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Penarikan ditolak dan saldo dikembalikan.' });
+  } catch (err) {
+    console.error('[adminRoutes] reject withdrawal error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menolak penarikan.' });
+  }
+});
+
 /**
  * POST /api/admin/stock
  * Single stock entry (legacy, kept for compatibility)

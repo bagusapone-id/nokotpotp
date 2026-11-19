@@ -41,6 +41,10 @@
     html{font-size:15px}
     body{margin:0;background:#020617;color:#94a3b8;font-family:'Geist',system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
     .hidden{display:none!important}
+    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);display:flex;justify-content:space-around;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:rgba(2,6,23,.96);border-top:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+    .bottom-nav a{min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#64748b;text-decoration:none;font-size:.625rem;font-weight:600}
+    .bottom-nav a i{font-size:16px}
+    .bottom-nav a.active{color:#34d399}
     .tm, .tt1, .tt2, .tt3{font-family:'Geist',system-ui,sans-serif}
     .mono, code, [style*="Geist Mono"]{font-family:'Geist Mono',monospace!important}
     ::-webkit-scrollbar{width:0}
@@ -168,6 +172,8 @@
     <!-- Register form -->
     <form id="register-form" novalidate style="display:none;flex-direction:column;gap:10px">
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-at"></i><input class="inp" type="text" id="reg-username" required placeholder="Username"/></div>
+      <div class="inp-wrap"><i class="inp-ico fa-solid fa-ticket"></i><input class="inp" type="text" id="reg-referral-code" placeholder="Kode referral (opsional)" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateReferralCodeInput()"/></div>
+      <div id="reg-referral-code-status" role="status" style="display:none;font-size:.6875rem;margin-top:-7px"></div>
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="reg-email" required placeholder="Alamat email"/></div>
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="reg-password" required placeholder="Password (min. 6)"/></div>
       <button type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px">Buat Akun</button>
@@ -210,7 +216,7 @@
   <div id="notif-banners" style="display:flex;flex-direction:column;gap:6px;padding:0 18px;margin-bottom:4px"></div>
 
   <!-- Scroll area -->
-  <div style="flex:1;overflow-y:auto;padding:0 18px 28px">
+  <div style="flex:1;overflow-y:auto;padding:0 18px 86px">
 
     <!-- SHOP -->
     <div id="shop-section">
@@ -263,6 +269,11 @@
     <div id="active-orders-container" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
 
   </div>
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+    <a href="/" class="active" aria-current="page"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
+    <a href="/withdrawal.html"><i class="fa-solid fa-wallet"></i><span>Tarik Saldo</span></a>
+    <a href="/referral.html"><i class="fa-solid fa-user-group"></i><span>Undang Teman</span></a>
+  </nav>
 </div>
 
 
