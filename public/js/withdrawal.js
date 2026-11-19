@@ -61,8 +61,8 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
     showMessage('Pilih bank atau e-wallet tujuan.', true);
     return;
   }
-  if (!Number.isSafeInteger(amount) || amount < 25000) {
-    showMessage('Minimal penarikan adalah Rp 25.000.', true);
+  if (!Number.isSafeInteger(amount) || amount < 1000) {
+    showMessage('Minimal penarikan adalah Rp 1.000.', true);
     return;
   }
   if (amount > currentBalance) {
