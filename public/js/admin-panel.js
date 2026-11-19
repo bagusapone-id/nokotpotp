@@ -791,6 +791,7 @@ window.deleteNotif = async function(id) {
 
 // ── Users ──
 let usersData = {};
+const balanceAdjustmentsInProgress = new Set();
 
 function listenUsers() {
   loadUsers();
@@ -854,23 +855,86 @@ function renderUsers() {
 
   container.innerHTML = entries.map(([uid, u]) => {
     const isBanned = u.banned === true;
-    return '<div style="display:flex;align-items:center;gap:10px;background:rgba(2,6,23,.55);border:1px solid '+(isBanned?'rgba(244,63,94,.2)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px">' +
-      '<div style="width:34px;height:34px;border-radius:9px;background:'+(isBanned?'rgba(244,63,94,.15)':'rgba(168,85,247,.1)')+';border:1px solid '+(isBanned?'rgba(244,63,94,.25)':'rgba(168,85,247,.2)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
-        '<i class="fa-solid '+(isBanned?'fa-ban':'fa-user')+'" style="font-size:13px;color:'+(isBanned?'#fb7185':'#c084fc')+'"></i>' +
-      '</div>' +
-      '<div style="min-width:0;flex:1">' +
-        '<div style="font-size:.875rem;font-weight:700;color:'+(isBanned?'#fb7185':'#e2e8f0')+'">'+(u.username||uid)+'</div>' +
-        '<div style="font-size:.6875rem;color:#334155;margin-top:1px">' +
-          'Saldo: <span style="color:#34d399;font-weight:600">'+formatRupiah(u.balance||0)+'</span>' +
-          (isBanned ? ' &nbsp;·&nbsp; <span style="color:#fb7185">Banned: '+(u.ban_reason||'-')+'</span>' : '') +
+    return '<div style="background:rgba(2,6,23,.55);border:1px solid '+(isBanned?'rgba(244,63,94,.2)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="width:34px;height:34px;border-radius:9px;background:'+(isBanned?'rgba(244,63,94,.15)':'rgba(168,85,247,.1)')+';border:1px solid '+(isBanned?'rgba(244,63,94,.25)':'rgba(168,85,247,.2)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+          '<i class="fa-solid '+(isBanned?'fa-ban':'fa-user')+'" style="font-size:13px;color:'+(isBanned?'#fb7185':'#c084fc')+'"></i>' +
         '</div>' +
+        '<div style="min-width:0;flex:1">' +
+          '<div style="font-size:.875rem;font-weight:700;color:'+(isBanned?'#fb7185':'#e2e8f0')+'">'+(u.username||uid)+'</div>' +
+          '<div style="font-size:.6875rem;color:#334155;margin-top:1px">' +
+            'Saldo: <span style="color:#34d399;font-weight:600">'+formatRupiah(u.balance||0)+'</span>' +
+            (isBanned ? ' &nbsp;·&nbsp; <span style="color:#fb7185">Banned: '+(u.ban_reason||'-')+'</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<button onclick="'+(isBanned?'unbanUser':'banUser')+'(\''+uid+'\')" style="background:'+(isBanned?'rgba(16,185,129,.1)':'rgba(244,63,94,.1)')+';border:1px solid '+(isBanned?'rgba(16,185,129,.2)':'rgba(244,63,94,.2)')+';color:'+(isBanned?'#34d399':'#fb7185')+';border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
+          '<i class="fa-solid '+(isBanned?'fa-unlock':'fa-ban')+'" style="font-size:10px"></i>'+(isBanned?'Unban':'Ban')+
+        '</button>' +
       '</div>' +
-      '<button onclick="'+(isBanned?'unbanUser':'banUser')+'(\''+uid+'\')" style="background:'+(isBanned?'rgba(16,185,129,.1)':'rgba(244,63,94,.1)')+';border:1px solid '+(isBanned?'rgba(16,185,129,.2)':'rgba(244,63,94,.2)')+';color:'+(isBanned?'#34d399':'#fb7185')+';border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
-        '<i class="fa-solid '+(isBanned?'fa-unlock':'fa-ban')+'" style="font-size:10px"></i>'+(isBanned?'Unban':'Ban')+
-      '</button>' +
+      '<div style="display:flex;gap:7px;margin-top:9px">' +
+        '<button onclick="adjustUserBalance(\''+uid+'\',\'add\')" class="btn btn-primary btn-sm" style="flex:1"><i class="fa-solid fa-plus"></i> Tambah saldo</button>' +
+        '<button onclick="adjustUserBalance(\''+uid+'\',\'subtract\')" class="btn btn-rose btn-sm" style="flex:1"><i class="fa-solid fa-minus"></i> Kurangi saldo</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
+
+window.adjustUserBalance = async function(uid, type) {
+  const user = usersData[uid];
+  if (!user || !['add', 'subtract'].includes(type)) return;
+
+  const adding = type === 'add';
+  const action = adding ? 'Tambah' : 'Kurangi';
+  const displayName = escapeHtml(user.username || uid);
+  const currentBalance = Number(user.balance) || 0;
+  const body =
+    '<div style="margin-bottom:10px">User: <strong style="color:#e2e8f0">' + displayName + '</strong></div>' +
+    '<div style="margin-bottom:12px">Saldo saat ini: <strong style="color:#34d399">' + escapeHtml(formatRupiah(currentBalance)) + '</strong></div>' +
+    '<label style="display:block;text-align:left;font-size:.75rem;color:#94a3b8;margin-bottom:5px">Nominal (Rp)</label>' +
+    '<input id="balance-adjustment-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="Contoh: 25000" style="width:100%;height:42px;padding:0 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(2,6,23,.8);color:#e2e8f0;font:inherit;outline:none"/>' +
+    '<label style="display:block;text-align:left;font-size:.75rem;color:#94a3b8;margin:10px 0 5px">Alasan</label>' +
+    '<textarea id="balance-adjustment-reason" maxlength="300" placeholder="Wajib diisi untuk catatan admin" style="width:100%;height:68px;padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(2,6,23,.8);color:#e2e8f0;font:inherit;resize:vertical;outline:none"></textarea>';
+  const confirmed = adding
+    ? await Dialog.confirm(action + ' Saldo User', body)
+    : await Dialog.confirmDanger(action + ' Saldo User', body, 'Ya, Kurangi Saldo');
+  if (!confirmed) return;
+
+  const amount = Number(document.getElementById('balance-adjustment-amount').value);
+  const reason = document.getElementById('balance-adjustment-reason').value.trim();
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    await Dialog.alert('error', 'Nominal Tidak Valid', 'Masukkan nominal bilangan bulat yang lebih dari nol.');
+    return;
+  }
+  if (!reason || reason.length > 300) {
+    await Dialog.alert('error', 'Alasan Wajib Diisi', 'Isi alasan penyesuaian saldo, maksimal 300 karakter.');
+    return;
+  }
+  if (!adding && amount > currentBalance) {
+    await Dialog.alert('error', 'Saldo Tidak Cukup', 'Nominal pengurangan melebihi saldo user.');
+    return;
+  }
+  if (balanceAdjustmentsInProgress.has(uid)) return;
+
+  balanceAdjustmentsInProgress.add(uid);
+  try {
+    const res = await adminFetch('/api/admin/users/' + encodeURIComponent(uid) + '/balance-adjustments', {
+      method: 'POST',
+      body: JSON.stringify({ type, amount, reason }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert('error', 'Gagal Mengubah Saldo', data.message || 'Saldo user tidak berhasil diperbarui.');
+      return;
+    }
+
+    await loadUsers();
+    await Dialog.alert('success', 'Saldo Diperbarui', data.message + ' Saldo sekarang: ' + formatRupiah(data.balance) + '.');
+  } catch {
+    await Dialog.alert('error', 'Koneksi Bermasalah', 'Tidak dapat memperbarui saldo user. Muat ulang daftar user sebelum mencoba lagi.');
+  } finally {
+    balanceAdjustmentsInProgress.delete(uid);
+  }
+};
 
 window.banUser = async function(uid) {
   const user = usersData[uid];

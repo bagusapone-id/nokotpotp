@@ -279,7 +279,7 @@ async function processSuccessfulDeposit(depositId, deposit, detail) {
   const credit = userResult.snapshot.child(`deposit_credits/${depositId}`).val();
   if (!credit) throw new Error(`Could not credit deposit ${depositId} to user ${deposit.user_id}`);
 
-  const referralCommission = Math.floor(amount / 5);
+  const referralCommission = Math.floor(amount / 2);
   if (deposit.referrer_id && referralCommission > 0) {
     const referrerRef = db.ref(`users/${deposit.referrer_id}`);
     const referralResult = await referrerRef.transaction(user => {
