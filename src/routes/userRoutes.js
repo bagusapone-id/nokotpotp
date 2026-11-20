@@ -4,11 +4,23 @@ const router = express.Router();
 const { db } = require('../config/firebase');
 const authUser = require('../middleware/authUser');
 const { CODE_PATTERN, ensureReferralCode } = require('../services/referralService');
+const {
+  SUCCESSFUL_DEPOSIT_REQUIRED_MESSAGE,
+  hasSuccessfulDeposit,
+} = require('../services/depositAccessService');
+const isAdminUser = require('../utils/isAdminUser');
 
 // GET /api/user/referrals — referral link, invited users, and earned commissions
 router.get('/referrals', authUser, async (req, res) => {
   const uid = req.user.uid;
   try {
+    if (!isAdminUser(req.user) && !(await hasSuccessfulDeposit(uid))) {
+      return res.status(403).json({
+        error: 'SUCCESSFUL_DEPOSIT_REQUIRED',
+        message: SUCCESSFUL_DEPOSIT_REQUIRED_MESSAGE,
+      });
+    }
+
     const userSnap = await db.ref(`users/${uid}`).once('value');
     if (!userSnap.exists()) return res.status(404).json({ error: 'NOT_FOUND', message: 'Akun tidak ditemukan.' });
     const [referralsSnap, referralCode, attributionSnap] = await Promise.all([
@@ -49,6 +61,13 @@ router.post('/referrals/claim', authUser, async (req, res) => {
 
   const uid = req.user.uid;
   try {
+    if (!isAdminUser(req.user) && !(await hasSuccessfulDeposit(uid))) {
+      return res.status(403).json({
+        error: 'SUCCESSFUL_DEPOSIT_REQUIRED',
+        message: SUCCESSFUL_DEPOSIT_REQUIRED_MESSAGE,
+      });
+    }
+
     const codeSnap = await db.ref(`referral_codes/${referralCode}`).once('value');
     const referrerId = codeSnap.child('user_id').val();
     if (!referrerId) {

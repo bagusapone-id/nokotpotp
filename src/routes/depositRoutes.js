@@ -5,6 +5,8 @@ const crypto = require('crypto');
 const authUser = require('../middleware/authUser');
 const { db } = require('../config/firebase');
 const { addDepositCredit, addWithdrawableCredit } = require('../services/balanceService');
+const { hasSuccessfulDeposit } = require('../services/depositAccessService');
+const isAdminUser = require('../utils/isAdminUser');
 
 // ── Pakasir API v2 base ──────────────────────────────────────────────────────
 const PAKASIR_BASE = 'https://app.pakasir.com';
@@ -133,6 +135,16 @@ router.post('/create', authUser, async (req, res) => {
   } catch (err) {
     console.error('[depositRoutes] create error:', err.message);
     return res.status(err.status || 500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/access', authUser, async (req, res) => {
+  try {
+    const hasSuccessful = isAdminUser(req.user) || await hasSuccessfulDeposit(req.user.uid);
+    return res.status(200).json({ success: true, has_successful_deposit: hasSuccessful });
+  } catch (err) {
+    console.error('[depositRoutes] access check error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memeriksa akses fitur.' });
   }
 });
 

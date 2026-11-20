@@ -27,7 +27,15 @@ async function loadReferralData(user) {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Gagal memuat data referral.');
+    if (!response.ok) {
+      const needsSuccessfulDeposit =
+        response.status === 403 && data.error === 'SUCCESSFUL_DEPOSIT_REQUIRED';
+      showReferralAccessMessage(
+        data.message || 'Gagal memuat data referral.',
+        needsSuccessfulDeposit ? 'locked' : 'error'
+      );
+      return;
+    }
 
     const inviteLink = `${window.location.origin}/daftar?ref=${encodeURIComponent(data.referral_code)}`;
     referralCodeDisplay.textContent = data.referral_code;
@@ -42,13 +50,32 @@ async function loadReferralData(user) {
     document.getElementById('claim-referral-card').style.display = data.can_claim_referral ? 'block' : 'none';
     renderCommissionHistory(data.history);
     renderReferralList(data.referrals);
+    document.querySelectorAll('.deposit-required').forEach(link => {
+      link.hidden = false;
+    });
+    document.getElementById('referral-loading').hidden = true;
+    document.getElementById('referral-locked').hidden = true;
+    document.getElementById('referral-page').hidden = false;
+    document.getElementById('referral-nav').hidden = false;
   } catch (error) {
-    const errorEl = document.getElementById('error-message');
-    errorEl.textContent = error.message || 'Terjadi kesalahan saat memuat data referral.';
-    errorEl.style.display = 'block';
-    document.getElementById('commission-history').textContent = 'Riwayat tidak dapat dimuat.';
-    document.getElementById('referral-list').textContent = 'Daftar teman tidak dapat dimuat.';
+    showReferralAccessMessage(
+      error.message || 'Terjadi kesalahan saat memuat data referral.',
+      'error'
+    );
   }
+}
+
+function showReferralAccessMessage(message, state) {
+  document.getElementById('referral-loading').hidden = true;
+  document.getElementById('referral-locked').hidden = false;
+  const icon = document.getElementById('referral-access-icon');
+  icon.classList.toggle('is-error', state === 'error');
+  const iconElement = document.createElement('i');
+  iconElement.className = state === 'locked' ? 'fa-solid fa-lock' : 'fa-solid fa-circle-exclamation';
+  icon.replaceChildren(iconElement);
+  document.getElementById('referral-access-title').textContent =
+    state === 'locked' ? 'Undang teman belum tersedia' : 'Akses referral gagal diperiksa';
+  document.getElementById('referral-access-message').textContent = message;
 }
 
 window.validateClaimReferralCode = function() {
