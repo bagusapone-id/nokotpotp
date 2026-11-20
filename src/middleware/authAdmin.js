@@ -1,4 +1,5 @@
 const authUser = require('./authUser');
+const isAdminUser = require('../utils/isAdminUser');
 
 /**
  * Middleware: verify Firebase ID token AND admin custom claim.
@@ -16,11 +17,7 @@ async function authAdmin(req, res, next) {
   const user = req.user;
 
   // Check custom claim OR env-based admin UID
-  const isAdmin =
-    (user.admin === true) ||
-    (process.env.ADMIN_SECRET_UID && user.uid === process.env.ADMIN_SECRET_UID);
-
-  if (!isAdmin) {
+  if (!isAdminUser(user)) {
     return res.status(403).json({ error: 'FORBIDDEN' });
   }
 

@@ -89,7 +89,7 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
     document.querySelectorAll('.amount-preset').forEach(preset => preset.classList.remove('active'));
     await loadWithdrawalHistory();
   } catch (error) {
-    if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS'].includes(error.code)) {
+    if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS', 'SUCCESSFUL_DEPOSIT_REQUIRED'].includes(error.code)) {
       showMessage(error.message, true);
       return;
     }
@@ -112,7 +112,7 @@ async function loadWithdrawalHistory() {
     document.getElementById('available-balance').textContent = formatRupiah(currentBalance);
     renderHistory(Array.isArray(data.withdrawals) ? data.withdrawals : []);
   } catch (error) {
-    if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS'].includes(error.code)) {
+    if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS', 'SUCCESSFUL_DEPOSIT_REQUIRED'].includes(error.code)) {
       showWithdrawalAccess('locked', error.message);
       return;
     }

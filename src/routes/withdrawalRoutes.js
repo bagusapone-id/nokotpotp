@@ -6,29 +6,30 @@ const { db } = require('../config/firebase');
 const authUser = require('../middleware/authUser');
 const { sendWithdrawalNotification } = require('../services/telegramService');
 const { getBalanceBuckets } = require('../services/balanceService');
+const {
+  SUCCESSFUL_DEPOSIT_REQUIRED_MESSAGE,
+  hasSuccessfulDeposit,
+} = require('../services/depositAccessService');
+const isAdminUser = require('../utils/isAdminUser');
 
 const MIN_WITHDRAWAL = 1000;
 const MINIMUM_BALANCE_TO_WITHDRAW = 25000;
 const MINIMUM_BALANCE_MESSAGE = 'Saldo utama harus minimal Rp 25.000 dan minimal penarikan Rp 1.000. Saldo komisi undang teman bisa di tarik.';
-const NO_TRANSACTIONS_MESSAGE = 'Tidak dapat mengakses fitur tarik saldo karena belum melakukan transaksi apa pun.';
 const BANKS = {
   dana: 'DANA',
   gopay: 'GoPay',
   seabank: 'SeaBank',
 };
 
-async function getWithdrawalAccessDenial(uid, withdrawableBalance) {
-  if (withdrawableBalance >= MINIMUM_BALANCE_TO_WITHDRAW) return null;
-  if (withdrawableBalance === 0) {
-    const depositsSnap = await db.ref('deposits')
-      .orderByChild('user_id')
-      .equalTo(uid)
-      .limitToFirst(1)
-      .once('value');
-    if (!depositsSnap.exists()) {
-      return { error: 'NO_TRANSACTIONS', message: NO_TRANSACTIONS_MESSAGE };
-    }
+async function getWithdrawalAccessDenial(uid, withdrawableBalance, user) {
+  if (isAdminUser(user)) return null;
+  if (!(await hasSuccessfulDeposit(uid))) {
+    return {
+      error: 'SUCCESSFUL_DEPOSIT_REQUIRED',
+      message: SUCCESSFUL_DEPOSIT_REQUIRED_MESSAGE,
+    };
   }
+  if (withdrawableBalance >= MINIMUM_BALANCE_TO_WITHDRAW) return null;
   return {
     error: 'MINIMUM_BALANCE_REQUIRED',
     message: MINIMUM_BALANCE_MESSAGE,
@@ -49,9 +50,10 @@ router.get('/', authUser, async (req, res) => {
       .filter(request => request.status !== 'FAILED')
       .sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
 
-    if (!withdrawals.length) {
-      const accessDenial = await getWithdrawalAccessDenial(uid, balance);
-      if (accessDenial) return res.status(403).json(accessDenial);
+    const accessDenial = await getWithdrawalAccessDenial(uid, balance, req.user);
+    if (accessDenial &&
+        !(withdrawals.length && accessDenial.error === 'MINIMUM_BALANCE_REQUIRED')) {
+      return res.status(403).json(accessDenial);
     }
 
     return res.status(200).json({
@@ -111,10 +113,11 @@ router.post('/', authUser, async (req, res) => {
       return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Akun tidak ditemukan.' });
     }
     const accountBalance = getBalanceBuckets(accountSnap.val()).withdrawableBalance;
-    const accessDenial = await getWithdrawalAccessDenial(uid, accountBalance);
+    const accessDenial = await getWithdrawalAccessDenial(uid, accountBalance, req.user);
     if (accessDenial) return res.status(403).json(accessDenial);
 
     await requestRef.set(request);
+    const isAdmin = isAdminUser(req.user);
     const result = await userRef.transaction(user => {
       if (user === null) return null;
       if (typeof user !== 'object') return;
@@ -125,7 +128,7 @@ router.post('/', authUser, async (req, res) => {
       if (user.withdrawal_reservations[withdrawalId]) return user;
 
       const balanceBuckets = getBalanceBuckets(user);
-      if (balanceBuckets.withdrawableBalance < MINIMUM_BALANCE_TO_WITHDRAW ||
+      if ((!isAdmin && balanceBuckets.withdrawableBalance < MINIMUM_BALANCE_TO_WITHDRAW) ||
           balanceBuckets.withdrawableBalance < amount) return;
 
       user.balance = balanceBuckets.balance - amount;
@@ -142,8 +145,8 @@ router.post('/', authUser, async (req, res) => {
         return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Akun tidak ditemukan.' });
       }
       const availableBalance = getBalanceBuckets(userSnap.val()).withdrawableBalance;
-      if (availableBalance < MINIMUM_BALANCE_TO_WITHDRAW) {
-        const accessDenial = await getWithdrawalAccessDenial(uid, availableBalance);
+      if (!isAdmin && availableBalance < MINIMUM_BALANCE_TO_WITHDRAW) {
+        const accessDenial = await getWithdrawalAccessDenial(uid, availableBalance, req.user);
         return res.status(403).json(accessDenial);
       }
       if (availableBalance < amount) {

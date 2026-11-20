@@ -272,6 +272,9 @@ function showSuccessModal(message) {
 
 function showLoginScreen() {
   document.getElementById("splash-screen")?.remove();
+  if (typeof window.closeFeaturePromoModal === "function") {
+    window.closeFeaturePromoModal();
+  }
   // Sembunyikan semua alert DULU
   document.getElementById("auth-error").classList.add("hidden");
   document.getElementById("auth-success").classList.add("hidden");
@@ -298,7 +301,22 @@ function showApp() {
     window.history.replaceState(null, "", "/");
   }
   initApp();
-  openFeaturePromoModal();
+  checkDepositFeatureAccess(currentUser);
+}
+
+async function checkDepositFeatureAccess(user) {
+  try {
+    const response = await apiFetch("/api/deposit/access");
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.message || "Gagal memeriksa akses fitur.");
+    if (currentUser !== user) return;
+
+    if (data.has_successful_deposit === true) openFeaturePromoModal();
+  } catch (error) {
+    if (currentUser !== user) return;
+    console.error("[user-panel] feature access check error:", error.message);
+    showError(error.message || "Gagal memeriksa akses fitur. Coba muat ulang halaman.");
+  }
 }
 
 function openFeaturePromoModal() {
