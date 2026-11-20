@@ -301,22 +301,7 @@ function showApp() {
     window.history.replaceState(null, "", "/");
   }
   initApp();
-  checkDepositFeatureAccess(currentUser);
-}
-
-async function checkDepositFeatureAccess(user) {
-  try {
-    const response = await apiFetch("/api/deposit/access");
-    const data = await safeJson(response);
-    if (!response.ok) throw new Error(data.message || "Gagal memeriksa akses fitur.");
-    if (currentUser !== user) return;
-
-    if (data.has_successful_deposit === true) openFeaturePromoModal();
-  } catch (error) {
-    if (currentUser !== user) return;
-    console.error("[user-panel] feature access check error:", error.message);
-    showError(error.message || "Gagal memeriksa akses fitur. Coba muat ulang halaman.");
-  }
+  openFeaturePromoModal();
 }
 
 function openFeaturePromoModal() {
