@@ -15,16 +15,138 @@ let referralValidationStatus = "empty";
 let referralValidationSequence = 0;
 let referralValidationTimer = null;
 let registrationInProgress = false;
+const loginHumanCheck = document.getElementById("login-human-check");
+const loginSubmitButton = document.getElementById("login-submit");
+const registerHumanCheck = document.getElementById("register-human-check");
+const mathChallengeModal = document.getElementById("math-challenge-modal");
+const mathChallengeQuestion = document.getElementById("math-challenge-question");
+const mathChallengeAnswerInput = document.getElementById("math-challenge-answer");
+const mathChallengeError = document.getElementById("math-challenge-error");
+let activeHumanCheck = null;
+let expectedMathAnswer = 0;
+let previousMathQuestion = "";
+
+function randomInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateMathChallenge() {
+  let question;
+  let answer;
+  do {
+    const operation = randomInteger(0, 1);
+    if (operation === 0) {
+      const left = randomInteger(2, 20);
+      const right = randomInteger(2, 20);
+      question = `${left} + ${right} = ?`;
+      answer = left + right;
+    } else if (operation === 1) {
+      const left = randomInteger(5, 30);
+      const right = randomInteger(1, left);
+      question = `${left} − ${right} = ?`;
+      answer = left - right;
+    }
+  } while (question === previousMathQuestion);
+
+  previousMathQuestion = question;
+  expectedMathAnswer = answer;
+  mathChallengeQuestion.textContent = question;
+  mathChallengeAnswerInput.value = "";
+  mathChallengeError.hidden = true;
+  mathChallengeError.textContent = "";
+}
+
+function openMathChallenge(input) {
+  activeHumanCheck = input;
+  generateMathChallenge();
+  mathChallengeModal.classList.remove("hidden");
+  mathChallengeModal.setAttribute("aria-hidden", "false");
+  mathChallengeAnswerInput.focus();
+}
+
+window.closeMathChallengeModal = function() {
+  mathChallengeModal.classList.add("hidden");
+  mathChallengeModal.setAttribute("aria-hidden", "true");
+  const input = activeHumanCheck;
+  activeHumanCheck = null;
+  if (input) input.focus();
+};
+
+document.getElementById("math-challenge-form").addEventListener("submit", event => {
+  event.preventDefault();
+  const answer = mathChallengeAnswerInput.value.trim();
+  if (!answer) {
+    mathChallengeError.textContent = "Isi jawaban terlebih dahulu.";
+    mathChallengeError.hidden = false;
+    mathChallengeAnswerInput.focus();
+    return;
+  }
+
+  if (!/^\d+$/.test(answer)) {
+    generateMathChallenge();
+    mathChallengeError.textContent = "Jawaban salah. Soal baru sudah dibuat.";
+    mathChallengeError.hidden = false;
+    mathChallengeAnswerInput.focus();
+    return;
+  }
+
+  if (Number(answer) !== expectedMathAnswer) {
+    generateMathChallenge();
+    mathChallengeError.textContent = "Jawaban salah. Soal baru sudah dibuat.";
+    mathChallengeError.hidden = false;
+    mathChallengeAnswerInput.focus();
+    return;
+  }
+
+  const input = activeHumanCheck;
+  if (input) {
+    const checkCard = input.closest(".human-check");
+    checkCard.classList.add("is-verifying");
+    window.closeMathChallengeModal();
+    window.setTimeout(() => {
+      checkCard.classList.remove("is-verifying");
+      input.checked = true;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }, 700);
+    return;
+  }
+  window.closeMathChallengeModal();
+});
+
+[loginHumanCheck, registerHumanCheck].forEach(input => {
+  input.addEventListener("click", event => {
+    if (input.closest(".human-check").classList.contains("is-verifying")) {
+      event.preventDefault();
+      return;
+    }
+    if (input.checked) {
+      event.preventDefault();
+      openMathChallenge(input);
+    }
+  });
+});
+
+function updateLoginSubmitState() {
+  loginSubmitButton.disabled = !loginHumanCheck.checked;
+  loginHumanCheck.closest(".human-check").classList.toggle("is-checked", loginHumanCheck.checked);
+}
 
 if (referralCodeFromLink) {
   document.getElementById("reg-referral-code").value = referralCodeFromLink.trim().toUpperCase();
 }
 
 function updateRegisterSubmitState() {
-  const submitButton = document.querySelector("#register-form button[type=submit]");
+  const submitButton = document.getElementById("register-submit");
   const hasCode = Boolean(document.getElementById("reg-referral-code").value.trim());
-  submitButton.disabled = registrationInProgress || (hasCode && referralValidationStatus !== "valid");
+  submitButton.disabled = registrationInProgress || !registerHumanCheck.checked ||
+    (hasCode && referralValidationStatus !== "valid");
+  registerHumanCheck.closest(".human-check").classList.toggle("is-checked", registerHumanCheck.checked);
 }
+
+loginHumanCheck.addEventListener("change", updateLoginSubmitState);
+registerHumanCheck.addEventListener("change", updateRegisterSubmitState);
+updateLoginSubmitState();
+updateRegisterSubmitState();
 
 window.validateReferralCodeInput = function() {
   const input = document.getElementById("reg-referral-code");
@@ -119,11 +241,18 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     errEl.classList.remove("hidden");
     return;
   }
+  if (!loginHumanCheck.checked) {
+    errEl.textContent = "Centang verifikasi Saya bukan robot terlebih dahulu.";
+    errEl.classList.remove("hidden");
+    return;
+  }
   try {
     await firebaseAuth.signInWithEmailAndPassword(email, password);
   } catch (err) {
     errEl.textContent = "Login gagal: " + mapAuthError(err.code);
     errEl.classList.remove("hidden");
+    loginHumanCheck.checked = false;
+    updateLoginSubmitState();
   }
 });
 
@@ -153,8 +282,13 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     errEl.classList.remove("hidden");
     return;
   }
+  if (!registerHumanCheck.checked) {
+    errEl.textContent = "Centang verifikasi Saya bukan robot terlebih dahulu.";
+    errEl.classList.remove("hidden");
+    return;
+  }
 
-  const submitBtn = e.target.querySelector("button[type=submit]");
+  const submitBtn = document.getElementById("register-submit");
   registrationInProgress = true;
   updateRegisterSubmitState();
   submitBtn.textContent = "Mendaftar...";
@@ -191,6 +325,7 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     errEl.classList.remove("hidden");
   } finally {
     registrationInProgress = false;
+    registerHumanCheck.checked = false;
     submitBtn.textContent = "Buat Akun";
     updateRegisterSubmitState();
   }
@@ -281,6 +416,7 @@ function showLoginScreen() {
   // Reset form
   document.getElementById("login-form").reset();
   document.getElementById("register-form").reset();
+  updateLoginSubmitState();
   if (referralCodeFromLink) {
     document.getElementById("reg-referral-code").value = referralCodeFromLink.trim().toUpperCase();
   }
@@ -321,6 +457,9 @@ document.addEventListener("keydown", event => {
   const modal = document.getElementById("feature-promo-modal");
   if (event.key === "Escape" && !modal.classList.contains("hidden")) {
     window.closeFeaturePromoModal();
+  }
+  if (event.key === "Escape" && !mathChallengeModal.classList.contains("hidden")) {
+    window.closeMathChallengeModal();
   }
 });
 

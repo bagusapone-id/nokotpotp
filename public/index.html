@@ -105,6 +105,31 @@
     .inp:focus{border-color:rgba(16,185,129,.4)}
     .inp-wrap{position:relative}
     .inp-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#334155;font-size:12px;pointer-events:none}
+    .human-check{display:flex;align-items:center;gap:13px;min-height:64px;padding:11px 14px;border:1px solid #d5dbe2;border-radius:8px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+    .human-check:hover{border-color:#aeb8c2}
+    .human-check:focus-within{border-color:#41a978;box-shadow:0 0 0 3px rgba(65,169,120,.16)}
+    .human-check.is-checked{border-color:#8bc9a7;background:#f6fbf7}
+    .human-check input{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    .human-check-box{width:24px;height:24px;flex-shrink:0;display:grid;place-items:center;border:2px solid #aeb7c0;border-radius:3px;background:#fff;color:#fff;transition:background .15s,border-color .15s}
+    .human-check-box i{font-size:13px;opacity:0}
+    .human-check-box .human-check-spinner{display:none}
+    .human-check.is-verifying .human-check-box{border-color:#41a978;background:#f6fbf7;color:#25965c}
+    .human-check.is-verifying .human-check-box .human-check-spinner{display:block;opacity:1;animation:human-check-spin .8s linear infinite}
+    .human-check input:checked+.human-check-box{border-color:#25965c;background:#25965c}
+    .human-check input:checked+.human-check-box .human-check-check{opacity:1}
+    @keyframes human-check-spin{to{transform:rotate(360deg)}}
+    .human-check-copy{flex:1;color:#303942;font-size:.9rem;font-weight:500}
+    .human-check-mark{color:#4b8c68;font-size:19px}
+    .human-check-brand{display:flex;align-items:center;flex-shrink:0}
+    .human-check-brand img{display:block;width:28px;height:28px}
+    .math-challenge-overlay{z-index:100}
+    .math-challenge-dialog{position:relative;width:100%;max-width:320px;padding:20px;border:1px solid #d5dbe2;border-radius:12px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+    .math-challenge-close{position:absolute;top:10px;right:10px;color:#64748b;background:#f8fafc;border:1px solid #d5dbe2}
+    .math-challenge-title{margin:0 32px 16px 0;color:#303942;font-size:1rem;font-weight:700}
+    .math-challenge-question{margin-bottom:12px;padding:14px;border:1px solid #d5e8dc;border-radius:8px;background:#f6fbf7;color:#303942;text-align:center;font-size:1.5rem;font-weight:800;letter-spacing:.04em}
+    .math-challenge-input{width:100%;height:44px;padding:0 12px;border:1px solid #d5dbe2;border-radius:8px;outline:none;background:#fff;color:#303942;font:inherit;font-size:.9rem}
+    .math-challenge-input:focus{border-color:#41a978;box-shadow:0 0 0 3px rgba(65,169,120,.16)}
+    .math-challenge-error{margin-top:8px;color:#c2414b;font-size:.75rem}
     /* Tab pill */
     .tab-pill{flex:1;height:34px;border-radius:8px;font-size:.8125rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:background .15s,color .15s;border:none;background:transparent;color:#475569}
     .tab-pill.active{background:rgba(255,255,255,.09);color:#f1f5f9}
@@ -182,7 +207,13 @@
     <form id="login-form" novalidate style="display:flex;flex-direction:column;gap:10px">
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="login-email" required placeholder="Alamat email"/></div>
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="login-password" required placeholder="Password"/></div>
-      <button type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px">Masuk</button>
+      <label class="human-check">
+        <input id="login-human-check" type="checkbox"/>
+        <span class="human-check-box" aria-hidden="true"><i class="fa-solid fa-check human-check-check"></i><i class="fa-solid fa-spinner human-check-spinner"></i></span>
+        <span class="human-check-copy">Saya bukan robot</span>
+        <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
+      </label>
+      <button id="login-submit" type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px" disabled>Masuk</button>
     </form>
     <!-- Register form -->
     <form id="register-form" novalidate style="display:none;flex-direction:column;gap:10px">
@@ -191,7 +222,13 @@
       <div id="reg-referral-code-status" role="status" style="display:none;font-size:.6875rem;margin-top:-7px"></div>
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="reg-email" required placeholder="Alamat email"/></div>
       <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="reg-password" required placeholder="Password (min. 6)"/></div>
-      <button type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px">Buat Akun</button>
+      <label class="human-check">
+        <input id="register-human-check" type="checkbox"/>
+        <span class="human-check-box" aria-hidden="true"><i class="fa-solid fa-check human-check-check"></i><i class="fa-solid fa-spinner human-check-spinner"></i></span>
+        <span class="human-check-copy">Saya bukan robot</span>
+        <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
+      </label>
+      <button id="register-submit" type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px" disabled>Buat Akun</button>
     </form>
   </div>
   </div><!-- /max-width wrapper -->
@@ -289,6 +326,21 @@
     <a href="/withdrawal"><i class="fa-solid fa-wallet"></i><span>Tarik Saldo</span></a>
     <a href="/referral"><i class="fa-solid fa-user-group"></i><span>Undang Teman</span></a>
   </nav>
+</div>
+
+<div id="math-challenge-modal" class="promo-overlay math-challenge-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="math-challenge-title" aria-hidden="true" onclick="if(event.target===this)closeMathChallengeModal()">
+  <div class="math-challenge-dialog fu" onclick="event.stopPropagation()">
+    <button id="math-challenge-close" type="button" class="btn btn-icon math-challenge-close" aria-label="Tutup verifikasi" onclick="closeMathChallengeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <h2 id="math-challenge-title" class="math-challenge-title">Verifikasi</h2>
+    <div id="math-challenge-question" class="math-challenge-question" aria-live="polite"></div>
+    <form id="math-challenge-form" novalidate>
+      <input id="math-challenge-answer" class="math-challenge-input" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="Jawaban" aria-label="Jawaban" required/>
+      <div id="math-challenge-error" class="math-challenge-error" role="alert" hidden></div>
+      <button type="submit" class="btn btn-primary btn-full" style="height:42px;margin-top:10px">Kirim</button>
+    </form>
+  </div>
 </div>
 
 <!-- ══ FEATURE PROMO MODAL ══ -->
