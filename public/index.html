@@ -303,6 +303,7 @@
       <div style="display:flex;background:rgba(2,6,23,.7);border:1px solid var(--border);border-radius:11px;padding:4px;gap:4px;margin-bottom:12px">
         <button id="tab-indo" onclick="switchTab('indo')" class="tab-pill active"><span>&#127470;&#127465;</span> Nokos Indo</button>
         <button id="tab-luar" onclick="switchTab('luar')" class="tab-pill"><i class="fa-solid fa-earth-asia" style="font-size:13px"></i> Nokos Luar</button>
+        <button id="tab-restapi" onclick="switchTab('restapi')" class="tab-pill"><i class="fa-solid fa-robot" style="font-size:12px"></i> REST API</button>
       </div>
 
       <!-- Country search -->
@@ -374,6 +375,130 @@
     </div>
   </div>
 </div>
+
+<!-- ══ REST API MODAL ══ -->
+<div id="restapi-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(8px);padding:16px">
+  <div class="card fu" style="width:100%;max-width:400px;max-height:92dvh;border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div id="restapi-modal-title" style="font-size:.9375rem;font-weight:700;color:#f1f5f9">REST API WA</div>
+      <button onclick="closeRestapiModal()" style="width:30px;height:30px;border:none;background:rgba(255,255,255,.05);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <i class="fa-solid fa-xmark" style="color:#64748b;font-size:13px"></i>
+      </button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:18px">
+
+      <!-- Step 1: Info + Bayar -->
+      <div id="restapi-step-info">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="width:52px;height:52px;border-radius:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+            <i class="fa-solid fa-robot" style="color:#818cf8;font-size:22px"></i>
+          </div>
+          <div style="font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">REST API WhatsApp</div>
+          <div style="font-size:.8125rem;color:#64748b;line-height:1.6">Buat WhatsApp kamu kebal block berjam-jam dengan teknologi REST API kami.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:11px 13px">
+            <i class="fa-solid fa-shield-halved" style="color:#818cf8;font-size:14px;margin-top:1px;flex-shrink:0"></i>
+            <div style="font-size:.8125rem;color:#94a3b8"><strong style="color:#e2e8f0">Anti-Block</strong> — Kirim pesan blast berjam-jam tanpa takut kena blokir WhatsApp</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:11px 13px">
+            <i class="fa-solid fa-bolt" style="color:#818cf8;font-size:14px;margin-top:1px;flex-shrink:0"></i>
+            <div style="font-size:.8125rem;color:#94a3b8"><strong style="color:#e2e8f0">Tanpa Batas</strong> — Kirim ribuan pesan tanpa batasan kuota harian</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:11px 13px">
+            <i class="fa-solid fa-code" style="color:#818cf8;font-size:14px;margin-top:1px;flex-shrink:0"></i>
+            <div style="font-size:.8125rem;color:#94a3b8"><strong style="color:#e2e8f0">REST API</strong> — Integrasikan ke sistem apapun via HTTP request</div>
+          </div>
+        </div>
+        <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:14px;margin-bottom:16px;text-align:center">
+          <div style="font-size:.75rem;color:#818cf8;margin-bottom:4px">Harga Aktivasi</div>
+          <div style="font-size:1.5rem;font-weight:800;color:#f1f5f9">Rp 25.000</div>
+          <div style="font-size:.6875rem;color:#334155;margin-top:3px">Pembayaran via Payment Gateway · Tidak bisa pakai saldo</div>
+        </div>
+        <button onclick="restapiProceedToPayment()" class="btn btn-primary btn-full btn-h">
+          <i class="fa-solid fa-credit-card" style="font-size:12px"></i> Bayar & Aktifkan
+        </button>
+      </div>
+
+      <!-- Step 2: Menunggu pembayaran -->
+      <div id="restapi-step-payment" style="display:none;text-align:center">
+        <div style="margin-bottom:16px">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:#818cf8;display:block;margin-bottom:12px"></i>
+          <div style="font-size:.875rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">Menunggu Pembayaran</div>
+          <div style="font-size:.8125rem;color:#64748b">Selesaikan pembayaran di halaman Pakasir</div>
+        </div>
+        <a id="restapi-payment-link" href="#" target="_blank" class="btn btn-primary btn-full btn-h" style="margin-bottom:12px">
+          <i class="fa-solid fa-external-link" style="font-size:12px"></i> Buka Halaman Pembayaran
+        </a>
+        <div style="font-size:.75rem;color:#334155">Halaman ini akan otomatis lanjut setelah pembayaran berhasil</div>
+      </div>
+
+      <!-- Step 3: Form input data -->
+      <div id="restapi-step-form" style="display:none">
+        <div style="font-size:.8125rem;color:#64748b;margin-bottom:16px">Pembayaran berhasil! Isi data untuk aktivasi REST API WA kamu.</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+          <div>
+            <div class="tl" style="margin-bottom:5px">Nama Kamu</div>
+            <div class="inp-wrap"><i class="inp-ico fa-solid fa-user"></i>
+              <input class="inp" type="text" id="restapi-nama" placeholder="cth: Budi Santoso"/>
+            </div>
+          </div>
+          <div>
+            <div class="tl" style="margin-bottom:5px">Nomor WA Target</div>
+            <div class="inp-wrap"><i class="inp-ico fa-brands fa-whatsapp"></i>
+              <input class="inp" type="tel" id="restapi-wa" placeholder="cth: 6281234567890"/>
+            </div>
+          </div>
+        </div>
+        <button onclick="restapiNextToDevice()" class="btn btn-primary btn-full btn-h">
+          <i class="fa-solid fa-arrow-right" style="font-size:12px"></i> Lanjutkan
+        </button>
+      </div>
+
+      <!-- Step 4: Loading proses -->
+      <div id="restapi-step-loading1" style="display:none;text-align:center;padding:20px 0">
+        <div style="width:52px;height:52px;border-radius:50%;border:3px solid rgba(99,102,241,.2);border-top-color:#818cf8;animation:spin 1s linear infinite;margin:0 auto 16px"></div>
+        <div style="font-size:.875rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">Memproses Data</div>
+        <div id="restapi-loading1-text" style="font-size:.8125rem;color:#64748b">Menyiapkan konfigurasi...</div>
+      </div>
+
+      <!-- Step 5: Input nama perangkat -->
+      <div id="restapi-step-device" style="display:none">
+        <div style="text-align:center;margin-bottom:16px">
+          <i class="fa-solid fa-laptop" style="font-size:2rem;color:#818cf8;display:block;margin-bottom:10px"></i>
+          <div style="font-size:.875rem;font-weight:700;color:#f1f5f9;margin-bottom:4px">Nama Perangkat</div>
+          <div style="font-size:.8125rem;color:#64748b">Beri nama untuk perangkat yang akan tertaut</div>
+        </div>
+        <div class="inp-wrap" style="margin-bottom:16px">
+          <i class="inp-ico fa-solid fa-laptop"></i>
+          <input class="inp" type="text" id="restapi-device" placeholder="cth: Laptop Kantor, PC Rumah"/>
+        </div>
+        <button onclick="restapiSubmit()" class="btn btn-primary btn-full btn-h">
+          <i class="fa-solid fa-plug" style="font-size:12px"></i> Install REST API
+        </button>
+      </div>
+
+      <!-- Step 6: Loading install -->
+      <div id="restapi-step-loading2" style="display:none;text-align:center;padding:20px 0">
+        <div style="width:52px;height:52px;border-radius:50%;border:3px solid rgba(99,102,241,.2);border-top-color:#818cf8;animation:spin 1s linear infinite;margin:0 auto 16px"></div>
+        <div style="font-size:.875rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">Menginstall REST API</div>
+        <div id="restapi-loading2-text" style="font-size:.8125rem;color:#64748b">Menghubungkan ke server...</div>
+      </div>
+
+      <!-- Step 7: Sukses -->
+      <div id="restapi-step-success" style="display:none;text-align:center;padding:16px 0">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--green-dim);border:1px solid var(--green-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+          <i class="fa-solid fa-circle-check" style="color:#34d399;font-size:22px"></i>
+        </div>
+        <div style="font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">Permintaan Terkirim!</div>
+        <div style="font-size:.8125rem;color:#64748b;margin-bottom:16px;line-height:1.6">Data kamu sudah dikirim ke admin. Proses aktivasi akan dilakukan dalam waktu dekat. Cek status di tab REST API.</div>
+        <button onclick="closeRestapiModal()" class="btn btn-primary btn-full btn-h">OK, Lihat Status</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <!-- ══ RIWAYAT MODAL ══ -->
 <div id="history-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(8px);padding:16px">
@@ -685,6 +810,7 @@ window.Dialog = Dialog;
   bridge("success-modal","flex",true);
   bridge("deposit-modal","flex",true);
   bridge("history-modal","flex",true);
+  bridge("restapi-modal","flex",true);
   bridge("otp-code-display","flex",true);
   bridge("error-banner","flex",true);
   bridge("connection-banner","flex",true);
