@@ -63,12 +63,6 @@ console.log(JSON.stringify({
       ".read": "auth !== null",
       ".write": "false"
     },
-    rest_api_orders: {
-      "$orderId": {
-        ".read": "auth !== null && data.child('user_id').val() === auth.uid",
-        ".write": "false"
-      }
-    },
     deposits: {
       "$depositId": {
         ".read": "auth !== null && data.child('user_id').val() === auth.uid",
