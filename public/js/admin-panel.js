@@ -69,12 +69,11 @@ function initAdmin() {
   listenUsers();
   loadWithdrawals();
   if (!withdrawalRefreshTimer) withdrawalRefreshTimer = setInterval(loadWithdrawals, 30000);
-  listenRestapiOrders();
 }
 
 // ── Nav tabs ──
 window.showAdminTab = function(tab) {
-  ["orders","stock","countries","notifications","withdrawals","users","restapi"].forEach(t => {
+  ["orders","stock","countries","notifications","withdrawals","users"].forEach(t => {
     const el = document.getElementById("tab-"+t);
     if (el) el.style.display = "none";
     const nav = document.getElementById("nav-"+t);
@@ -86,7 +85,6 @@ window.showAdminTab = function(tab) {
   if (navEl) navEl.classList.add("active");
   if (tab === 'users') loadUsers();
   if (tab === 'notifications') loadEventStatus();
-  if (tab === 'restapi') loadRestapiOrders();
   if (tab === 'withdrawals') loadWithdrawals();
 };
 
@@ -979,90 +977,5 @@ window.unbanUser = async function(uid) {
     const data = await safeJson(res);
     if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal unban user.');
     else loadUsers();
-  } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
-};
-
-// ── REST API WA Orders ──
-let restapiOrdersData = {};
-
-function listenRestapiOrders() {
-  firebaseDB.ref("rest_api_orders").on("value", (snap) => {
-    restapiOrdersData = {};
-    if (snap.exists()) snap.forEach(c => { restapiOrdersData[c.key] = { ...c.val(), order_id: c.key }; });
-    // Update badge count (pending)
-    const pending = Object.values(restapiOrdersData).filter(o => o.status === 'PENDING').length;
-    const badge = document.getElementById('restapi-count');
-    if (badge) {
-      badge.textContent = pending;
-      badge.style.display = pending > 0 ? 'inline' : 'none';
-    }
-    renderRestapiOrders();
-  });
-}
-
-async function loadRestapiOrders() {
-  renderRestapiOrders();
-}
-
-function renderRestapiOrders() {
-  const container = document.getElementById("restapi-order-list");
-  if (!container) return;
-  const entries = Object.values(restapiOrdersData).sort((a,b) => b.created_at - a.created_at);
-  if (!entries.length) {
-    container.innerHTML = '<div style="text-align:center;padding:28px 0;color:#334155;font-size:.8125rem">Belum ada order REST API.</div>';
-    return;
-  }
-  const statusCfg = {
-    PENDING:  { cls:'s-lock',  label:'Menunggu',  color:'#38bdf8' },
-    ACTIVE:   { cls:'s-avail', label:'Aktif',     color:'#34d399' },
-    REJECTED: { cls:'s-burn',  label:'Ditolak',   color:'#fb7185' },
-  };
-  container.innerHTML = entries.map(o => {
-    const cfg  = statusCfg[o.status] || statusCfg.PENDING;
-    const date = new Date(o.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    const actionBtns = o.status === 'PENDING'
-      ? '<div style="display:flex;gap:7px;margin-top:10px">' +
-          '<button onclick="updateRestapiStatus(\''+o.order_id+'\',\'ACTIVE\')" style="flex:1;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:8px;height:34px;font-size:.75rem;font-weight:700;cursor:pointer">✅ Aktifkan</button>' +
-          '<button onclick="updateRestapiStatus(\''+o.order_id+'\',\'REJECTED\')" style="flex:1;background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:8px;height:34px;font-size:.75rem;font-weight:700;cursor:pointer">❌ Tolak</button>' +
-        '</div>'
-      : '';
-    return '<div class="card fu" style="padding:13px 14px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
-        '<div>' +
-          '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0">'+o.nama+'</div>' +
-          '<div style="font-size:.6875rem;color:#334155">'+o.username+' · '+date+'</div>' +
-        '</div>' +
-        '<span class="'+cfg.cls+'" style="font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px">'+cfg.label+'</span>' +
-      '</div>' +
-      '<div style="font-size:.8125rem;color:#94a3b8;margin-bottom:4px"><i class="fa-brands fa-whatsapp" style="color:#34d399;margin-right:5px"></i>'+o.wa_target+'</div>' +
-      '<div style="font-size:.8125rem;color:#94a3b8"><i class="fa-solid fa-laptop" style="color:#818cf8;margin-right:5px"></i>'+o.nama_perangkat+'</div>' +
-      (o.status_note ? '<div style="font-size:.75rem;color:#fbbf24;margin-top:5px"><i class="fa-solid fa-circle-info" style="margin-right:3px"></i>'+o.status_note+'</div>' : '') +
-      actionBtns +
-    '</div>';
-  }).join('');
-}
-
-window.updateRestapiStatus = async function(orderId, status) {
-  let note = '';
-  if (status === 'REJECTED') {
-    const ok = await Dialog.confirmDanger(
-      'Tolak Order?',
-      '<div style="margin-bottom:8px">Order akan ditolak.</div>' +
-      '<textarea id="restapi-reject-note" placeholder="Alasan penolakan..." style="width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e2e8f0;font-family:inherit;font-size:.8125rem;padding:10px;resize:none;outline:none;height:72px;box-sizing:border-box;margin-top:4px"></textarea>',
-      'Ya, Tolak'
-    );
-    if (!ok) return;
-    note = document.getElementById('restapi-reject-note')?.value?.trim() || '';
-  } else {
-    const ok = await Dialog.confirm('Aktifkan Order?', 'Order REST API akan diaktifkan dan user diberitahu.');
-    if (!ok) return;
-  }
-  try {
-    const res = await adminFetch('/api/rest-api/admin/orders/'+orderId+'/status', {
-      method: 'POST',
-      body: JSON.stringify({ status, note }),
-    });
-    const data = await safeJson(res);
-    if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal update status.');
   } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
 };
