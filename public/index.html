@@ -251,6 +251,9 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
+      <button onclick="openHistoryModal()" class="btn btn-icon btn-ghost" title="Riwayat">
+        <i class="fa-solid fa-clock-rotate-left" style="font-size:13px;color:#64748b"></i>
+      </button>
       <button id="logout-btn" class="btn btn-icon btn-ghost">
         <i class="fa-solid fa-right-from-bracket" style="font-size:13px;color:#64748b"></i>
       </button>
@@ -368,6 +371,30 @@
         </span>
         <i class="promo-option-arrow fa-solid fa-chevron-right" aria-hidden="true"></i>
       </a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIWAYAT MODAL ══ -->
+<div id="history-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(8px);padding:16px">
+  <div class="card fu" style="width:100%;max-width:400px;max-height:88dvh;border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="font-size:.9375rem;font-weight:700;color:#f1f5f9">Riwayat Pembelian</div>
+      <button onclick="closeHistoryModal()" style="width:30px;height:30px;border:none;background:rgba(255,255,255,.05);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <i class="fa-solid fa-xmark" style="color:#64748b;font-size:13px"></i>
+      </button>
+    </div>
+    <!-- Filter tabs -->
+    <div style="display:flex;gap:3px;padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <button onclick="filterHistory('all')" id="hf-all" class="tab-pill active" style="flex:1;font-size:.75rem">Semua</button>
+      <button onclick="filterHistory('COMPLETED')" id="hf-COMPLETED" class="tab-pill" style="flex:1;font-size:.75rem">Berhasil</button>
+      <button onclick="filterHistory('WAITING_OTP')" id="hf-WAITING_OTP" class="tab-pill" style="flex:1;font-size:.75rem">Menunggu</button>
+      <button onclick="filterHistory('CANCELLED')" id="hf-CANCELLED" class="tab-pill" style="flex:1;font-size:.75rem">Gagal</button>
+    </div>
+    <!-- List -->
+    <div id="history-list" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem">Memuat...</div>
     </div>
   </div>
 </div>
@@ -657,6 +684,7 @@ window.Dialog = Dialog;
   bridge("timeout-modal","flex",true);
   bridge("success-modal","flex",true);
   bridge("deposit-modal","flex",true);
+  bridge("history-modal","flex",true);
   bridge("otp-code-display","flex",true);
   bridge("error-banner","flex",true);
   bridge("connection-banner","flex",true);

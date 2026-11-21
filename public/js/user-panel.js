@@ -1299,6 +1299,99 @@ window.backToMethodSelect = function() {
 // ------------------------------------------------------
 
 // ══════════════════════════════════════════════════════
+// RIWAYAT PEMBELIAN
+// ══════════════════════════════════════════════════════
+
+let _historyOrders = [];
+let _historyFilter = 'all';
+
+window.openHistoryModal = async function() {
+  document.getElementById('history-modal').classList.remove('hidden');
+  _historyFilter = 'all';
+  _setHistoryFilter('all');
+  await _loadHistory();
+};
+
+window.closeHistoryModal = function() {
+  document.getElementById('history-modal').classList.add('hidden');
+};
+
+window.filterHistory = function(filter) {
+  _historyFilter = filter;
+  _setHistoryFilter(filter);
+  _renderHistory();
+};
+
+function _setHistoryFilter(filter) {
+  ['all','COMPLETED','WAITING_OTP','CANCELLED'].forEach(f => {
+    const btn = document.getElementById('hf-' + f);
+    if (btn) btn.classList.toggle('active', f === filter);
+  });
+}
+
+async function _loadHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i>Memuat...</div>';
+  try {
+    const res  = await apiFetch('/api/orders/history');
+    const data = await safeJson(res);
+    if (!res.ok || !data.orders) {
+      list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem">Gagal memuat riwayat.</div>';
+      return;
+    }
+    _historyOrders = data.orders;
+    _renderHistory();
+  } catch {
+    list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem">Koneksi bermasalah.</div>';
+  }
+}
+
+function _renderHistory() {
+  const list = document.getElementById('history-list');
+  const statusCfg = {
+    WAITING_OTP:   { cls:'s-lock',  label:'Menunggu OTP',  icon:'fa-clock' },
+    OTP_REQUESTED: { cls:'s-lock',  label:'OTP Diminta',   icon:'fa-paper-plane' },
+    COMPLETED:     { cls:'s-avail', label:'Berhasil',      icon:'fa-circle-check' },
+    EXPIRED:       { cls:'s-exp',   label:'Kadaluarsa',    icon:'fa-hourglass-end' },
+    CANCELLED:     { cls:'s-burn',  label:'Dibatalkan',    icon:'fa-rotate-left' },
+  };
+
+  // Filter
+  let filtered = _historyOrders;
+  if (_historyFilter === 'COMPLETED') {
+    filtered = _historyOrders.filter(o => o.status === 'COMPLETED');
+  } else if (_historyFilter === 'WAITING_OTP') {
+    filtered = _historyOrders.filter(o => ['WAITING_OTP','OTP_REQUESTED'].includes(o.status));
+  } else if (_historyFilter === 'CANCELLED') {
+    filtered = _historyOrders.filter(o => ['CANCELLED','EXPIRED'].includes(o.status));
+  }
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#334155;font-size:.8125rem"><i class="fa-solid fa-box-open" style="display:block;font-size:1.5rem;margin-bottom:8px;color:#1e293b"></i>Tidak ada riwayat.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(o => {
+    const cfg  = statusCfg[o.status] || { cls:'s-exp', label: o.status, icon:'fa-circle' };
+    const date = new Date(o.created_at).toLocaleDateString('id-ID',{ day:'2-digit', month:'short', year:'numeric' });
+    const time = new Date(o.created_at).toLocaleTimeString('id-ID',{ hour:'2-digit', minute:'2-digit' });
+    return '<div style="background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:11px 13px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+        '<span style="font-family:\'Geist Mono\',monospace;font-size:.875rem;color:#f1f5f9;font-weight:700">' + (o.phone_number||'—') + '</span>' +
+        '<span class="' + cfg.cls + '" style="font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px">' +
+          '<i class="fa-solid ' + cfg.icon + '" style="font-size:9px"></i>' + cfg.label +
+        '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between">' +
+        '<span style="font-size:.75rem;color:#475569">' + (o.country_name||'—') + '</span>' +
+        '<span style="font-size:.6875rem;color:#334155">' + date + ' · ' + time + '</span>' +
+      '</div>' +
+      (o.price ? '<div style="margin-top:5px;font-size:.75rem;color:#334155">Harga: <span style="color:#34d399;font-weight:600">' + formatRupiah(o.price) + '</span>' + (o.is_refunded ? ' <span style="color:#fb7185">(Refund)</span>' : '') + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
 // NOTIFICATIONS
 // ══════════════════════════════════════════════════════
 
