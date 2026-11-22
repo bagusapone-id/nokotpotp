@@ -1,70 +1,124 @@
 'use strict';
 const express = require('express');
-const router = express.Router();
-const crypto = require('crypto');
+const router  = express.Router();
+const crypto  = require('crypto');
 const authUser = require('../middleware/authUser');
-const { db } = require('../config/firebase');
+const { db }   = require('../config/firebase');
 const { addDepositCredit, addWithdrawableCredit } = require('../services/balanceService');
 const { hasSuccessfulDeposit } = require('../services/depositAccessService');
 const isAdminUser = require('../utils/isAdminUser');
 
-// ── Pakasir API v2 base ──────────────────────────────────────────────────────
-const PAKASIR_BASE = 'https://app.pakasir.com';
-const PAKASIR_SLUG = () => process.env.PAKASIR_SLUG;
-const PAKASIR_KEY  = () => process.env.PAKASIR_API_KEY;
-const WEBHOOK_SECRET_HEADER = 'x-secret';
+// ── Duitku config ─────────────────────────────────────────────────────────────
+const DUITKU_BASE = () =>
+  process.env.DUITKU_MODE === 'production'
+    ? 'https://passport.duitku.com/webapi'
+    : 'https://sandbox.duitku.com/webapi';
 
-/** POST/GET to Pakasir v2 */
-async function pakasirFetch(method, path, body) {
-  const url = `${PAKASIR_BASE}${path}`;
-  console.log(`[pakasir] ${method} ${url}`, body ? JSON.stringify(body) : '');
+const DUITKU_MERCHANT = () => process.env.DUITKU_MERCHANT_CODE;
+const DUITKU_KEY      = () => process.env.DUITKU_API_KEY;
+
+// Payment method codes (Duitku v2)
+// QR = QRIS dinamis, BC = BCA VA, M2 = Mandiri VA,
+// BR = BRI VA, B1 = BNI VA, DA = DANA, OV = OVO, S1 = ShopeePay
+const VALID_METHODS = ['QR', 'BC', 'M2', 'BR', 'B1', 'DA', 'OV', 'S1'];
+
+// ── Duitku helpers ────────────────────────────────────────────────────────────
+
+/** Build Duitku request signature: MD5(merchantCode + amount + merchantOrderId + apiKey) */
+function buildSignature(merchantCode, amount, merchantOrderId, apiKey) {
+  const raw = `${merchantCode}${amount}${merchantOrderId}${apiKey}`;
+  return crypto.createHash('md5').update(raw).digest('hex');
+}
+
+/**
+ * Create a transaction on Duitku.
+ * Returns the full Duitku response object.
+ */
+async function duitkuCreateTransaction({
+  merchantOrderId,
+  paymentAmount,
+  paymentMethod,
+  productDetails,
+  email,
+  customerVaName,
+  returnUrl,
+  callbackUrl,
+  expiryPeriod = 60, // minutes
+}) {
+  const merchantCode = DUITKU_MERCHANT();
+  const apiKey       = DUITKU_KEY();
+
+  if (!merchantCode || !apiKey) {
+    throw new Error('DUITKU_MERCHANT_CODE atau DUITKU_API_KEY belum di-set di .env');
+  }
+
+  const signature = buildSignature(merchantCode, paymentAmount, merchantOrderId, apiKey);
+
+  const body = {
+    merchantCode,
+    paymentAmount,
+    paymentMethod,
+    merchantOrderId,
+    productDetails,
+    email,
+    customerVaName,
+    returnUrl:    returnUrl  || process.env.DUITKU_RETURN_URL   || '',
+    callbackUrl:  callbackUrl || process.env.DUITKU_CALLBACK_URL || '',
+    signature,
+    expiryPeriod,
+  };
+
+  const url = `${DUITKU_BASE()}/api/merchant/v2/inquiry`;
+  console.log(`[duitku] POST ${url} method=${paymentMethod} orderId=${merchantOrderId}`);
+
   const res = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': PAKASIR_KEY(),
-    },
-    body: body ? JSON.stringify(body) : undefined,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
+
   const json = await res.json().catch(() => ({}));
-  console.log(`[pakasir] response ${res.status}:`, JSON.stringify(json));
-  if (!res.ok) {
-    const msg = json?.message || json?.error || `HTTP ${res.status}`;
+  console.log(`[duitku] response ${res.status}:`, JSON.stringify(json));
+
+  // Duitku returns 200 even on some errors — check statusCode field
+  if (!res.ok || (json.statusCode && json.statusCode !== '00')) {
+    const msg = json.statusMessage || json.Message || `HTTP ${res.status}`;
     const err = new Error(msg);
     err.status = res.status;
     throw err;
   }
+
   return json;
 }
 
-/** Constant-time compare webhook secret */
-function verifyWebhook(headerValue, secret) {
-  if (!headerValue || !secret) return false;
-  try {
-    const h1 = crypto.createHash('sha256').update(headerValue).digest();
-    const h2 = crypto.createHash('sha256').update(secret).digest();
-    return crypto.timingSafeEqual(h1, h2);
-  } catch {
-    return false;
-  }
+/**
+ * Check a Duitku transaction status.
+ * GET /api/merchant/transactionStatus
+ */
+async function duitkuCheckStatus(merchantOrderId, amount) {
+  const merchantCode = DUITKU_MERCHANT();
+  const apiKey       = DUITKU_KEY();
+  const signature    = buildSignature(merchantCode, amount, merchantOrderId, apiKey);
+
+  const url = `${DUITKU_BASE()}/api/merchant/transactionStatus`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ merchantCode, merchantOrderId, amount, signature }),
+  });
+  const json = await res.json().catch(() => ({}));
+  return json; // { transactionStatus, statusCode, statusMessage, ... }
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const VALID_METHODS = [
-  'payment_link','qris',
-  'bni_va','bri_va','cimb_niaga_va','danamon_va',
-  'maybank_va','bnc_va','bsi_va','muamalat_va','ocbc_va',
-];
-
-// ── POST /api/deposit/create ─────────────────────────────────────────────────
+// ── POST /api/deposit/create ──────────────────────────────────────────────────
 router.post('/create', authUser, async (req, res) => {
-  const { amount, payment_method = 'payment_link' } = req.body;
+  const { amount, payment_method } = req.body;
   const userId = req.user.uid;
 
-  if (!amount || typeof amount !== 'number' || !Number.isInteger(amount) || amount < 10000) {
-    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Minimal deposit Rp 10.000' });
+  if (!amount || typeof amount !== 'number' || !Number.isInteger(amount) || amount < 15000) {
+    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Minimal deposit Rp 15.000' });
   }
-  if (!VALID_METHODS.includes(payment_method)) {
+  if (!payment_method || !VALID_METHODS.includes(payment_method)) {
     return res.status(400).json({ error: 'INVALID_METHOD', message: 'Metode pembayaran tidak valid' });
   }
 
@@ -72,61 +126,49 @@ router.post('/create', authUser, async (req, res) => {
     const depositRef = db.ref('deposits').push();
     const depositId  = depositRef.key;
     const orderId    = `DEP-${depositId}`;
+
     const [attributionSnap, userSnap] = await Promise.all([
       db.ref(`referral_attributions/${userId}`).once('value'),
       db.ref(`users/${userId}`).once('value'),
     ]);
     const attribution = attributionSnap.val();
-    const username = userSnap.child('username').val() || '';
+    const userEmail   = req.user.email || '';
+    const username    = userSnap.child('username').val() || userEmail || userId;
 
-    let txData;
+    // Create Duitku transaction
+    const duitkuRes = await duitkuCreateTransaction({
+      merchantOrderId: orderId,
+      paymentAmount:   amount,
+      paymentMethod:   payment_method,
+      productDetails:  `Deposit saldo NOKOTPOTP - ${username}`,
+      email:           userEmail,
+      customerVaName:  username,
+    });
 
-    if (payment_method === 'payment_link') {
-      // payment_link juga pakai endpoint create-transaction dengan method: 'payment_link'
-      const result = await pakasirFetch('POST',
-        `/api/v2/create-transaction/${PAKASIR_SLUG()}/${orderId}`,
-        { method: 'payment_link', amount }
-      );
-      txData = {
-        txn_id:         result.txn_id,
-        payment_link:   result.payment_link || `https://app.pakasir.com/pay-v2/${result.txn_id}`,
-        payment_method: 'payment_link',
-        qr_string:      '',
-        va_number:      '',
-        fee:            0,
-        total_payment:  amount,
-        expired_at:     new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-    } else {
-      // POST /api/v2/create-transaction/{slug}/{order_id}
-      // body pakai "method" bukan "payment_method"
-      const tx = await pakasirFetch('POST',
-        `/api/v2/create-transaction/${PAKASIR_SLUG()}/${orderId}`,
-        { method: payment_method, amount }
-      );
-      txData = {
-        txn_id:         tx.txn_id,
-        payment_link:   '',  // kosong untuk non-payment_link
-        payment_method: tx.payment_method || payment_method,
-        qr_string:      tx.qr_string  || '',
-        va_number:      tx.va_number  || '',
-        fee:            tx.fee            || 0,
-        total_payment:  tx.total_payment  || amount,
-        expired_at:     tx.expired_at     || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-    }
+    // Map Duitku response to internal txData shape
+    const txData = {
+      txn_id:         duitkuRes.reference  || '',      // Duitku reference number
+      payment_method,
+      payment_link:   duitkuRes.paymentUrl || '',      // payment page / redirect URL
+      qr_string:      duitkuRes.qrString   || '',      // QRIS string (for QR method)
+      va_number:      duitkuRes.vaNumber   || '',      // VA number (for VA methods)
+      fee:            0,                               // Duitku includes fee in amount
+      total_payment:  amount,
+      expired_at:     new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 60 min default
+    };
 
     const depositData = {
-      deposit_id:     depositId,
-      order_id:       orderId,
-      user_id:        userId,
+      deposit_id:  depositId,
+      order_id:    orderId,
+      user_id:     userId,
       username,
-      referrer_id:    attribution ? attribution.referrer_id : null,
+      referrer_id: attribution ? attribution.referrer_id : null,
       amount,
-      status:         'PENDING',
+      status:      'PENDING',
+      gateway:     'duitku',
       ...txData,
-      created_at:     Date.now(),
-      completed_at:   null,
+      created_at:  Date.now(),
+      completed_at: null,
     };
 
     await depositRef.set(depositData);
@@ -138,6 +180,7 @@ router.post('/create', authUser, async (req, res) => {
   }
 });
 
+// ── GET /api/deposit/access ───────────────────────────────────────────────────
 router.get('/access', authUser, async (req, res) => {
   try {
     const hasSuccessful = isAdminUser(req.user) || await hasSuccessfulDeposit(req.user.uid);
@@ -160,21 +203,25 @@ router.get('/status/:depositId', authUser, async (req, res) => {
     const deposit = snap.val();
     if (deposit.user_id !== userId) return res.status(403).json({ error: 'FORBIDDEN' });
 
-    if (deposit.status === 'PENDING' && deposit.txn_id) {
+    // Poll Duitku for status update if still pending
+    if (deposit.status === 'PENDING' && deposit.order_id) {
       try {
-        const detail = await pakasirFetch('GET',
-          `/api/v2/transaction-status/${PAKASIR_SLUG()}/${deposit.txn_id}`
-        );
-        if (detail.status === 'completed') {
-          await processSuccessfulDeposit(depositId, deposit, detail);
+        const detail = await duitkuCheckStatus(deposit.order_id, deposit.amount);
+        // statusCode '00' = success
+        if (detail.statusCode === '00') {
+          await processSuccessfulDeposit(depositId, deposit, {
+            completed_at: Date.now(),
+            duitku_ref:   detail.reference || deposit.txn_id,
+          });
           deposit.status       = 'SUCCESS';
-          deposit.completed_at = detail.completed_at;
-        } else if (detail.status === 'canceled') {
+          deposit.completed_at = Date.now();
+        } else if (['04', '05'].includes(detail.statusCode)) {
+          // 04 = canceled, 05 = expired
           await db.ref(`deposits/${depositId}/status`).set('CANCELED');
           deposit.status = 'CANCELED';
         }
       } catch (apiErr) {
-        console.error('[depositRoutes] status check error:', apiErr.message);
+        console.error('[depositRoutes] duitku status check error:', apiErr.message);
       }
     }
 
@@ -185,7 +232,7 @@ router.get('/status/:depositId', authUser, async (req, res) => {
   }
 });
 
-// ── GET /api/deposit/history ─────────────────────────────────────────────────
+// ── GET /api/deposit/history ──────────────────────────────────────────────────
 router.get('/history', authUser, async (req, res) => {
   const userId = req.user.uid;
   try {
@@ -203,67 +250,112 @@ router.get('/history', authUser, async (req, res) => {
   }
 });
 
-// ── POST /api/deposit/webhook ─────────────────────────────────────────────────
-router.post('/webhook', express.json(), async (req, res) => {
-  const headerSecret  = req.get(WEBHOOK_SECRET_HEADER);
-  const webhookSecret = process.env.PAKASIR_WEBHOOK_SECRET;
-
-  if (!verifyWebhook(headerSecret, webhookSecret)) {
-    console.error('[depositRoutes] webhook verification failed');
-    return res.status(401).json({ error: 'UNAUTHORIZED' });
-  }
-
+// ── POST /api/deposit/callback ────────────────────────────────────────────────
+// Duitku posts to this endpoint when payment status changes.
+// Must be publicly accessible (no authUser).
+// Registered as DUITKU_CALLBACK_URL in .env and in Duitku dashboard.
+router.post('/callback', express.json(), express.urlencoded({ extended: false }), async (req, res) => {
   try {
-    const event = req.body;
-    const { txn_id, order_id, amount, status } = event;
+    const {
+      merchantCode,
+      amount,
+      merchantOrderId,
+      productDetail,
+      additionalParam,
+      paymentCode,
+      resultCode,
+      merchantUserId,
+      reference,
+      signature: incomingSignature,
+    } = req.body;
 
-    if (!txn_id || !order_id || !amount || !status) {
-      return res.status(400).json({ error: 'INVALID_PAYLOAD' });
-    }
-    if (status !== 'completed') {
-      return res.status(200).json({ success: true, message: 'ignored' });
+    console.log('[duitku callback] received:', JSON.stringify({
+      merchantOrderId, amount, resultCode, reference,
+    }));
+
+    // ── 1. Verify signature ──────────────────────────────────────────────────
+    const expectedSignature = buildSignature(
+      merchantCode,
+      amount,
+      merchantOrderId,
+      DUITKU_KEY()
+    );
+    // Constant-time compare to prevent timing attacks
+    const sigBufExpected = Buffer.from(expectedSignature, 'utf8');
+    const sigBufIncoming = Buffer.from(incomingSignature || '', 'utf8');
+    const signatureValid =
+      sigBufExpected.length === sigBufIncoming.length &&
+      crypto.timingSafeEqual(sigBufExpected, sigBufIncoming);
+
+    if (!signatureValid) {
+      console.error('[duitku callback] signature mismatch — possible forgery');
+      return res.status(400).send('Bad Signature');
     }
 
-    // Find deposit by order_id
+    // ── 2. Only process success ──────────────────────────────────────────────
+    if (resultCode !== '00') {
+      console.log(`[duitku callback] non-success resultCode=${resultCode}, ignored`);
+      return res.status(200).send('OK');
+    }
+
+    // ── 3. Find deposit by order_id ──────────────────────────────────────────
     const snap = await db.ref('deposits')
-      .orderByChild('order_id').equalTo(order_id).limitToFirst(1)
+      .orderByChild('order_id').equalTo(merchantOrderId).limitToFirst(1)
       .once('value');
 
     if (!snap.exists()) {
-      console.error('[depositRoutes] webhook: deposit not found', order_id);
-      return res.status(404).json({ error: 'NOT_FOUND' });
+      console.error('[duitku callback] deposit not found for', merchantOrderId);
+      return res.status(404).send('Not Found');
     }
 
     let depositId, deposit;
     snap.forEach(c => { depositId = c.key; deposit = c.val(); });
 
-    if (deposit.status === 'SUCCESS') return res.status(200).json({ success: true, message: 'already processed' });
-    if (deposit.amount !== amount) {
-      console.error('[depositRoutes] amount mismatch', { expected: deposit.amount, got: amount });
-      return res.status(400).json({ error: 'AMOUNT_MISMATCH' });
+    // ── 4. Idempotency check — already processed ─────────────────────────────
+    if (deposit.status === 'SUCCESS') {
+      console.log(`[duitku callback] ${merchantOrderId} already processed, skipping`);
+      return res.status(200).send('OK');
     }
 
-    // Double-check with Pakasir API
-    const detail = await pakasirFetch('GET',
-      `/api/v2/transaction-status/${PAKASIR_SLUG()}/${txn_id}`
-    );
-    if (detail.status !== 'completed' || detail.order_id !== order_id || detail.amount !== deposit.amount) {
-      console.error('[depositRoutes] webhook API verify failed', detail);
-      return res.status(400).json({ error: 'VERIFICATION_FAILED' });
+    // ── 5. Amount check — must match database ────────────────────────────────
+    const callbackAmount = Number(amount);
+    if (callbackAmount !== deposit.amount) {
+      console.error('[duitku callback] amount mismatch', {
+        callback: callbackAmount,
+        db: deposit.amount,
+        orderId: merchantOrderId,
+      });
+      return res.status(400).send('Amount Mismatch');
     }
 
-    await processSuccessfulDeposit(depositId, deposit, detail);
-    return res.status(200).json({ success: true });
+    // ── 6. Double-check with Duitku API (re-verify before crediting) ─────────
+    const statusDetail = await duitkuCheckStatus(merchantOrderId, deposit.amount);
+    if (statusDetail.statusCode !== '00') {
+      console.error('[duitku callback] API re-check failed', statusDetail);
+      return res.status(400).send('Verification Failed');
+    }
+
+    // ── 7. Credit balance (idempotent inside processSuccessfulDeposit) ───────
+    await processSuccessfulDeposit(depositId, deposit, {
+      completed_at: Date.now(),
+      duitku_ref:   reference || statusDetail.reference || '',
+    });
+
+    console.log(`[duitku callback] ✅ processed ${merchantOrderId}`);
+    return res.status(200).send('OK');
 
   } catch (err) {
-    console.error('[depositRoutes] webhook error:', err.message);
-    return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+    console.error('[duitku callback] error:', err.message, err.stack);
+    // Return 200 to prevent Duitku from retrying indefinitely on our bugs
+    return res.status(200).send('OK');
   }
 });
 
-// ── Helper ───────────────────────────────────────────────────────────────────
+// ── Helper: processSuccessfulDeposit ─────────────────────────────────────────
+// Idempotency is guaranteed by the Firebase transaction inside:
+// it checks deposit_credits[depositId] before crediting.
 async function processSuccessfulDeposit(depositId, deposit, detail) {
-  const amount = deposit.amount;
+  const amount      = deposit.amount;
   const completedAt = detail.completed_at || Date.now();
   const completedAtTimestamp = typeof completedAt === 'number' || /^\d+$/.test(String(completedAt))
     ? Number(completedAt)
@@ -271,65 +363,88 @@ async function processSuccessfulDeposit(depositId, deposit, detail) {
   const referralCreatedAt = Number.isFinite(completedAtTimestamp) ? completedAtTimestamp : Date.now();
 
   const eventSnap = await db.ref('events/deposit_double').once('value');
-  const event = eventSnap.val();
+  const event     = eventSnap.val();
   const eligibleForDouble = event && event.active === true && amount >= (event.min_amount || 25000);
-  const userRef = db.ref(`users/${deposit.user_id}`);
+
+  const userRef    = db.ref(`users/${deposit.user_id}`);
   const userResult = await userRef.transaction(user => {
     if (user === null) return null;
     if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+
+    // Idempotency: if this deposit was already credited, abort transaction
     if (user.deposit_credits && user.deposit_credits[depositId]) return;
 
-    const eventApplied = Boolean(eligibleForDouble && !(user.events && user.events.deposit_double_used));
-    const eventBonus = eventApplied ? amount : 0;
-    const creditAmount = amount + eventBonus;
+    const eventApplied  = Boolean(eligibleForDouble && !(user.events && user.events.deposit_double_used));
+    const eventBonus    = eventApplied ? amount : 0;
+    const creditAmount  = amount + eventBonus;
+
     addDepositCredit(user, amount, eventBonus);
+
     if (eventApplied) {
       user.events = user.events || {};
       user.events.deposit_double_used = true;
     }
+
     user.deposit_credits = user.deposit_credits || {};
     user.deposit_credits[depositId] = {
-      credited: creditAmount,
+      credited:           creditAmount,
       withdrawable_credit: amount,
-      event_bonus: eventBonus,
-      event_applied: eventApplied,
+      event_bonus:        eventBonus,
+      event_applied:      eventApplied,
     };
     return user;
   });
-  const credit = userResult.snapshot.child(`deposit_credits/${depositId}`).val();
-  if (!credit) throw new Error(`Could not credit deposit ${depositId} to user ${deposit.user_id}`);
 
+  const credit = userResult.snapshot.child(`deposit_credits/${depositId}`).val();
+  if (!credit) {
+    // Transaction was aborted — most likely already processed (idempotent)
+    console.log(`[depositRoutes] deposit ${depositId} was already credited, skipping`);
+    return;
+  }
+
+  // ── Referral commission ───────────────────────────────────────────────────
   const referralCommission = Math.floor(amount / 2);
   if (deposit.referrer_id && referralCommission > 0) {
-    const referrerRef = db.ref(`users/${deposit.referrer_id}`);
+    const referrerRef    = db.ref(`users/${deposit.referrer_id}`);
     const referralResult = await referrerRef.transaction(user => {
       if (user === null) return null;
       if (!user || typeof user !== 'object' || Array.isArray(user)) return;
+
+      // Idempotency: skip if already credited this deposit's commission
       if (user.referral_earnings && user.referral_earnings[depositId]) return;
 
       addWithdrawableCredit(user, referralCommission);
       user.referral_earnings = user.referral_earnings || {};
       user.referral_earnings[depositId] = {
-        referred_user_id: deposit.user_id,
+        referred_user_id:  deposit.user_id,
         referred_username: deposit.username || deposit.user_id,
-        deposit_amount: amount,
-        commission: referralCommission,
-        created_at: referralCreatedAt,
+        deposit_amount:    amount,
+        commission:        referralCommission,
+        created_at:        referralCreatedAt,
       };
       return user;
     });
+
     const earning = referralResult.snapshot.child(`referral_earnings/${depositId}`).val();
-    if (!earning) throw new Error(`Could not credit referral commission for deposit ${depositId}`);
+    if (!earning) {
+      console.log(`[depositRoutes] referral for deposit ${depositId} already credited, skipping`);
+    }
   }
 
+  // ── Finalise deposit record ───────────────────────────────────────────────
   await db.ref(`deposits/${depositId}`).update({
-    status:        'SUCCESS',
-    completed_at:  detail.completed_at || Date.now(),
-    credited:      credit.credited,
-    event_applied: credit.event_applied,
+    status:              'SUCCESS',
+    completed_at:        completedAt,
+    credited:            credit.credited,
+    event_applied:       credit.event_applied,
     referral_commission: referralCommission,
+    duitku_ref:          detail.duitku_ref || '',
   });
-  console.log(`[depositRoutes] ✅ +Rp${credit.credited} → user ${deposit.user_id}; referral +Rp${referralCommission} → ${deposit.referrer_id || 'none'}`);
+
+  console.log(
+    `[depositRoutes] ✅ +Rp${credit.credited} → user ${deposit.user_id}` +
+    `; referral +Rp${referralCommission} → ${deposit.referrer_id || 'none'}`
+  );
 }
 
 module.exports = router;
