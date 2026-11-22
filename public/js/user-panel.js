@@ -1,4 +1,4 @@
-// =============================================
+﻿// =============================================
 // USER PANEL
 // =============================================
 
@@ -1150,51 +1150,47 @@ window.backToAmount = function() {
 
 window.selectPaymentMethod = async function(method) {
   const amount = parseInt(document.getElementById('deposit-amount-input').value);
-  
+
+  // Disable semua tombol metode saat loading
+  const methodBtns = document.querySelectorAll('#deposit-step-method button[onclick^="selectPaymentMethod"]');
+  methodBtns.forEach(b => { b.disabled = true; });
+
   try {
     const res = await apiFetch('/api/deposit/create', {
       method: 'POST',
       body: JSON.stringify({ amount, payment_method: method }),
     });
     const data = await safeJson(res);
-    
+
     if (!res.ok) {
-      showError(data.message || 'Gagal membuat deposit');
+      methodBtns.forEach(b => { b.disabled = false; });
+      await Dialog.alert('error', 'Gagal Membuat Transaksi', data.message || 'Gagal membuat deposit. Coba lagi.');
       return;
     }
-    
+
     currentDeposit = data.deposit;
-    
-    // Show payment instructions
     document.getElementById('deposit-step-method').style.display = 'none';
     document.getElementById('deposit-step-payment').style.display = 'block';
-    
     renderPaymentInstructions(data.deposit);
     startDepositStatusCheck(data.deposit.deposit_id);
-    
+
   } catch (err) {
-    showError('Koneksi bermasalah: ' + err.message);
+    methodBtns.forEach(b => { b.disabled = false; });
+    await Dialog.alert('error', 'Koneksi Bermasalah', 'Periksa koneksi internet dan coba lagi.');
   }
 };
 
 function renderPaymentInstructions(deposit) {
   const container = document.getElementById('deposit-payment-instructions');
-  
-  if (deposit.payment_method === 'payment_link') {
-    // Payment Link � arahkan ke halaman Pakasir
+  const pm = deposit.payment_method;
+
+  const VA_METHODS = { BC:'BCA', M2:'Mandiri', BR:'BRI', B1:'BNI' };
+  const EWALLET_METHODS = { DA:'DANA', OV:'OVO', S1:'ShopeePay' };
+
+  if (pm === 'QR') {
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">Klik tombol di bawah untuk melanjutkan pembayaran</div>
-        <a href="${deposit.payment_link}" target="_blank" class="btn btn-primary btn-full btn-h">
-          <i class="fa-solid fa-external-link" style="font-size:12px"></i> Bayar Sekarang
-        </a>
-      </div>
-    `;
-  } else if (deposit.payment_method === 'qris') {
-    // QRIS
-    container.innerHTML = `
-      <div style="text-align:center;padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:12px">Scan QRIS dengan aplikasi pembayaran Anda</div>
+        <div style="font-size:.875rem;color:#64748b;margin-bottom:12px">Scan QRIS dengan aplikasi pembayaran kamu</div>
         <div style="background:#fff;padding:12px;border-radius:14px;display:inline-block;margin-bottom:10px">
           <canvas id="qris-canvas"></canvas>
         </div>
@@ -1206,44 +1202,30 @@ function renderPaymentInstructions(deposit) {
         </div>
       </div>
     `;
-    // Generate QR image dari qr_string
-    const canvas = document.getElementById('qris-canvas');
-    if (typeof QRCode !== 'undefined') {
-      QRCode.toCanvas(canvas, deposit.qr_string, {
-        width: 220,
-        margin: 1,
-        color: { dark: '#000000', light: '#ffffff' },
-      }, err => { if (err) console.error('[QRIS]', err); });
-    } else {
-      canvas.parentElement.innerHTML = '<div style="color:#ef4444;font-size:.75rem">Gagal load QR library</div>';
+    if (deposit.qr_string && typeof QRCode !== 'undefined') {
+      const canvas = document.getElementById('qris-canvas');
+      QRCode.toCanvas(canvas, deposit.qr_string, { width:220, margin:1, color:{dark:'#000000',light:'#ffffff'} },
+        err => { if (err) console.error('[QRIS]', err); });
+    } else if (!deposit.qr_string && deposit.payment_link) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:16px">
+          <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">Lanjutkan pembayaran QRIS via halaman Duitku</div>
+          <a href="${deposit.payment_link}" target="_blank" class="btn btn-primary btn-full btn-h">
+            <i class="fa-solid fa-qrcode" style="font-size:12px"></i> Buka Halaman Pembayaran
+          </a>
+        </div>`;
     }
 
-  } else {
-    // Virtual Account
-    const bankName = {
-      'bni_va':       'BNI',
-      'bri_va':       'BRI',
-      'cimb_niaga_va':'CIMB Niaga',
-      'danamon_va':   'Danamon',
-      'maybank_va':   'Maybank',
-      'bnc_va':       'Neo Commerce',
-      'bsi_va':       'BSI',
-      'muamalat_va':  'Muamalat',
-      'ocbc_va':      'OCBC',
-    }[deposit.payment_method] || 'Bank';
-    
+  } else if (VA_METHODS[pm]) {
+    const bankName = VA_METHODS[pm];
     container.innerHTML = `
       <div style="padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px;text-align:center">
-          Transfer ke Virtual Account ${bankName}
-        </div>
+        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px;text-align:center">Transfer ke Virtual Account ${bankName}</div>
         <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-          <div class="tl" style="margin-bottom:6px">Nomor VA</div>
+          <div class="tl" style="margin-bottom:6px">Nomor VA ${bankName}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <span class="tm" style="font-size:1.125rem;color:#f1f5f9">${deposit.va_number}</span>
-            <button onclick="copyVA()" class="btn btn-xs btn-sky">
-              <i class="fa-regular fa-copy" style="font-size:10px"></i> Salin
-            </button>
+            <span class="tm" style="font-size:1.125rem;color:#f1f5f9;font-family:'Geist Mono',monospace;letter-spacing:.05em">${deposit.va_number || '-'}</span>
+            <button onclick="copyVA()" class="btn btn-xs btn-sky"><i class="fa-regular fa-copy" style="font-size:10px"></i> Salin</button>
           </div>
         </div>
         <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:14px">
@@ -1251,13 +1233,33 @@ function renderPaymentInstructions(deposit) {
           <div class="tm" style="font-size:1.25rem;color:#34d399">${formatRupiah(deposit.total_payment)}</div>
         </div>
         <div style="font-size:.75rem;color:#334155;margin-top:12px;text-align:center">
-          <i class="fa-solid fa-clock" style="margin-right:3px"></i> Berlaku hingga ${new Date(deposit.expired_at).toLocaleString('id-ID')}
+          <i class="fa-solid fa-clock" style="margin-right:3px"></i>
+          Berlaku hingga ${new Date(deposit.expired_at).toLocaleString('id-ID')}
         </div>
       </div>
     `;
+
+  } else if (EWALLET_METHODS[pm] || deposit.payment_link) {
+    const walletName = EWALLET_METHODS[pm] || 'E-Wallet';
+    container.innerHTML = `
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">
+          Klik tombol di bawah untuk membuka <strong>${walletName}</strong> dan menyelesaikan pembayaran
+        </div>
+        <a href="${deposit.payment_link}" target="_blank" class="btn btn-primary btn-full btn-h">
+          <i class="fa-solid fa-external-link" style="font-size:12px"></i> Bayar dengan ${walletName}
+        </a>
+        <div style="font-size:.7rem;color:#334155;margin-top:12px">
+          <i class="fa-solid fa-clock" style="margin-right:3px"></i>
+          Berlaku hingga ${new Date(deposit.expired_at).toLocaleString('id-ID')}
+        </div>
+      </div>
+    `;
+
+  } else {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:#334155;font-size:.8125rem">Instruksi pembayaran tidak tersedia. Hubungi admin.</div>';
   }
 }
-
 window.copyVA = function() {
   if (!currentDeposit || !currentDeposit.va_number) return;
   navigator.clipboard.writeText(currentDeposit.va_number);

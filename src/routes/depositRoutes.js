@@ -319,7 +319,7 @@ router.post('/callback', express.json(), express.urlencoded({ extended: false })
 
     // ── 5. Amount check — must match database ────────────────────────────────
     const callbackAmount = Number(amount);
-    if (callbackAmount !== deposit.amount) {
+    if (callbackAmount !== Number(deposit.amount)) {
       console.error('[duitku callback] amount mismatch', {
         callback: callbackAmount,
         db: deposit.amount,

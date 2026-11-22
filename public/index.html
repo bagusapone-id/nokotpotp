@@ -508,24 +508,45 @@
           <div id="deposit-selected-amount" class="tm" style="font-size:1.375rem;color:#6ee7b7;margin-top:4px">Rp 0</div>
         </div>
 
-        <div class="tb" style="margin-bottom:12px">Pilih metode pembayaran:</div>
-        
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-link" style="font-size:14px;margin-right:10px"></i>
-            <span style="flex:1;text-align:left">Payment Link (Semua Metode)</span>
+        <div class="tb" style="margin-bottom:10px">Pilih metode pembayaran:</div>
+
+        <!-- QRIS -->
+        <div class="tl" style="margin-bottom:6px;font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;color:#334155">QRIS</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
+          <button onclick="selectPaymentMethod('QR')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 14px">
+            <i class="fa-solid fa-qrcode" style="font-size:15px;margin-right:10px;color:#38bdf8"></i>
+            <span style="flex:1;text-align:left">QRIS <span style="font-size:.6875rem;color:#334155;margin-left:4px">Semua dompet & m-banking</span></span>
           </button>
-          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-qrcode" style="font-size:14px;margin-right:10px"></i>
-            <span style="flex:1;text-align:left">QRIS</span>
+        </div>
+
+        <!-- Virtual Account -->
+        <div class="tl" style="margin-bottom:6px;font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;color:#334155">Virtual Account</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px">
+          <button onclick="selectPaymentMethod('BC')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:7px">
+            <i class="fa-solid fa-building-columns" style="font-size:12px;color:#3b82f6"></i> BCA
           </button>
-          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-building-columns" style="font-size:14px;margin-right:10px"></i>
-            <span style="flex:1;text-align:left">BNI Virtual Account</span>
+          <button onclick="selectPaymentMethod('M2')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:7px">
+            <i class="fa-solid fa-building-columns" style="font-size:12px;color:#fbbf24"></i> Mandiri
           </button>
-          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-building-columns" style="font-size:14px;margin-right:10px"></i>
-            <span style="flex:1;text-align:left">BRI Virtual Account</span>
+          <button onclick="selectPaymentMethod('BR')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:7px">
+            <i class="fa-solid fa-building-columns" style="font-size:12px;color:#3b82f6"></i> BRI
+          </button>
+          <button onclick="selectPaymentMethod('B1')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:7px">
+            <i class="fa-solid fa-building-columns" style="font-size:12px;color:#f97316"></i> BNI
+          </button>
+        </div>
+
+        <!-- E-Wallet -->
+        <div class="tl" style="margin-bottom:6px;font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;color:#334155">E-Wallet</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:16px">
+          <button onclick="selectPaymentMethod('DA')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:6px">
+            <i class="fa-solid fa-wallet" style="font-size:12px;color:#3b82f6"></i> DANA
+          </button>
+          <button onclick="selectPaymentMethod('OV')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:6px">
+            <i class="fa-solid fa-wallet" style="font-size:12px;color:#8b5cf6"></i> OVO
+          </button>
+          <button onclick="selectPaymentMethod('S1')" class="btn btn-ghost btn-full" style="height:44px;justify-content:center;gap:6px">
+            <i class="fa-solid fa-wallet" style="font-size:12px;color:#f97316"></i> ShopeePay
           </button>
         </div>
 
