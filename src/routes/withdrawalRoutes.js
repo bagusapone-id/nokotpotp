@@ -13,8 +13,8 @@ const {
 const isAdminUser = require('../utils/isAdminUser');
 
 const MIN_WITHDRAWAL = 1000;
-const MINIMUM_BALANCE_TO_WITHDRAW = 25000;
-const MINIMUM_BALANCE_MESSAGE = 'Saldo utama harus minimal Rp 25.000 dan minimal penarikan Rp 1.000. Saldo komisi undang teman bisa di tarik.';
+const MINIMUM_BALANCE_TO_WITHDRAW = 10000;
+const MINIMUM_BALANCE_MESSAGE = 'Saldo utama harus minimal Rp 10.000 dan minimal penarikan Rp 1.000. Saldo komisi undang teman bisa di tarik.';
 const BANKS = {
   dana: 'DANA',
   gopay: 'GoPay',
