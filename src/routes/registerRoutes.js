@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { auth, db } = require('../config/firebase');
 const { CODE_PATTERN, createUniqueReferralCode } = require('../services/referralService');
+const { registerLimiter } = require('../middleware/rateLimits');
 
 router.post('/validate-referral-code', async (req, res) => {
   const referralCode = typeof req.body.referralCode === 'string'
@@ -30,10 +31,11 @@ router.post('/validate-referral-code', async (req, res) => {
 /**
  * POST /api/register
  * Create user record in DB after Firebase Auth registration.
- * No auth middleware — called right after createUserWithEmailAndPassword.
+ * No auth middleware â€” called right after createUserWithEmailAndPassword.
  * Body: { idToken: string, username: string }
+ * Rate limited: max 5 per 15 menit per IP.
  */
-router.post('/', async (req, res) => {
+router.post('/', registerLimiter, async (req, res) => {
   const { idToken, username, referralCode } = req.body;
 
   if (!idToken || !username) {

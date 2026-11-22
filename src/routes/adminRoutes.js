@@ -385,21 +385,51 @@ router.delete('/notifications/:id', authAdmin, async (req, res) => {
 });
 
 // GET /api/admin/users — list all users from Firebase users/{uid}
+// GET /api/admin/users — list users dengan paginasi
+// Query params: ?page=1&limit=50 (default limit 50, max 100)
 router.get('/users', authAdmin, async (req, res) => {
+  const page  = Math.max(1, parseInt(req.query.page, 10)  || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+
   try {
-    // Gunakan Firebase REST API untuk read semua users — lebih reliable di serverless
+    // Gunakan Firebase REST API — lebih reliable di serverless
     const dbUrl = process.env.FIREBASE_DATABASE_URL;
     const accessToken = await db.app.options.credential.getAccessToken();
     const fetchRes = await fetch(`${dbUrl}/users.json?access_token=${accessToken.access_token}`);
     const data = await fetchRes.json();
+
     const users = [];
     if (data && typeof data === 'object') {
       Object.entries(data).forEach(([uid, val]) => {
         if (val && typeof val === 'object') users.push({ uid, ...val });
       });
     }
-    console.log('[adminRoutes] users count via REST:', users.length);
-    return res.status(200).json({ success: true, users });
+
+    // Sort: user terbaru (joined_at atau created_at) di atas; fallback ke uid string sort
+    users.sort((a, b) => {
+      const ta = Number(a.created_at || a.joined_at || 0);
+      const tb = Number(b.created_at || b.joined_at || 0);
+      return tb - ta;
+    });
+
+    const total = users.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const offset = (page - 1) * limit;
+    const paginatedUsers = users.slice(offset, offset + limit);
+
+    console.log(`[adminRoutes] users total=${total} page=${page}/${totalPages} limit=${limit}`);
+    return res.status(200).json({
+      success: true,
+      users: paginatedUsers,
+      pagination: {
+        page,
+        limit,
+        total,
+        total_pages: totalPages,
+        has_next: page < totalPages,
+        has_prev: page > 1,
+      },
+    });
   } catch (err) {
     console.error('[adminRoutes] users error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });

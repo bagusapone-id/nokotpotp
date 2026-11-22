@@ -800,18 +800,24 @@ function listenUsers() {
   loadUsers();
 }
 
-async function loadUsers() {
+// State paginasi users
+let usersPagination = { page: 1, totalPages: 1, total: 0 };
+
+async function loadUsers(page) {
+  page = page || usersPagination.page || 1;
   const container = document.getElementById("users-list");
   if (!container) return;
   container.innerHTML = '<div class="sk" style="height:52px"></div><div class="sk" style="height:52px;margin-top:7px"></div>';
   try {
-    const res = await adminFetch('/api/admin/users');
+    const res = await adminFetch('/api/admin/users?page=' + page + '&limit=50');
     const data = await safeJson(res);
     console.log('[loadUsers] response:', res.status, data);
     if (data.success) {
       usersData = {};
       data.users.forEach(u => { usersData[u.uid] = u; });
+      usersPagination = data.pagination || { page: 1, totalPages: 1, total: data.users.length };
       renderUsers();
+      renderUsersPagination();
     } else {
       container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#fb7185;font-size:.8125rem">' + (data.message||'Gagal load users') + '</div>';
     }
@@ -819,6 +825,31 @@ async function loadUsers() {
     console.error('[loadUsers] error:', e);
     container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#fb7185;font-size:.8125rem">Koneksi bermasalah.</div>';
   }
+}
+
+function renderUsersPagination() {
+  // Hapus nav lama jika ada
+  const existing = document.getElementById('users-pagination-nav');
+  if (existing) existing.remove();
+
+  const p = usersPagination;
+  if (!p || p.total_pages <= 1) return;
+
+  const container = document.getElementById("users-list");
+  if (!container || !container.parentElement) return;
+
+  const nav = document.createElement('div');
+  nav.id = 'users-pagination-nav';
+  nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px';
+  nav.innerHTML =
+    '<button onclick="loadUsers(' + Math.max(1, p.page - 1) + ')" ' +
+      'style="height:32px;padding:0 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#64748b" ' +
+      (p.has_prev ? '' : 'disabled') + '>← Prev</button>' +
+    '<span style="font-size:.6875rem;color:#334155">' + p.page + ' / ' + p.total_pages + ' (' + p.total + ' users)</span>' +
+    '<button onclick="loadUsers(' + Math.min(p.total_pages, p.page + 1) + ')" ' +
+      'style="height:32px;padding:0 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#64748b" ' +
+      (p.has_next ? '' : 'disabled') + '>Next →</button>';
+  container.parentElement.insertBefore(nav, container.nextSibling);
 }
 
 function renderUsers() {

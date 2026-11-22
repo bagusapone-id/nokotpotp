@@ -7,6 +7,7 @@ const { db } = require('../config/firebase');
 const { addDepositCredit, addWithdrawableCredit } = require('../services/balanceService');
 const { hasSuccessfulDeposit } = require('../services/depositAccessService');
 const isAdminUser = require('../utils/isAdminUser');
+const { depositCreateLimiter } = require('../middleware/rateLimits');
 
 // ── Pakasir API v2 base ──────────────────────────────────────────────────────
 const PAKASIR_BASE = 'https://app.pakasir.com';
@@ -57,7 +58,9 @@ const VALID_METHODS = [
 ];
 
 // ── POST /api/deposit/create ─────────────────────────────────────────────────
-router.post('/create', authUser, async (req, res) => {
+// authUser dipasang duluan agar req.user.uid tersedia untuk keyGenerator limiter.
+// depositCreateLimiter: max 10 request per 10 menit per user.
+router.post('/create', authUser, depositCreateLimiter, async (req, res) => {
   const { amount, payment_method = 'payment_link' } = req.body;
   const userId = req.user.uid;
 
