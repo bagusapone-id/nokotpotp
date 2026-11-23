@@ -155,9 +155,14 @@
     ═══════════════════════════════════════ */
     #login-screen{
       position:fixed;inset:0;z-index:10;
-      display:flex;flex-direction:column;
+      display:flex;justify-content:center;
       overflow-y:auto;
       background:var(--bg);
+    }
+    .login-inner{
+      width:100%;max-width:400px;
+      display:flex;flex-direction:column;
+      min-height:100%;
     }
     /* subtle grid texture */
     #login-screen::before{
@@ -386,6 +391,7 @@
      LOGIN / REGISTER SCREEN
 ══════════════════════════════════════════ -->
 <div id="login-screen">
+  <div class="login-inner">
   <!-- Branding hero -->
   <div class="login-branding fu">
     <h1 class="login-h1" aria-label="Nokos OTP">Nokos<br/><em>OTP.</em></h1>
@@ -464,8 +470,9 @@
         Buat Akun <i class="fa-solid fa-arrow-right" style="font-size:11px"></i>
       </button>
     </form>
-  </div>
-</div>
+  </div><!-- /login-form-panel -->
+  </div><!-- /login-inner -->
+</div><!-- /login-screen -->
 
 
 <!-- ══════════════════════════════════════════
