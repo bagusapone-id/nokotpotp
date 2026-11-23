@@ -8,160 +8,245 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <style>
-    :root{--accent:#c084fc;--accent-bright:#d8b4fe;--accent-dim:rgba(192,132,252,.1);--accent-line:rgba(192,132,252,.22);--surface:#191326;--muted:#a59ab4;--line:rgba(235,219,255,.1)}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% -18%,rgba(106,62,151,.32),transparent 48%),#100b18;color:#f5eefb;font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-    button,input{font:inherit}
-    .page{width:min(100%,400px);margin:0 auto;padding:16px 16px 112px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .back-link{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;color:#e3d8ed;text-decoration:none;background:rgba(255,255,255,.035)}
-    .brand{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:800;letter-spacing:.04em;color:#e8dff0}
-    .brand img{width:25px;height:25px}
-    .page-label{padding:5px 8px;border:1px solid var(--accent-line);border-radius:20px;color:var(--accent-bright);font-size:.5625rem;font-weight:800;letter-spacing:.12em}
-    .hero{position:relative;overflow:hidden;padding:20px;border:1px solid rgba(216,180,254,.18);border-radius:22px;background:linear-gradient(145deg,#39204f,#21152f 62%,#21162e);margin-bottom:13px}
-    .hero:after{content:"";position:absolute;width:190px;height:190px;right:-110px;top:-105px;border:1px solid rgba(216,180,254,.17);border-radius:50%;box-shadow:0 0 0 23px rgba(216,180,254,.035),0 0 0 46px rgba(216,180,254,.025)}
-    .hero-kicker{display:flex;align-items:center;gap:7px;color:#d4b8ec;font-size:.625rem;font-weight:800;letter-spacing:.14em}
-    .hero-title{position:relative;z-index:1;margin:13px 0 8px;font-size:clamp(1.7rem,8vw,2.1rem);font-weight:800;letter-spacing:-.06em;line-height:1.04;color:#fff}
-    .hero-title em{color:var(--accent-bright);font-style:normal}
-    .hero-copy{position:relative;z-index:1;max-width:290px;margin:0;color:#d0c0dc;font-size:.78rem;line-height:1.55}
-    .limit-pill{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:7px 10px;border:1px solid rgba(216,180,254,.2);border-radius:30px;background:rgba(255,255,255,.055);color:#e4caff;font-size:.65rem;font-weight:700}
-    .card{padding:16px;border:1px solid var(--line);border-radius:18px;background:rgba(25,19,38,.92);box-shadow:0 12px 30px rgba(0,0,0,.14);margin-bottom:12px}
-    .card-heading{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:.92rem;font-weight:800;color:#f5eefb}
-    .card-heading i{color:var(--accent);font-size:.85rem}
-    .muted{color:var(--muted);font-size:.75rem;line-height:1.55}
-    .invite-code-box{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#120d1b}
-    .overline{margin-bottom:5px;color:#988aa7;font-size:.625rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-    .referral-code{color:var(--accent-bright);font:700 1rem 'Geist Mono',monospace;letter-spacing:.03em}
-    .link-box{overflow-wrap:anywhere;margin:9px 0;padding:11px 12px;border:1px dashed rgba(216,180,254,.24);border-radius:12px;background:rgba(12,8,18,.65);color:#e8dff0;font:500 .68rem 'Geist Mono',monospace}
-    .btn{min-height:39px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid var(--accent-line);border-radius:11px;background:var(--accent-dim);color:var(--accent-bright);font-size:.72rem;font-weight:800;text-decoration:none;cursor:pointer;transition:transform .12s,opacity .12s}
-    .btn:active{transform:scale(.97)}
-    .btn:disabled{opacity:.42;cursor:not-allowed}
-    .btn-primary{width:100%;min-height:44px;background:var(--accent);border-color:transparent;color:#241033}
-    .btn-compact{min-height:32px;padding:0 9px;font-size:.65rem}
-    .copy-feedback{min-height:16px;margin-top:7px;text-align:center;color:#b9a8c8;font-size:.66rem}
-    .stats{display:grid;grid-template-columns:1fr 1.25fr;gap:9px;margin-bottom:12px}
-    .stat-card{padding:13px;border:1px solid var(--line);border-radius:15px;background:rgba(25,19,38,.92)}
-    .stat-label{display:flex;align-items:center;gap:6px;margin-bottom:7px;color:#ab9db8;font-size:.64rem;font-weight:700}
-    .stat-label i{color:var(--accent)}
-    .stat-value{color:#f2e7fb;font:700 1.05rem 'Geist Mono',monospace;letter-spacing:-.03em}
-    .stat-value.accent{color:var(--accent-bright);font-size:.94rem}
-    .section-note{margin:-4px 0 9px;color:#a59ab4;font-size:.68rem}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{font-size:15px}
+    body{margin:0;background:#06090f;color:#e6edf3;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;-webkit-font-smoothing:antialiased}
+    button,input{font-family:inherit}
+    ::-webkit-scrollbar{width:0}
+
+    :root{
+      --bg:#06090f;--s1:#0d1117;--s2:#161b22;--s3:#21262d;
+      --line:#30363d;--line2:#484f58;
+      --g:#3fb950;--g-dim:rgba(63,185,80,.12);--g-bdr:rgba(63,185,80,.28);--g-text:#3fb950;
+      --purple:#a371f7;--purple-dim:rgba(163,113,247,.12);--purple-bdr:rgba(163,113,247,.28);
+      --amber:#d29922;--amber-dim:rgba(210,153,34,.1);--amber-bdr:rgba(210,153,34,.28);
+      --rose:#f85149;--rose-dim:rgba(248,81,73,.1);--rose-bdr:rgba(248,81,73,.25);
+      --text:#e6edf3;--text2:#848d97;--text3:#484f58;
+      --mono:'JetBrains Mono',monospace;
+    }
+
+    .page{width:min(100%,400px);margin:0 auto;padding:0 0 100px}
+
+    /* Topbar */
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px}
+    .topbar-left{display:flex;align-items:center;gap:10px}
+    .back-btn{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--s1);display:flex;align-items:center;justify-content:center;color:var(--text2);text-decoration:none;font-size:13px;flex-shrink:0}
+    .topbar-title{font-size:.9375rem;font-weight:700;color:var(--text)}
+    .page-chip{padding:4px 10px;border:1px solid var(--purple-bdr);border-radius:20px;font-size:.5625rem;font-weight:700;letter-spacing:.1em;color:var(--purple);text-transform:uppercase}
+
+    /* Hero */
+    .hero{padding:8px 18px 22px}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1px solid var(--purple-bdr);border-radius:20px;background:var(--purple-dim);font-size:.625rem;font-weight:700;color:var(--purple);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+    .hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--purple)}
+    .hero-h1{font-size:1.875rem;font-weight:900;color:var(--text);letter-spacing:-.04em;line-height:1.05;margin-bottom:8px}
+    .hero-h1 em{color:var(--purple);font-style:normal}
+    .hero-sub{font-size:.8125rem;color:var(--text2);line-height:1.6;max-width:280px;margin-bottom:12px}
+    .hero-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--line2);border-radius:20px;background:var(--s2);font-size:.6875rem;font-weight:600;color:var(--text3)}
+
+    /* Divider */
+    .h-line{height:1px;background:var(--line);margin:0 0 18px}
+
+    /* Card */
+    .card{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 18px 12px}
+    .card-title{font-size:.8125rem;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+    .card-title i{color:var(--purple);font-size:12px}
+
+    /* Referral code box */
+    .code-box{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--s2);margin-bottom:9px}
+    .code-label{font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+    .code-value{font-family:var(--mono);font-size:.9375rem;font-weight:700;color:var(--purple);letter-spacing:.03em}
+    .link-box{padding:10px 12px;border:1px dashed var(--line2);border-radius:9px;background:var(--s2);color:var(--text2);font-family:var(--mono);font-size:.6875rem;line-height:1.5;overflow-wrap:anywhere;margin-bottom:9px}
+    .copy-feedback{min-height:16px;margin-top:6px;text-align:center;color:var(--text3);font-size:.6875rem}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:9px;font-size:.8125rem;font-weight:700;cursor:pointer;transition:opacity .12s,transform .1s;white-space:nowrap}
+    .btn:active{transform:scale(.97);opacity:.85}
+    .btn:disabled{opacity:.35;pointer-events:none}
+    .btn-full{width:100%}
+    .btn-primary{height:40px;padding:0 14px;background:var(--g-text);border:none;color:#0d1117}
+    .btn-purple{height:40px;padding:0 14px;background:var(--purple-dim);border:1px solid var(--purple-bdr);color:var(--purple)}
+    .btn-sm{height:32px;padding:0 11px;font-size:.75rem;border-radius:7px}
+    .btn-ghost{background:var(--s2);border:1px solid var(--line);color:var(--text2)}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 18px;margin-bottom:12px}
+    .stat-card{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:13px}
+    .stat-label{font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+    .stat-label i{color:var(--purple);font-size:10px}
+    .stat-value{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--text);letter-spacing:-.03em}
+    .stat-value.accent{color:var(--purple)}
+
+    /* Alert */
+    .error-msg{display:none;margin:0 18px 12px;padding:10px 12px;border:1px solid var(--rose-bdr);border-radius:9px;background:var(--rose-dim);color:#ffa198;font-size:.8125rem}
+
+    /* Code input */
+    .code-inp{width:100%;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:9px;outline:0;background:var(--s2);color:var(--text);font-family:var(--mono);font-size:.875rem;font-weight:600;text-transform:uppercase;transition:border-color .15s}
+    .code-inp:focus{border-color:var(--purple-bdr)}
+
+    /* History list */
     .history-list-item{padding:11px 0;border-bottom:1px solid var(--line)}
     .history-list-item:last-child{padding-bottom:0;border-bottom:0}
-    .empty{text-align:center;padding:17px 8px;color:#9386a0;font-size:.72rem}
-    .error{display:none;margin:0 0 12px;padding:11px 12px;border:1px solid rgba(251,113,133,.25);border-radius:12px;background:rgba(251,113,133,.08);color:#fecdd3;font-size:.78rem}
-    .code-input{width:100%;height:44px;padding:0 12px;border:1px solid var(--line);border-radius:11px;outline:0;background:#120d1b;color:#f5eefb;font:600 .85rem 'Geist Mono',monospace;text-transform:uppercase}
-    .code-input:focus{border-color:var(--accent)}
-    .earnings-table{width:100%;border-collapse:collapse;font-size:.7rem;text-align:left}
-    .earnings-table th,.earnings-table td{padding:9px 6px;border-bottom:1px solid var(--line)}
-    .earnings-table th{color:#a99bb5;font-weight:700}
-    .earnings-table td:last-child{color:var(--accent-bright);font-weight:800;text-align:right}
-    .disclaimer{margin:9px 0 0;color:#9e90aa;font-size:.64rem;line-height:1.5}
-    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);display:flex;justify-content:space-around;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:rgba(16,11,24,.96);border-top:1px solid var(--line);backdrop-filter:blur(14px)}
-    .bottom-nav a{min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#867a91;text-decoration:none;font-size:.625rem;font-weight:600}
-    .bottom-nav[hidden],.bottom-nav a.deposit-required[hidden],#referral-loading[hidden],#referral-locked[hidden],#referral-page[hidden],#referral-nav[hidden]{display:none!important}
-    .bottom-nav a i{font-size:16px}
-    .bottom-nav a.active{color:var(--accent-bright)}
+    .item-name{font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:3px}
+    .item-meta{font-size:.6875rem;color:var(--text3)}
+    .item-amount{margin-top:4px;font-family:var(--mono);font-size:.8125rem;font-weight:700;color:var(--purple)}
+    .empty{text-align:center;padding:16px 8px;color:var(--text3);font-size:.75rem}
+
+    /* Simulation table */
+    .sim-table{width:100%;border-collapse:collapse;font-size:.75rem}
+    .sim-table th,.sim-table td{padding:8px 6px;border-bottom:1px solid var(--line)}
+    .sim-table th{color:var(--text2);font-weight:600;text-align:left}
+    .sim-table td:last-child{color:var(--purple);font-weight:700;text-align:right;font-family:var(--mono)}
+    .sim-table tr:last-child td{border-bottom:0}
+    .sim-note{margin:8px 0 0;color:var(--text3);font-size:.6875rem;line-height:1.5}
+
+    /* Access gate */
     .access-state{width:min(100%,400px);min-height:100dvh;margin:0 auto;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-    .access-card{width:100%;padding:24px 20px;border:1px solid var(--line);border-radius:20px;background:rgba(25,19,38,.92)}
-    .access-icon{width:48px;height:48px;margin:0 auto 14px;display:grid;place-items:center;border:1px solid var(--accent-line);border-radius:16px;background:var(--accent-dim);color:var(--accent);font-size:20px}
-    .access-icon.is-error{border-color:rgba(251,113,133,.25);background:rgba(251,113,133,.08);color:#fb7185}
-    .access-card h1{margin:0 0 8px;font-size:1.1rem;color:#f5eefb}
-    .access-card p{margin:0;color:var(--muted);font-size:.8125rem;line-height:1.6}
-    .access-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;margin-top:18px;padding:0 16px;border-radius:12px;background:var(--accent);color:#241033;text-decoration:none;font-size:.8125rem;font-weight:800}
-    @media(max-width:360px){.page{padding-left:12px;padding-right:12px}.hero{padding:17px}.card{padding:13px}}
+    .access-card{width:100%;padding:22px 18px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
+    .access-icon{width:46px;height:46px;margin:0 auto 13px;display:grid;place-items:center;border:1px solid var(--purple-bdr);border-radius:13px;background:var(--purple-dim);color:var(--purple);font-size:19px}
+    .access-icon.is-error{border-color:var(--rose-bdr);background:var(--rose-dim);color:var(--rose)}
+    .access-card h1{margin:0 0 7px;font-size:1rem;color:var(--text)}
+    .access-card p{margin:0;color:var(--text2);font-size:.8125rem;line-height:1.6}
+    .access-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:16px;padding:0 16px;border-radius:9px;background:var(--purple);color:#0d1117;text-decoration:none;font-size:.8125rem;font-weight:700;gap:7px}
+
+    /* Bottom nav pill — sama dengan index */
+    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);padding:10px 20px max(16px,env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 55%,transparent);pointer-events:none}
+    .nav-pill{display:flex;background:var(--s1);border:1px solid var(--line);border-radius:30px;overflow:hidden;pointer-events:all}
+    .bottom-nav a{flex:1;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text3);text-decoration:none;font-size:.5rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:color .15s,background .15s;border-radius:30px}
+    .bottom-nav a i{font-size:17px}
+    .bottom-nav a.active{background:var(--s2);color:var(--text)}
+    .bottom-nav a.active i{color:var(--g-text)}
+    .bottom-nav a.deposit-required[hidden]{display:none!important}
+
+    #referral-loading[hidden],#referral-locked[hidden],#referral-page[hidden],#referral-nav[hidden]{display:none!important}
+
+    @keyframes sp{0%,100%{opacity:.2;transform:scale(.75)}50%{opacity:1;transform:scale(1)}}
+    @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .fu{animation:fu .18s ease both}
   </style>
 </head>
 <body>
+
+  <!-- Loading -->
   <div id="referral-loading" class="access-state">
-    <p>Memeriksa akses fitur undang teman...</p>
+    <div style="display:flex;gap:5px">
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);animation:sp .9s ease-in-out infinite"></span>
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);animation:sp .9s ease-in-out .18s infinite"></span>
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);animation:sp .9s ease-in-out .36s infinite"></span>
+    </div>
   </div>
+
+  <!-- Locked -->
   <main id="referral-locked" class="access-state" hidden>
     <div class="access-card">
       <div id="referral-access-icon" class="access-icon" aria-hidden="true"></div>
       <h1 id="referral-access-title">Undang teman belum tersedia</h1>
-      <p id="referral-access-message">Fitur ini tersedia setelah minimal satu deposit berapa pun berhasil dibayar.</p>
-      <a href="/" class="access-link">Kembali ke beranda</a>
+      <p id="referral-access-message">Fitur ini tersedia setelah minimal satu deposit berhasil dibayar.</p>
+      <a href="/" class="access-link"><i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Kembali</a>
     </div>
   </main>
+
+  <!-- Main page -->
   <main id="referral-page" class="page" hidden>
-    <header class="topbar">
-      <a href="/" class="back-link" aria-label="Kembali ke beranda"><i class="fa-solid fa-arrow-left"></i></a>
-      <div class="brand"><img src="/logo.svg" alt=""/> Nokos OTP</div>
-      <span class="page-label">REFERRAL</span>
-    </header>
 
-    <section class="hero">
-      <div class="hero-kicker"><i class="fa-solid fa-sparkles"></i> REFERRAL CLUB</div>
-      <h1 class="hero-title">Ajak teman.<br/>Dapat <em>50%</em>.</h1>
-      <p class="hero-copy">Setiap deposit teman yang berhasil memberimu komisi ke saldo. Makin banyak teman, makin banyak kesempatan.</p>
-      <span class="limit-pill"><i class="fa-solid fa-infinity"></i> Tanpa batas jumlah deposit</span>
-    </section>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <a href="/" class="back-btn" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></a>
+        <span class="topbar-title">Undang Teman</span>
+      </div>
+      <span class="page-chip">Referral</span>
+    </div>
 
-    <section class="card">
-      <h2 class="card-heading"><i class="fa-solid fa-wallet"></i> Komisi bisa ditarik</h2>
-      <p class="muted" style="margin:0 0 11px">Komisi undang teman masuk ke saldo utama dan bisa ditarik. Akses penarikan tersedia saat saldo utama minimal Rp 10.000; minimal penarikan Rp 1.000.</p>
-      <a class="btn btn-primary" href="/withdrawal"><i class="fa-solid fa-arrow-right"></i> Buka tarik saldo</a>
-    </section>
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Referral Club</div>
+      <h1 class="hero-h1">Ajak teman.<br/>Dapat <em>50%</em>.</h1>
+      <p class="hero-sub">Setiap deposit teman yang berhasil memberimu komisi ke saldo. Makin banyak teman, makin banyak komisi.</p>
+      <span class="hero-pill"><i class="fa-solid fa-infinity" style="font-size:10px"></i> Tanpa batas jumlah deposit</span>
+    </div>
 
-    <section class="card">
-      <h2 class="card-heading"><i class="fa-solid fa-ticket"></i> Kode undanganmu</h2>
-      <div class="invite-code-box">
+    <div class="h-line"></div>
+
+    <!-- Komisi bisa ditarik -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-wallet"></i> Komisi bisa ditarik</div>
+      <p style="margin:0 0 12px;font-size:.8125rem;color:var(--text2);line-height:1.6">Komisi masuk ke saldo utama dan bisa ditarik. Akses penarikan tersedia saat saldo utama minimal Rp 10.000, minimal penarikan Rp 1.000.</p>
+      <a class="btn btn-primary btn-full" href="/withdrawal" style="text-decoration:none">
+        <i class="fa-solid fa-arrow-right" style="font-size:11px"></i> Buka tarik saldo
+      </a>
+    </div>
+
+    <!-- Kode undangan -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-ticket"></i> Kode undanganmu</div>
+      <div class="code-box">
         <div>
-          <div class="overline">Kode referral</div>
-          <strong id="referral-code-display" class="referral-code">Memuat...</strong>
+          <div class="code-label">Kode referral</div>
+          <strong id="referral-code-display" class="code-value">Memuat...</strong>
         </div>
-        <button id="copy-code-btn" class="btn btn-compact" type="button" disabled><i class="fa-regular fa-copy"></i> Salin kode</button>
+        <button id="copy-code-btn" class="btn btn-sm btn-ghost" type="button" disabled>
+          <i class="fa-regular fa-copy" style="font-size:11px"></i> Salin kode
+        </button>
       </div>
       <div id="invite-link" class="link-box">Memuat link undangan...</div>
-      <button id="copy-link-btn" class="btn btn-primary" type="button" disabled><i class="fa-solid fa-link"></i> Salin link undangan</button>
+      <button id="copy-link-btn" class="btn btn-purple btn-full" type="button" disabled>
+        <i class="fa-solid fa-link" style="font-size:11px"></i> Salin link undangan
+      </button>
       <div id="copy-message" class="copy-feedback" role="status"></div>
-    </section>
+    </div>
 
-    <section id="claim-referral-card" class="card" style="display:none">
-      <h2 class="card-heading"><i class="fa-solid fa-link"></i>Sudah daftar tanpa kode?</h2>
-      <p class="muted" style="margin:0 0 11px">Kaitkan kode teman satu kali. Komisi berlaku untuk deposit sukses setelah kode terhubung.</p>
+    <!-- Klaim kode (jika belum punya referrer) -->
+    <div id="claim-referral-card" class="card" style="display:none">
+      <div class="card-title"><i class="fa-solid fa-link"></i> Sudah daftar tanpa kode?</div>
+      <p style="margin:0 0 11px;font-size:.8125rem;color:var(--text2);line-height:1.55">Kaitkan kode teman satu kali. Komisi berlaku untuk deposit sukses setelah kode terhubung.</p>
       <form id="claim-referral-form" style="display:flex;flex-direction:column;gap:9px">
-        <input id="claim-referral-code" class="code-input" type="text" placeholder="NOKOTPXXXXX" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateClaimReferralCode()"/>
-        <div id="claim-referral-status" role="status" style="display:none;font-size:.72rem"></div>
-        <button id="claim-referral-submit" class="btn btn-primary" type="submit" disabled><i class="fa-solid fa-check"></i> Kaitkan kode</button>
+        <input id="claim-referral-code" class="code-inp" type="text" placeholder="NOKTPXXXXX" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateClaimReferralCode()"/>
+        <div id="claim-referral-status" role="status" style="display:none;font-size:.6875rem"></div>
+        <button id="claim-referral-submit" class="btn btn-purple btn-full" type="submit" disabled>
+          <i class="fa-solid fa-check" style="font-size:11px"></i> Kaitkan kode
+        </button>
       </form>
-    </section>
+    </div>
 
-    <div id="error-message" class="error" role="alert"></div>
+    <!-- Error -->
+    <div id="error-message" class="error-msg" role="alert"></div>
 
-    <section class="stats" aria-label="Statistik referral">
+    <!-- Stats -->
+    <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label"><i class="fa-solid fa-user-group"></i> Teman</div>
-        <div id="invited-count" class="stat-value">-</div>
+        <div id="invited-count" class="stat-value">—</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label"><i class="fa-solid fa-coins"></i> Komisi</div>
-        <div id="total-earned" class="stat-value accent">-</div>
+        <div class="stat-label"><i class="fa-solid fa-coins"></i> Total Komisi</div>
+        <div id="total-earned" class="stat-value accent">—</div>
       </div>
-    </section>
+    </div>
 
-    <section class="card">
-      <h2 class="card-heading"><i class="fa-solid fa-arrow-trend-up"></i> Komisi terbaru</h2>
-      <p class="section-note">Komisi tercatat setelah deposit teman berhasil.</p>
-      <div id="commission-history" class="muted">Memuat riwayat...</div>
-    </section>
+    <!-- Komisi terbaru -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Komisi terbaru</div>
+      <p style="margin:0 0 10px;font-size:.6875rem;color:var(--text3)">Tercatat setelah deposit teman berhasil.</p>
+      <div id="commission-history" style="font-size:.8125rem;color:var(--text2)">Memuat...</div>
+    </div>
 
-    <section class="card">
-      <h2 class="card-heading"><i class="fa-solid fa-people-group"></i> Temanmu</h2>
-      <div id="referral-list" class="muted">Memuat daftar teman...</div>
-    </section>
+    <!-- Daftar teman -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-people-group"></i> Temanmu</div>
+      <div id="referral-list" style="font-size:.8125rem;color:var(--text2)">Memuat...</div>
+    </div>
 
-    <section class="card">
-      <h2 class="card-heading"><i class="fa-solid fa-calculator"></i> Simulasi komisi</h2>
-      <table class="earnings-table">
-        <thead><tr><th>Deposit sukses</th><th style="text-align:right">Komisi 50%</th></tr></thead>
+    <!-- Simulasi -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-calculator"></i> Simulasi komisi</div>
+      <table class="sim-table">
+        <thead><tr><th>Deposit teman</th><th style="text-align:right">Komisi 50%</th></tr></thead>
         <tbody>
           <tr><td>Rp 5.000</td><td>Rp 2.500</td></tr>
           <tr><td>Rp 25.000</td><td>Rp 12.500</td></tr>
@@ -170,15 +255,20 @@
           <tr><td>Dan seterusnya</td><td>50% dari deposit</td></tr>
         </tbody>
       </table>
-      <p class="disclaimer">Contoh di atas hanya simulasi. Semua nominal deposit teman yang sukses mendapat komisi 50%, tanpa batas jumlah deposit.</p>
-    </section>
+      <p class="sim-note">Semua nominal deposit teman yang sukses mendapat komisi 50%, tanpa batas jumlah deposit.</p>
+    </div>
+
   </main>
 
+  <!-- Bottom nav -->
   <nav id="referral-nav" class="bottom-nav" aria-label="Navigasi utama" hidden>
-    <a href="/"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
-    <a href="/withdrawal" class="deposit-required" hidden><i class="fa-solid fa-wallet"></i><span>Tarik Saldo</span></a>
-    <a href="/referral" class="active deposit-required" aria-current="page" hidden><i class="fa-solid fa-user-group"></i><span>Undang Teman</span></a>
+    <div class="nav-pill">
+      <a href="/"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
+      <a href="/withdrawal" class="deposit-required" hidden><i class="fa-solid fa-wallet"></i><span>Tarik</span></a>
+      <a href="/referral" class="active deposit-required" aria-current="page" hidden><i class="fa-solid fa-user-group"></i><span>Referral</span></a>
+    </div>
   </nav>
+
   <script src="/js/firebase-config.js"></script>
   <script src="/js/referral.js"></script>
 </body>
