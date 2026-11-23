@@ -9,7 +9,7 @@ const { hasSuccessfulDeposit } = require('../services/depositAccessService');
 const isAdminUser = require('../utils/isAdminUser');
 const { depositCreateLimiter } = require('../middleware/rateLimits');
 
-const MIN_DEPOSIT_AMOUNT = 10000;
+const MIN_DEPOSIT_AMOUNT = 5000;
 
 // ── Pakasir API v2 base ──────────────────────────────────────────────────────
 const PAKASIR_BASE = 'https://app.pakasir.com';
@@ -67,7 +67,7 @@ router.post('/create', authUser, depositCreateLimiter, async (req, res) => {
   const userId = req.user.uid;
 
   if (!amount || typeof amount !== 'number' || !Number.isInteger(amount) || amount < MIN_DEPOSIT_AMOUNT) {
-    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Minimal deposit Rp 10.000' });
+    return res.status(400).json({ error: 'INVALID_AMOUNT', message: 'Minimal deposit Rp 5.000' });
   }
   if (!VALID_METHODS.includes(payment_method)) {
     return res.status(400).json({ error: 'INVALID_METHOD', message: 'Metode pembayaran tidak valid' });

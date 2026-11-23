@@ -63,7 +63,7 @@ Server berjalan di `http://localhost:3000`
 - **Tarik Saldo:** `http://localhost:3000/withdrawal`
 - **Health Check:** `http://localhost:3000/healthz`
 
-Penarikan minimum Rp 1.000, tanpa biaya, ke DANA, GoPay, atau SeaBank. Fitur dapat diakses jika saldo yang bisa ditarik minimal Rp 25.000. Bonus event deposit 2x tetap bisa dipakai membeli layanan tetapi tidak dapat ditarik; bonus dipakai lebih dahulu sebelum saldo deposit. Komisi referral, refund, dan saldo tambahan admin tetap bisa ditarik. Saldo yang sudah ada sebelum pemisahan ini tetap dianggap sebagai saldo utama. Saldo dicadangkan saat permintaan diajukan dan dikembalikan jika admin menolak. Setelah mengubah Firebase Database Rules, salin rules terbaru dari `node set-db-rules.js` ke Firebase Console; penulisan data akun dan permintaan penarikan hanya dilakukan server.
+Penarikan minimum Rp 1.000, tanpa biaya, ke DANA, GoPay, atau SeaBank. Fitur dapat diakses jika saldo yang bisa ditarik minimal Rp 15.000. Bonus event deposit 2x tetap bisa dipakai membeli layanan tetapi tidak dapat ditarik; bonus dipakai lebih dahulu sebelum saldo deposit. Komisi referral, refund, dan saldo tambahan admin tetap bisa ditarik. Saldo yang sudah ada sebelum pemisahan ini tetap dianggap sebagai saldo utama. Saldo dicadangkan saat permintaan diajukan dan dikembalikan jika admin menolak. Setelah mengubah Firebase Database Rules, salin rules terbaru dari `node set-db-rules.js` ke Firebase Console; penulisan data akun dan permintaan penarikan hanya dilakukan server.
 
 Untuk membuat kode referral unik bagi semua akun yang sudah ada, jalankan sekali setelah konfigurasi `.env` terisi:
 
@@ -144,4 +144,4 @@ Lalu tambah stok nomor dari **Admin Panel ? Tambah Stok**.
 - ?? **Auto-Refund** � Cancel order = saldo kembali 100%
 - ? **Expiry Guardian** � Background job expire order macet otomatis setiap 30 detik
 - **Referral** � Kode undangan unik berformat `NOKOTPXXXXX`; pengundang mendapat komisi 50% tanpa batas jumlah deposit sukses. Akun yang terlanjur mendaftar tanpa kode dapat mengaitkannya sekali dari halaman Undang Teman.
-- **Tarik Saldo** � Permintaan manual DANA, GoPay, dan SeaBank; biaya gratis, minimum penarikan Rp 1.000 dan saldo yang bisa ditarik minimal Rp 25.000 untuk akses. Bonus event tidak dapat ditarik. Permintaan tampil di dashboard admin dan dikirim melalui Telegram.
+- **Tarik Saldo** � Permintaan manual DANA, GoPay, dan SeaBank; biaya gratis, minimum penarikan Rp 1.000 dan saldo yang bisa ditarik minimal Rp 15.000 untuk akses. Bonus event tidak dapat ditarik. Permintaan tampil di dashboard admin dan dikirim melalui Telegram.

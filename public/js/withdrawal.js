@@ -13,7 +13,7 @@ let withdrawalAccessChecked = false;
 let withdrawalHistoryLoading = false;
 let lastAccessAttemptFingerprint = '';
 
-const MINIMUM_BALANCE_TO_WITHDRAW = 20000;
+const MINIMUM_BALANCE_TO_WITHDRAW = 15000;
 
 document.querySelectorAll('.bank-option').forEach(button => {
   button.addEventListener('click', () => selectBank(button.dataset.bank));
