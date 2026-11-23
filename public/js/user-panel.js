@@ -10,6 +10,14 @@ let timerInterval = null;
 let resendCooldownInterval = null;
 let orderListenerRef = null;
 let balanceListenerRef = null;
+let connectionListenerRef = null;
+let countriesListenerRef = null;
+let stockListenerRef = null;
+let notificationsListenerRef = null;
+let activeOrdersQueryRef = null;
+let banListenerRef = null;
+let depositEventListenerRef = null;
+let depositStatusListenerRef = null;
 const referralCodeFromLink = new URLSearchParams(window.location.search).get("ref");
 let referralValidationStatus = "empty";
 let referralValidationSequence = 0;
@@ -351,6 +359,7 @@ firebaseAuth.onAuthStateChanged(async (user) => {
     idToken = await user.getIdToken();
     showApp();
   } else {
+    cleanupListeners();
     currentUser = null;
     idToken = null;
     showLoginScreen();
@@ -464,7 +473,31 @@ document.addEventListener("keydown", event => {
 });
 
 function cleanupListeners() {
-  if (balanceListenerRef) { balanceListenerRef.off(); balanceListenerRef = null; }
+  [
+    balanceListenerRef,
+    connectionListenerRef,
+    countriesListenerRef,
+    stockListenerRef,
+    notificationsListenerRef,
+    activeOrdersQueryRef,
+    banListenerRef,
+    depositEventListenerRef,
+    depositStatusListenerRef,
+  ].forEach(ref => {
+    if (ref) ref.off();
+  });
+  balanceListenerRef = null;
+  connectionListenerRef = null;
+  countriesListenerRef = null;
+  stockListenerRef = null;
+  notificationsListenerRef = null;
+  activeOrdersQueryRef = null;
+  banListenerRef = null;
+  depositEventListenerRef = null;
+  depositStatusListenerRef = null;
+  if (depositCheckInterval) { clearInterval(depositCheckInterval); depositCheckInterval = null; }
+  if (_notifTimer) { clearInterval(_notifTimer); _notifTimer = null; }
+  currentDeposit = null;
   // Cleanup semua active orders
   Object.keys(orderStates).forEach(id => removeOrderCard(id));
   clearInterval(timerInterval);
@@ -481,7 +514,8 @@ function initApp() {
   checkForActiveOrder();
   // Realtime ban listener — auto sign-out if banned
   if (currentUser) {
-    firebaseDB.ref('users/' + currentUser.uid + '/banned').on('value', async (snap) => {
+    banListenerRef = firebaseDB.ref('users/' + currentUser.uid + '/banned');
+    banListenerRef.on('value', async (snap) => {
       if (snap.val() === true) {
         // Ambil reason
         const reasonSnap = await firebaseDB.ref('users/' + currentUser.uid + '/ban_reason').once('value');
@@ -541,14 +575,16 @@ const ERROR_MAP = {
 
 // ---- Connection ----
 function setupConnectionListener() {
-  const ref = firebaseDB.ref(".info/connected");
-  ref.on("value", (snap) => {
+  connectionListenerRef = firebaseDB.ref(".info/connected");
+  connectionListenerRef.on("value", (snap) => {
     const banner = document.getElementById("connection-banner");
     if (snap.val() === false) {
       banner.classList.remove("hidden");
     } else {
       banner.classList.add("hidden");
     }
+  }, error => {
+    console.error("[connection] listener error:", error.message);
   });
 }
 
@@ -570,13 +606,19 @@ let stockData = {};
 let countrySearchQuery = "";
 
 function setupCountriesAndStockListener() {
-  firebaseDB.ref("countries").on("value", (snap) => {
+  countriesListenerRef = firebaseDB.ref("countries");
+  countriesListenerRef.on("value", (snap) => {
     countriesData = snap.val() || {};
     renderCountryList();
+  }, error => {
+    showError("Gagal memperbarui daftar negara: " + error.message);
   });
-  firebaseDB.ref("phone_stocks").on("value", (snap) => {
+  stockListenerRef = firebaseDB.ref("phone_stocks");
+  stockListenerRef.on("value", (snap) => {
     stockData = snap.val() || {};
     renderCountryList();
+  }, error => {
+    showError("Gagal memperbarui stok realtime: " + error.message);
   });
 }
 
@@ -695,14 +737,23 @@ const orderStates = {};
 
 function checkForActiveOrder() {
   if (!currentUser) return;
-  firebaseDB.ref("orders").orderByChild("user_id").equalTo(currentUser.uid).once("value", (snap) => {
-    if (!snap.exists()) return;
+  activeOrdersQueryRef = firebaseDB.ref("orders").orderByChild("user_id").equalTo(currentUser.uid);
+  activeOrdersQueryRef.on("value", (snap) => {
+    const activeIds = new Set();
     snap.forEach((child) => {
       const o = child.val();
       if (["WAITING_OTP", "OTP_REQUESTED"].includes(o.status)) {
+        activeIds.add(child.key);
         addActiveOrderCard(child.key, o.phone_number, o.expires_at, o.country_name, o.status, o.price);
+      } else {
+        removeOrderCard(child.key);
       }
     });
+    Object.keys(orderStates).forEach(id => {
+      if (!activeIds.has(id)) removeOrderCard(id);
+    });
+  }, error => {
+    showError("Gagal memantau order secara realtime: " + error.message);
   });
 }
 
@@ -758,7 +809,15 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
   // Init state
-  orderStates[orderId] = { listenerRef: null, timerInterval: null, cooldownInterval: null, autoOtpTimeout: null, hasOtp: false, resendCount: 0 };
+  orderStates[orderId] = {
+    listenerRef: null,
+    timerInterval: null,
+    cooldownInterval: null,
+    autoOtpTimeout: null,
+    hasOtp: false,
+    otpRequested: initialStatus === "OTP_REQUESTED",
+    resendCount: 0,
+  };
 
   startOrderTimer(orderId, expiresAt);
   listenOrderById(orderId);
@@ -964,6 +1023,24 @@ function listenOrderById(orderId) {
   ref.on("value", (snap) => {
     if (!snap.exists()) return;
     const o = snap.val();
+    const state = orderStates[orderId];
+    if (o.status === "OTP_REQUESTED" && state && !state.otpRequested) {
+      state.otpRequested = true;
+      if (state.autoOtpTimeout) {
+        clearTimeout(state.autoOtpTimeout);
+        state.autoOtpTimeout = null;
+      }
+      const requestButton = document.getElementById("req-btn-" + orderId);
+      const resendButton = document.getElementById("resend-btn-" + orderId);
+      if (requestButton) requestButton.style.display = "none";
+      if (resendButton) {
+        resendButton.style.display = "flex";
+        startResendCooldownFor(orderId, 300);
+      }
+    }
+    if (state && Number.isSafeInteger(Number(o.resend_count))) {
+      state.resendCount = Math.max(state.resendCount, Number(o.resend_count));
+    }
     if (o.otp_code && o.otp_code.length > 0) {
       const otpEl = document.getElementById("otp-display-" + orderId);
       const otpVal = document.getElementById("otp-val-" + orderId);
@@ -1064,17 +1141,18 @@ window.openDepositModal = function() {
   document.getElementById('deposit-amount-input').value = '';
   selectDepositAmount(null);
   updateDepositPreview(0);
-  // Cek event aktif
   const banner = document.getElementById('deposit-event-banner');
-  if (banner) {
-    firebaseDB.ref('events/deposit_double').once('value').then(snap => {
+  if (banner && !depositEventListenerRef) {
+    depositEventListenerRef = firebaseDB.ref('events/deposit_double');
+    depositEventListenerRef.on('value', snap => {
       const ev = snap.val();
       window._depositEventActive = ev && ev.active;
       window._depositEventMin = ev ? (ev.min_amount || 25000) : 25000;
       if (ev && ev.active) banner.style.display = 'block';
       else banner.style.display = 'none';
       updateDepositPreview(parseInt(document.getElementById('deposit-amount-input').value) || 0);
-    }).catch(() => {
+    }, error => {
+      console.error('[deposit] event listener error:', error.message);
       window._depositEventActive = false;
       banner.style.display = 'none';
     });
@@ -1086,6 +1164,14 @@ window.closeDepositModal = function() {
   if (depositCheckInterval) {
     clearInterval(depositCheckInterval);
     depositCheckInterval = null;
+  }
+  if (depositEventListenerRef) {
+    depositEventListenerRef.off();
+    depositEventListenerRef = null;
+  }
+  if (depositStatusListenerRef) {
+    depositStatusListenerRef.off();
+    depositStatusListenerRef = null;
   }
   currentDeposit = null;
 };
@@ -1266,6 +1352,16 @@ window.copyVA = function() {
 
 function startDepositStatusCheck(depositId) {
   if (depositCheckInterval) clearInterval(depositCheckInterval);
+  if (depositStatusListenerRef) depositStatusListenerRef.off();
+  depositStatusListenerRef = firebaseDB.ref('deposits/' + depositId);
+  depositStatusListenerRef.on('value', snap => {
+    const deposit = snap.val();
+    if (deposit && deposit.user_id === currentUser.uid && deposit.status === 'SUCCESS') {
+      finishDepositSuccess(depositId, deposit);
+    }
+  }, error => {
+    console.error('[deposit] realtime status listener error:', error.message);
+  });
   
   depositCheckInterval = setInterval(async () => {
     try {
@@ -1273,16 +1369,18 @@ function startDepositStatusCheck(depositId) {
       const data = await safeJson(res);
       
       if (data.success && data.deposit.status === 'SUCCESS') {
-        clearInterval(depositCheckInterval);
-        depositCheckInterval = null;
-        closeDepositModal();
-        showSuccessModal(`Deposit berhasil! +${formatRupiah(data.deposit.amount)}`);
-        // Balance diupdate otomatis oleh Firebase realtime listener
+        finishDepositSuccess(depositId, data.deposit);
       }
     } catch (err) {
       console.error('[deposit] status check error:', err);
     }
   }, 5000);
+}
+
+function finishDepositSuccess(depositId, deposit) {
+  if (!currentDeposit || currentDeposit.deposit_id !== depositId) return;
+  closeDepositModal();
+  showSuccessModal(`Deposit berhasil! +${formatRupiah(deposit.amount)}`);
 }
 
 window.backToMethodSelect = function() {
@@ -1339,7 +1437,8 @@ function renderNotifCarousel() {
 }
 
 function setupNotificationsListener() {
-  firebaseDB.ref("notifications").on("value", (snap) => {
+  notificationsListenerRef = firebaseDB.ref("notifications");
+  notificationsListenerRef.on("value", (snap) => {
     if (_notifTimer) { clearInterval(_notifTimer); _notifTimer = null; }
     _notifItems = [];
     if (snap.exists()) {
@@ -1360,5 +1459,7 @@ function setupNotificationsListener() {
         renderNotifCarousel();
       }, 4000);
     }
+  }, error => {
+    showError("Gagal memperbarui notifikasi realtime: " + error.message);
   });
 }

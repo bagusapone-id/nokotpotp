@@ -40,6 +40,22 @@ router.get('/withdrawals', authAdmin, async (req, res) => {
   }
 });
 
+router.delete('/withdrawals/history', authAdmin, async (req, res) => {
+  try {
+    await db.ref('withdrawal_requests').remove();
+    return res.status(200).json({
+      success: true,
+      message: 'Semua riwayat penarikan telah dihapus.',
+    });
+  } catch (err) {
+    console.error('[adminRoutes] delete withdrawal history error:', err.message);
+    return res.status(500).json({
+      error: 'SERVER_ERROR',
+      message: 'Gagal menghapus riwayat penarikan.',
+    });
+  }
+});
+
 router.post('/withdrawals/:uid/:withdrawalId/complete', authAdmin, async (req, res) => {
   const { uid, withdrawalId } = req.params;
   const requestRef = db.ref(`withdrawal_requests/${uid}/${withdrawalId}`);
@@ -417,7 +433,9 @@ router.get('/users', authAdmin, async (req, res) => {
     const offset = (page - 1) * limit;
     const paginatedUsers = users.slice(offset, offset + limit);
 
-    console.log(`[adminRoutes] users total=${total} page=${page}/${totalPages} limit=${limit}`);
+    if (req.query.quiet !== '1') {
+      console.log(`[adminRoutes] users total=${total} page=${page}/${totalPages} limit=${limit}`);
+    }
     return res.status(200).json({
       success: true,
       users: paginatedUsers,

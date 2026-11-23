@@ -3,6 +3,17 @@
 let withdrawalUser = null;
 let currentBalance = 0;
 let selectedBank = '';
+let userRecordRef = null;
+let withdrawalRequestsRef = null;
+let withdrawalAccessPollTimer = null;
+let liveWithdrawalHistory = [];
+let hasSuccessfulDeposit = false;
+let withdrawalAccessGranted = false;
+let withdrawalAccessChecked = false;
+let withdrawalHistoryLoading = false;
+let lastAccessAttemptFingerprint = '';
+
+const MINIMUM_BALANCE_TO_WITHDRAW = 20000;
 
 document.querySelectorAll('.bank-option').forEach(button => {
   button.addEventListener('click', () => selectBank(button.dataset.bank));
@@ -42,12 +53,99 @@ function showWithdrawalAccess(state, message) {
 
 firebase.auth().onAuthStateChanged(user => {
   if (!user) {
+    stopWithdrawalListeners();
     window.location.replace('/');
     return;
   }
   withdrawalUser = user;
+  listenForWithdrawalUpdates(user);
   loadWithdrawalHistory();
 });
+
+function stopWithdrawalListeners() {
+  [userRecordRef, withdrawalRequestsRef].forEach(ref => {
+    if (ref) ref.off();
+  });
+  userRecordRef = null;
+  withdrawalRequestsRef = null;
+  if (withdrawalAccessPollTimer) {
+    clearInterval(withdrawalAccessPollTimer);
+    withdrawalAccessPollTimer = null;
+  }
+}
+
+function listenForWithdrawalUpdates(user) {
+  stopWithdrawalListeners();
+  userRecordRef = firebase.database().ref(`users/${user.uid}`);
+  withdrawalRequestsRef = firebase.database().ref(`withdrawal_requests/${user.uid}`);
+
+  userRecordRef.on('value', snapshot => {
+    const account = snapshot.val() || {};
+    currentBalance = Number(
+      account.withdrawable_balance === undefined || account.withdrawable_balance === null
+        ? account.balance || 0
+        : account.withdrawable_balance
+    ) || 0;
+    updateWithdrawalLiveView();
+    syncWithdrawalAccess();
+  }, error => showWithdrawalRealtimeError(error));
+
+  withdrawalRequestsRef.on('value', snapshot => {
+    liveWithdrawalHistory = Object.entries(snapshot.val() || {})
+      .map(([withdrawal_id, request]) => ({ withdrawal_id, ...request }))
+      .filter(request => request.status !== 'FAILED')
+      .sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
+    updateWithdrawalLiveView();
+    syncWithdrawalAccess();
+  }, error => showWithdrawalRealtimeError(error));
+
+}
+
+function updateWithdrawalLiveView() {
+  if (document.getElementById('withdrawal-page').hidden) return;
+  document.getElementById('available-balance').textContent = formatRupiah(currentBalance);
+  renderHistory(liveWithdrawalHistory);
+}
+
+function syncWithdrawalAccess() {
+  if (!withdrawalAccessChecked) return;
+  const accessFingerprint = [
+    hasSuccessfulDeposit,
+    currentBalance,
+    liveWithdrawalHistory.length,
+  ].join(':');
+  const allowed = hasSuccessfulDeposit && (
+    currentBalance >= MINIMUM_BALANCE_TO_WITHDRAW || liveWithdrawalHistory.length > 0
+  );
+  if (!allowed) {
+    withdrawalAccessGranted = false;
+    startWithdrawalAccessPolling();
+    showWithdrawalAccess(
+      'locked',
+      hasSuccessfulDeposit
+        ? `Saldo utama harus minimal Rp ${MINIMUM_BALANCE_TO_WITHDRAW.toLocaleString('id-ID')} dan minimal penarikan Rp 1.000. Saldo komisi undang teman bisa di tarik.`
+        : 'Fitur ini tersedia setelah minimal satu deposit berapa pun berhasil dibayar.'
+    );
+    return;
+  }
+  if (!withdrawalAccessGranted && !withdrawalHistoryLoading &&
+      accessFingerprint !== lastAccessAttemptFingerprint) {
+    lastAccessAttemptFingerprint = accessFingerprint;
+    loadWithdrawalHistory();
+  }
+}
+
+function startWithdrawalAccessPolling() {
+  if (withdrawalAccessPollTimer) return;
+  withdrawalAccessPollTimer = setInterval(() => {
+    if (!withdrawalAccessGranted && document.visibilityState !== 'hidden') loadWithdrawalHistory();
+  }, 5000);
+}
+
+function showWithdrawalRealtimeError(error) {
+  console.error('[withdrawal] realtime listener error:', error.message);
+  showMessage('Pembaruan data realtime gagal. Periksa koneksi dan muat ulang halaman.', true);
+}
 
 document.getElementById('withdrawal-form').addEventListener('submit', async event => {
   event.preventDefault();
@@ -101,24 +199,44 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
 });
 
 async function loadWithdrawalHistory() {
-  if (!withdrawalUser) return;
+  if (!withdrawalUser || withdrawalHistoryLoading) return;
+  withdrawalHistoryLoading = true;
+  let recheckAccess = false;
   const historyEl = document.getElementById('withdrawal-history');
   try {
     const response = await withdrawalFetch('/api/withdrawals');
     const data = await parseWithdrawalResponse(response);
 
+    withdrawalAccessChecked = true;
+    withdrawalAccessGranted = true;
+    lastAccessAttemptFingerprint = '';
+    hasSuccessfulDeposit = true;
+    if (withdrawalAccessPollTimer) {
+      clearInterval(withdrawalAccessPollTimer);
+      withdrawalAccessPollTimer = null;
+    }
     showWithdrawalAccess('available');
     currentBalance = Number(data.balance) || 0;
     document.getElementById('available-balance').textContent = formatRupiah(currentBalance);
-    renderHistory(Array.isArray(data.withdrawals) ? data.withdrawals : []);
+    liveWithdrawalHistory = Array.isArray(data.withdrawals) ? data.withdrawals : [];
+    renderHistory(liveWithdrawalHistory);
   } catch (error) {
     if (['MINIMUM_BALANCE_REQUIRED', 'NO_TRANSACTIONS', 'SUCCESSFUL_DEPOSIT_REQUIRED'].includes(error.code)) {
+      withdrawalAccessChecked = true;
+      withdrawalAccessGranted = false;
+      hasSuccessfulDeposit = error.code !== 'SUCCESSFUL_DEPOSIT_REQUIRED';
+      startWithdrawalAccessPolling();
       showWithdrawalAccess('locked', error.message);
+      recheckAccess = true;
       return;
     }
+    withdrawalAccessChecked = true;
     showWithdrawalAccess('available');
     historyEl.textContent = error.message || 'Riwayat penarikan tidak dapat dimuat.';
     document.getElementById('available-balance').textContent = 'Tidak tersedia';
+  } finally {
+    withdrawalHistoryLoading = false;
+    if (recheckAccess) syncWithdrawalAccess();
   }
 }
 

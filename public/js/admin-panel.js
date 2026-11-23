@@ -3,6 +3,12 @@ let adminUser = null, adminToken = null, currentStockTab = "indo";
 let stockData = {}, countriesData = {}, ordersData = {};
 let countrySearchQueryAdmin = "";
 let withdrawalRefreshTimer = null;
+let currentAdminTab = "orders";
+let withdrawalsLoadInProgress = false;
+let usersLoadInProgress = false;
+let eventStatusLoadInProgress = false;
+let bulkCancelInProgress = false;
+let deletingWithdrawalHistory = false;
 
 // ── Auth ──
 firebaseAuth.onAuthStateChanged(async (user) => {
@@ -36,7 +42,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 document.getElementById("logout-btn").addEventListener("click", () => firebaseAuth.signOut());
 
 async function adminFetch(url, opts = {}) {
-  if (adminUser) adminToken = await adminUser.getIdToken(true);
+  if (adminUser) adminToken = await adminUser.getIdToken();
   return fetch(url, { ...opts, headers: { "Content-Type":"application/json", "Authorization":"Bearer "+adminToken, ...(opts.headers||{}) } });
 }
 
@@ -68,11 +74,19 @@ function initAdmin() {
   listenNotifications();
   listenUsers();
   loadWithdrawals();
-  if (!withdrawalRefreshTimer) withdrawalRefreshTimer = setInterval(loadWithdrawals, 30000);
+  if (!withdrawalRefreshTimer) {
+    withdrawalRefreshTimer = setInterval(() => {
+      if (!adminUser || document.visibilityState === "hidden") return;
+      if (currentAdminTab === "withdrawals") loadWithdrawals();
+      if (currentAdminTab === "users") loadUsers(usersPagination.page, { silent: true });
+      if (currentAdminTab === "notifications") loadEventStatus();
+    }, 5000);
+  }
 }
 
 // ── Nav tabs ──
 window.showAdminTab = function(tab) {
+  currentAdminTab = tab;
   ["orders","stock","countries","notifications","withdrawals","users"].forEach(t => {
     const el = document.getElementById("tab-"+t);
     if (el) el.style.display = "none";
@@ -98,6 +112,8 @@ function listenOrders() {
       if (o.status === "WAITING_OTP" || o.status === "OTP_REQUESTED") ordersData[c.key] = o;
     });
     renderOrders();
+  }, error => {
+    document.getElementById("order-list").textContent = "Gagal memuat order realtime: " + error.message;
   });
   // Update timer setiap detik tanpa re-render penuh
   setInterval(() => {
@@ -119,6 +135,11 @@ function renderOrders() {
   const container = document.getElementById("order-list");
   const entries   = Object.entries(ordersData).slice(0, 200);
   document.getElementById("order-count").textContent = entries.length;
+  const activeCount = Object.keys(ordersData).length;
+  document.getElementById("active-order-count").textContent = activeCount;
+  const bulkCancelButton = document.getElementById("cancel-all-active-btn");
+  bulkCancelButton.disabled = activeCount === 0 || bulkCancelInProgress;
+  bulkCancelButton.style.opacity = bulkCancelButton.disabled ? ".5" : "1";
 
   if (!entries.length) {
     container.innerHTML =
@@ -251,11 +272,52 @@ window.adminCancelOrder = async function(orderId) {
   } catch { await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet."); }
 };
 
+window.adminCancelAllActiveOrders = async function() {
+  const activeCount = Object.keys(ordersData).length;
+  if (!activeCount || bulkCancelInProgress) return;
+
+  const ok = await Dialog.confirmDanger(
+    "Batalkan & Refund Semua Order Aktif?",
+    "Sebanyak <strong style='color:#fb7185'>"+activeCount+" order aktif</strong> akan dibatalkan. Saldo setiap order yang berhasil diproses akan dikembalikan ke user.",
+    "Ya, Refund Semua"
+  );
+  if (!ok) return;
+
+  bulkCancelInProgress = true;
+  renderOrders();
+  try {
+    const res = await adminFetch("/api/orders/admin-cancel-active", { method:"POST" });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert("error", "Gagal", data.message || "Gagal membatalkan order aktif.");
+    } else if (data.failed && data.failed.length) {
+      await Dialog.alert(
+        "error",
+        "Sebagian Order Gagal",
+        data.cancelled+" order berhasil dibatalkan dan di-refund. "+data.failed.length+" gagal diproses; cek log server sebelum mencoba lagi."
+      );
+    } else {
+      await Dialog.alert(
+        "success",
+        "Selesai",
+        data.cancelled+" order berhasil dibatalkan dan di-refund."+(data.skipped ? " "+data.skipped+" order dilewati karena statusnya sudah berubah." : "")
+      );
+    }
+  } catch {
+    await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet. Status sebagian order mungkin sudah berubah; muat ulang sebelum mencoba lagi.");
+  } finally {
+    bulkCancelInProgress = false;
+    renderOrders();
+  }
+};
+
 // ── Stock ──
 function listenStock() {
   firebaseDB.ref("phone_stocks").on("value", (snap) => {
     stockData = snap.val() || {};
     renderStockList(); updateStockCounts(); updateStockFilterCountry();
+  }, error => {
+    document.getElementById("stock-list").textContent = "Gagal memuat stok realtime: " + error.message;
   });
 }
 
@@ -356,6 +418,8 @@ function listenCountries() {
   firebaseDB.ref("countries").on("value", (snap) => {
     countriesData = snap.val() || {};
     renderCountriesList(); populateCountrySelect();
+  }, error => {
+    document.getElementById("countries-list").textContent = "Gagal memuat negara realtime: " + error.message;
   });
 }
 
@@ -450,7 +514,8 @@ function formatRupiah(n) { return "Rp " + Number(n||0).toLocaleString("id-ID"); 
 
 async function loadWithdrawals() {
   const container = document.getElementById("withdrawal-list");
-  if (!container) return;
+  if (!container || withdrawalsLoadInProgress) return;
+  withdrawalsLoadInProgress = true;
   try {
     const res = await adminFetch("/api/admin/withdrawals");
     const data = await safeJson(res);
@@ -459,6 +524,8 @@ async function loadWithdrawals() {
   } catch (err) {
     document.getElementById("withdrawal-count").textContent = "!";
     container.textContent = err.message || "Gagal memuat permintaan penarikan.";
+  } finally {
+    withdrawalsLoadInProgress = false;
   }
 }
 
@@ -537,6 +604,38 @@ window.processWithdrawal = async function(uid, withdrawalId, action, amount) {
     await Dialog.alert("success", "Berhasil", data.message || "Status penarikan diperbarui.");
   } catch {
     await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet.");
+  }
+};
+
+window.deleteAllWithdrawalHistory = async function() {
+  if (deletingWithdrawalHistory) return;
+
+  const confirmed = await Dialog.confirmDanger(
+    "Hapus Semua Riwayat Penarikan?",
+    "Riwayat penarikan <strong style='color:#fb7185'>semua user dan semua status</strong> akan dihapus permanen. Permintaan yang masih berjalan ikut terhapus, tetapi saldo yang tertahan tidak otomatis dikembalikan.",
+    "Ya, Hapus Semua"
+  );
+  if (!confirmed) return;
+
+  const button = document.getElementById("delete-all-withdrawal-history-btn");
+  deletingWithdrawalHistory = true;
+  button.disabled = true;
+  button.style.opacity = ".5";
+  try {
+    const res = await adminFetch("/api/admin/withdrawals/history", { method:"DELETE" });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert("error", "Gagal Menghapus", data.message || "Riwayat penarikan tidak berhasil dihapus.");
+      return;
+    }
+    await loadWithdrawals();
+    await Dialog.alert("success", "Riwayat Dihapus", data.message || "Semua riwayat penarikan telah dihapus.");
+  } catch {
+    await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet sebelum mencoba lagi.");
+  } finally {
+    deletingWithdrawalHistory = false;
+    button.disabled = false;
+    button.style.opacity = "1";
   }
 };
 
@@ -661,6 +760,8 @@ window.cancelLongPress = function() {
 
 // ── Events ──
 async function loadEventStatus() {
+  if (eventStatusLoadInProgress) return;
+  eventStatusLoadInProgress = true;
   try {
     const res  = await adminFetch('/api/admin/events');
     const data = await safeJson(res);
@@ -678,7 +779,11 @@ async function loadEventStatus() {
         text.textContent = 'Event tidak aktif';
       }
     }
-  } catch {}
+  } catch (error) {
+    console.error('[admin-panel] event status refresh failed:', error.message);
+  } finally {
+    eventStatusLoadInProgress = false;
+  }
 }
 
 window.toggleEvent = async function(active) {
@@ -722,6 +827,8 @@ function listenNotifications() {
   firebaseDB.ref("notifications").on("value", (snap) => {
     notificationsData = snap.val() || {};
     renderNotifList();
+  }, error => {
+    document.getElementById("notif-list").textContent = "Gagal memuat notifikasi realtime: " + error.message;
   });
 }
 
@@ -803,15 +910,18 @@ function listenUsers() {
 // State paginasi users
 let usersPagination = { page: 1, totalPages: 1, total: 0 };
 
-async function loadUsers(page) {
+async function loadUsers(page, options = {}) {
   page = page || usersPagination.page || 1;
   const container = document.getElementById("users-list");
-  if (!container) return;
-  container.innerHTML = '<div class="sk" style="height:52px"></div><div class="sk" style="height:52px;margin-top:7px"></div>';
+  if (!container || usersLoadInProgress) return;
+  usersLoadInProgress = true;
+  if (!options.silent) {
+    container.innerHTML = '<div class="sk" style="height:52px"></div><div class="sk" style="height:52px;margin-top:7px"></div>';
+  }
   try {
-    const res = await adminFetch('/api/admin/users?page=' + page + '&limit=50');
+    const res = await adminFetch('/api/admin/users?page=' + page + '&limit=50' + (options.silent ? '&quiet=1' : ''));
     const data = await safeJson(res);
-    console.log('[loadUsers] response:', res.status, data);
+    if (!options.silent) console.log('[loadUsers] response:', res.status, data);
     if (data.success) {
       usersData = {};
       data.users.forEach(u => { usersData[u.uid] = u; });
@@ -823,7 +933,11 @@ async function loadUsers(page) {
     }
   } catch(e) {
     console.error('[loadUsers] error:', e);
-    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#fb7185;font-size:.8125rem">Koneksi bermasalah.</div>';
+    if (!options.silent || !Object.keys(usersData).length) {
+      container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#fb7185;font-size:.8125rem">Koneksi bermasalah.</div>';
+    }
+  } finally {
+    usersLoadInProgress = false;
   }
 }
 

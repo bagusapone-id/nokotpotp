@@ -19,6 +19,33 @@ async function refundOrderToUser(uid, orderId, order) {
   }
 }
 
+async function adminCancelOrder(orderId, allowedStatuses) {
+  const orderRef = db.ref(`orders/${orderId}`);
+  const snap = await orderRef.once('value');
+  if (!snap.exists()) return { cancelled: false };
+
+  const order = snap.val();
+  if (allowedStatuses && !allowedStatuses.includes(order.status)) {
+    return { cancelled: false };
+  }
+  if (['COMPLETED', 'CANCELLED'].includes(order.status) || order.is_refunded) {
+    return { cancelled: false };
+  }
+
+  const price = Number(order.price || 0);
+  if (!Number.isSafeInteger(price) || price < 0 || (price > 0 && !order.user_id)) {
+    throw new Error(`Order ${orderId} has invalid refund data`);
+  }
+
+  if (price > 0) await refundOrderToUser(order.user_id, orderId, order);
+  if (order.stock_key) {
+    await db.ref(`phone_stocks/${order.stock_key}/status`).set('AVAILABLE');
+  }
+  await orderRef.update({ status: 'CANCELLED', is_refunded: true });
+
+  return { cancelled: true, refundedAmount: price };
+}
+
 /**
  * POST /api/orders/:id/cancel
  * User: cancel an order and get refund
@@ -86,30 +113,62 @@ router.post('/:id/admin-cancel', authAdmin, async (req, res) => {
     if (!snap.exists()) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Order tidak ditemukan.' });
     }
-    const order = snap.val();
-    if (['COMPLETED','CANCELLED'].includes(order.status) || order.is_refunded) {
+    const result = await adminCancelOrder(orderId);
+    if (!result.cancelled) {
       return res.status(409).json({ error: 'INVALID_STATUS', message: 'Order sudah selesai atau dibatalkan.' });
     }
 
-    const price    = order.price || 0;
-    const uid      = order.user_id;
-    const stockKey = order.stock_key;
-
-    // Refund balance
-    if (price && uid) {
-      await refundOrderToUser(uid, orderId, order);
-    }
-    // Return stock
-    if (stockKey) {
-      await db.ref(`phone_stocks/${stockKey}/status`).set('AVAILABLE');
-    }
-    // Update order
-    await db.ref(`orders/${orderId}`).update({ status: 'CANCELLED', is_refunded: true });
-
-    return res.status(200).json({ success: true, refunded_amount: price });
+    return res.status(200).json({ success: true, refunded_amount: result.refundedAmount });
   } catch (err) {
     console.error('[cancelRoutes] admin-cancel error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+/**
+ * POST /api/orders/admin-cancel-active
+ * Admin: cancel and refund every active order shown in the admin panel.
+ */
+router.post('/admin-cancel-active', authAdmin, async (req, res) => {
+  const activeStatuses = ['WAITING_OTP', 'OTP_REQUESTED'];
+  try {
+    const snap = await db.ref('orders').once('value');
+    const orderIds = [];
+    if (snap.exists()) {
+      snap.forEach(child => {
+        const order = child.val();
+        if (order && activeStatuses.includes(order.status)) orderIds.push(child.key);
+      });
+    }
+
+    let cancelled = 0;
+    let skipped = 0;
+    const failed = [];
+
+    for (const orderId of orderIds) {
+      try {
+        const result = await adminCancelOrder(orderId, activeStatuses);
+        if (result.cancelled) cancelled++;
+        else skipped++;
+      } catch (err) {
+        failed.push(orderId);
+        console.error('[cancelRoutes] bulk admin-cancel error:', {
+          order_id: orderId,
+          error: err.message,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: failed.length === 0,
+      total: orderIds.length,
+      cancelled,
+      skipped,
+      failed,
+    });
+  } catch (err) {
+    console.error('[cancelRoutes] bulk admin-cancel error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memproses pembatalan order aktif.' });
   }
 });
 

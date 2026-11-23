@@ -9,9 +9,15 @@ let referralUser = null;
 let claimValidationSequence = 0;
 let claimValidationTimer = null;
 let claimCodeValid = false;
+let referralAccessPollTimer = null;
+let referralListenerRefs = [];
+let referralDataLoaded = false;
+let referralDataLoading = false;
+const referralLiveData = { code: '', earnings: {}, referrals: {}, attribution: null };
 
 firebase.auth().onAuthStateChanged(async user => {
   if (!user) {
+    stopReferralListeners();
     window.location.replace('/');
     return;
   }
@@ -20,7 +26,18 @@ firebase.auth().onAuthStateChanged(async user => {
   await loadReferralData(user);
 });
 
+function stopReferralListeners() {
+  if (referralAccessPollTimer) {
+    clearInterval(referralAccessPollTimer);
+    referralAccessPollTimer = null;
+  }
+  referralListenerRefs.forEach(ref => ref.off());
+  referralListenerRefs = [];
+}
+
 async function loadReferralData(user) {
+  if (referralDataLoading) return;
+  referralDataLoading = true;
   try {
     const token = await user.getIdToken();
     const response = await fetch('/api/user/referrals', {
@@ -34,39 +51,106 @@ async function loadReferralData(user) {
         data.message || 'Gagal memuat data referral.',
         needsSuccessfulDeposit ? 'locked' : 'error'
       );
-      return;
+      if (needsSuccessfulDeposit) pollForReferralAccess(user);
+      return false;
     }
 
-    const inviteLink = `${window.location.origin}/daftar?ref=${encodeURIComponent(data.referral_code)}`;
-    referralCodeDisplay.textContent = data.referral_code;
-    inviteLinkEl.textContent = inviteLink;
-    copyButton.disabled = false;
-    copyCodeButton.disabled = false;
-    copyButton.onclick = () => copyInviteLink(inviteLink);
-    copyCodeButton.onclick = () => copyInviteCode(data.referral_code);
-
-    document.getElementById('invited-count').textContent = data.invited_count;
-    document.getElementById('total-earned').textContent = formatRupiah(data.total_earned);
-    document.getElementById('claim-referral-card').style.display = data.can_claim_referral ? 'block' : 'none';
-    renderCommissionHistory(data.history);
-    renderReferralList(data.referrals);
-    document.querySelectorAll('.deposit-required').forEach(link => {
-      link.hidden = false;
-    });
-    document.getElementById('referral-loading').hidden = true;
-    document.getElementById('referral-locked').hidden = true;
-    document.getElementById('referral-page').hidden = false;
-    document.getElementById('referral-nav').hidden = false;
+    if (referralAccessPollTimer) {
+      clearInterval(referralAccessPollTimer);
+      referralAccessPollTimer = null;
+    }
+    referralLiveData.code = data.referral_code;
+    referralLiveData.earnings = Object.fromEntries((data.history || []).map(item => [item.deposit_id, item]));
+    referralLiveData.referrals = Object.fromEntries((data.referrals || []).map(item => [item.user_id, item]));
+    referralLiveData.attribution = data.can_claim_referral ? null : true;
+    showReferralPage();
+    renderReferralData();
+    if (!referralDataLoaded) {
+      referralDataLoaded = true;
+      listenForReferralUpdates(user);
+    }
+    return true;
   } catch (error) {
     showReferralAccessMessage(
       error.message || 'Terjadi kesalahan saat memuat data referral.',
       'error'
     );
+    return false;
+  } finally {
+    referralDataLoading = false;
   }
+}
+
+function pollForReferralAccess(user) {
+  if (referralAccessPollTimer) return;
+  referralAccessPollTimer = setInterval(() => {
+    if (document.visibilityState !== 'hidden') loadReferralData(user);
+  }, 5000);
+}
+
+function listenForReferralUpdates(user) {
+  stopReferralListeners();
+  const refs = [
+    ['code', firebaseDB.ref(`users/${user.uid}/referral_code`)],
+    ['earnings', firebaseDB.ref(`users/${user.uid}/referral_earnings`)],
+    ['referrals', firebaseDB.ref(`referrals/${user.uid}`)],
+    ['attribution', firebaseDB.ref(`referral_attributions/${user.uid}`)],
+  ];
+
+  refs.forEach(([key, ref]) => {
+    referralListenerRefs.push(ref);
+    ref.on('value', snap => {
+      referralLiveData[key] = snap.val();
+      renderReferralData();
+    }, error => {
+      showReferralAccessMessage(error.message || 'Gagal memperbarui data referral.', 'error');
+    });
+  });
+}
+
+function showReferralPage() {
+  document.querySelectorAll('.deposit-required').forEach(link => {
+    link.hidden = false;
+  });
+  document.getElementById('referral-loading').hidden = true;
+  document.getElementById('referral-locked').hidden = true;
+  document.getElementById('referral-page').hidden = false;
+  document.getElementById('referral-nav').hidden = false;
+}
+
+function renderReferralData() {
+  const code = referralLiveData.code;
+  if (typeof code === 'string' && code) {
+    const inviteLink = `${window.location.origin}/daftar?ref=${encodeURIComponent(code)}`;
+    referralCodeDisplay.textContent = code;
+    inviteLinkEl.textContent = inviteLink;
+    copyButton.disabled = false;
+    copyCodeButton.disabled = false;
+    copyButton.onclick = () => copyInviteLink(inviteLink);
+    copyCodeButton.onclick = () => copyInviteCode(code);
+  }
+
+  const history = Object.entries(referralLiveData.earnings || {})
+    .map(([depositId, earning]) => ({ deposit_id: depositId, ...earning }))
+    .sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
+  const referrals = Object.entries(referralLiveData.referrals || {})
+    .map(([userId, referral]) => ({ user_id: userId, ...referral }))
+    .sort((a, b) => Number(b.joined_at || 0) - Number(a.joined_at || 0));
+
+  document.getElementById('invited-count').textContent = referrals.length;
+  document.getElementById('total-earned').textContent = formatRupiah(
+    history.reduce((total, earning) => total + (Number(earning.commission) || 0), 0)
+  );
+  document.getElementById('claim-referral-card').style.display =
+    referralLiveData.attribution ? 'none' : 'block';
+  renderCommissionHistory(history);
+  renderReferralList(referrals);
 }
 
 function showReferralAccessMessage(message, state) {
   document.getElementById('referral-loading').hidden = true;
+  document.getElementById('referral-page').hidden = true;
+  document.getElementById('referral-nav').hidden = true;
   document.getElementById('referral-locked').hidden = false;
   const icon = document.getElementById('referral-access-icon');
   icon.classList.toggle('is-error', state === 'error');
@@ -155,7 +239,6 @@ document.getElementById('claim-referral-form').addEventListener('submit', async 
     status.style.color = '#c084fc';
     claimCodeValid = false;
     document.getElementById('claim-referral-code').value = '';
-    await loadReferralData(referralUser);
   } catch (error) {
     status.textContent = error.message || 'Gagal mengaitkan kode referral.';
     status.style.color = '#fb7185';
