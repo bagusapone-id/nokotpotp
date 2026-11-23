@@ -3,6 +3,35 @@ const router = express.Router();
 const authAdmin = require('../middleware/authAdmin');
 const { db } = require('../config/firebase');
 const { addWithdrawableCredit, getBalanceBuckets, adjustBalance } = require('../services/balanceService');
+const { installAdminAudit } = require('../services/adminAuditService');
+const {
+  decodeUserCursor,
+  encodeUserCursor,
+  normalizeUsername,
+  projectAdminUser,
+  selectUserCursorPage,
+} = require('../utils/adminUserIndex');
+
+installAdminAudit(router);
+
+router.get('/audit-logs', authAdmin, async (req, res) => {
+  try {
+    const snapshot = await db.ref('admin_audit_logs')
+      .orderByChild('created_at')
+      .limitToLast(100)
+      .once('value');
+    const logs = [];
+    snapshot.forEach(child => {
+      const log = child.val();
+      if (log && typeof log === 'object') logs.push({ id: child.key, ...log });
+    });
+    logs.sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0));
+    return res.status(200).json({ success: true, logs });
+  } catch (err) {
+    console.error('[adminRoutes] audit log list error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat audit log.' });
+  }
+});
 
 /**
  * GET /api/admin/verify
@@ -37,22 +66,6 @@ router.get('/withdrawals', authAdmin, async (req, res) => {
   } catch (err) {
     console.error('[adminRoutes] withdrawal list error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat permintaan penarikan.' });
-  }
-});
-
-router.delete('/withdrawals/history', authAdmin, async (req, res) => {
-  try {
-    await db.ref('withdrawal_requests').remove();
-    return res.status(200).json({
-      success: true,
-      message: 'Semua riwayat penarikan telah dihapus.',
-    });
-  } catch (err) {
-    console.error('[adminRoutes] delete withdrawal history error:', err.message);
-    return res.status(500).json({
-      error: 'SERVER_ERROR',
-      message: 'Gagal menghapus riwayat penarikan.',
-    });
   }
 });
 
@@ -427,57 +440,135 @@ router.delete('/notifications/:id', authAdmin, async (req, res) => {
   }
 });
 
-// GET /api/admin/users — list all users from Firebase users/{uid}
-// GET /api/admin/users — list users dengan paginasi
-// Query params: ?page=1&limit=50 (default limit 50, max 100)
+// Cursor queries use the indexed created_at or username_lower fields.
 router.get('/users', authAdmin, async (req, res) => {
-  const page  = Math.max(1, parseInt(req.query.page, 10)  || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+  const rawSearch = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 128) : '';
+  const search = normalizeUsername(rawSearch);
+  const sortKind = search ? 'username_lower' : 'created_at';
+  if (req.query.direction && !['next', 'previous'].includes(req.query.direction)) {
+    return res.status(400).json({ error: 'INVALID_DIRECTION', message: 'Arah paginasi tidak valid.' });
+  }
+  const direction = req.query.direction === 'previous' ? 'previous' : 'next';
+  let cursor = null;
+  if (req.query.cursor) {
+    try {
+      cursor = decodeUserCursor(req.query.cursor);
+    } catch (err) {
+      return res.status(400).json({ error: 'INVALID_CURSOR', message: err.message });
+    }
+  }
+  if (cursor && cursor.kind !== sortKind) {
+    return res.status(400).json({ error: 'INVALID_CURSOR', message: 'Cursor tidak sesuai dengan daftar user.' });
+  }
 
   try {
-    // Gunakan Firebase REST API — lebih reliable di serverless
-    const dbUrl = process.env.FIREBASE_DATABASE_URL;
-    const accessToken = await db.app.options.credential.getAccessToken();
-    const fetchRes = await fetch(`${dbUrl}/users.json?access_token=${accessToken.access_token}`);
-    const data = await fetchRes.json();
+    let rows = [];
 
-    const users = [];
-    if (data && typeof data === 'object') {
-      Object.entries(data).forEach(([uid, val]) => {
-        if (val && typeof val === 'object') users.push({ uid, ...val });
+    if (search && /^NOKOTP[A-HJ-NP-Z2-9]{5}$/i.test(rawSearch)) {
+      const codeSnap = await db.ref(`referral_codes/${rawSearch.toUpperCase()}/user_id`).once('value');
+      const uid = codeSnap.val();
+      if (uid) {
+        const userSnap = await db.ref(`users/${uid}`).once('value');
+        const user = userSnap.val();
+        if (user && typeof user === 'object' && !Array.isArray(user)) rows = [{ uid, user }];
+      }
+    } else if (search && /^[^.#$\[\]\/\u0000-\u001F\u007F]{1,128}$/.test(rawSearch)) {
+      const exactSnap = await db.ref('users').orderByKey().equalTo(rawSearch).once('value');
+      exactSnap.forEach(child => {
+        const user = child.val();
+        if (user && typeof user === 'object' && !Array.isArray(user)) {
+          rows.push({ uid: child.key, user });
+        }
       });
     }
 
-    // Sort: user terbaru (joined_at atau created_at) di atas; fallback ke uid string sort
-    users.sort((a, b) => {
-      const ta = Number(a.created_at || a.joined_at || 0);
-      const tb = Number(b.created_at || b.joined_at || 0);
-      return tb - ta;
-    });
-
-    const total = users.length;
-    const totalPages = Math.ceil(total / limit) || 1;
-    const offset = (page - 1) * limit;
-    const paginatedUsers = users.slice(offset, offset + limit);
-
-    if (req.query.quiet !== '1') {
-      console.log(`[adminRoutes] users total=${total} page=${page}/${totalPages} limit=${limit}`);
+    if (search && rows.length === 0) {
+      if (cursor && cursor.kind !== 'username_lower') {
+        return res.status(400).json({ error: 'INVALID_CURSOR', message: 'Cursor tidak sesuai dengan pencarian username.' });
+      }
+      let usersQuery = db.ref('users').orderByChild('username_lower');
+      if (cursor) {
+        if (direction === 'previous') {
+          usersQuery = usersQuery.startAt(search).endAt(cursor.value, cursor.uid).limitToLast(limit + 2);
+        } else {
+          usersQuery = usersQuery.startAt(cursor.value, cursor.uid)
+            .endAt(`${search}\uf8ff`).limitToFirst(limit + 2);
+        }
+      } else {
+        usersQuery = usersQuery.startAt(search).endAt(`${search}\uf8ff`).limitToFirst(limit + 1);
+      }
+      const snapshot = await usersQuery.once('value');
+      snapshot.forEach(child => {
+        const user = child.val();
+        if (user && typeof user === 'object' && !Array.isArray(user)) {
+          rows.push({ uid: child.key, user });
+        }
+      });
+    } else if (!search) {
+      if (cursor && cursor.kind !== 'created_at') {
+        return res.status(400).json({ error: 'INVALID_CURSOR', message: 'Cursor tidak sesuai dengan daftar user.' });
+      }
+      let usersQuery = db.ref('users').orderByChild('created_at');
+      if (cursor) {
+        usersQuery = direction === 'previous'
+          ? usersQuery.startAt(cursor.value, cursor.uid).limitToFirst(limit + 2)
+          : usersQuery.endAt(cursor.value, cursor.uid).limitToLast(limit + 2);
+      } else {
+        usersQuery = usersQuery.limitToLast(limit + 1);
+      }
+      const snapshot = await usersQuery.once('value');
+      snapshot.forEach(child => {
+        const user = child.val();
+        if (user && typeof user === 'object' && !Array.isArray(user)) {
+          rows.push({ uid: child.key, user });
+        }
+      });
     }
+
+    const page = selectUserCursorPage(rows, { kind: sortKind, direction, cursor, limit });
+    rows = page.rows;
+    const users = rows.map(({ uid, user }) => projectAdminUser(uid, user));
     return res.status(200).json({
       success: true,
-      users: paginatedUsers,
+      users,
       pagination: {
-        page,
         limit,
-        total,
-        total_pages: totalPages,
-        has_next: page < totalPages,
-        has_prev: page > 1,
+        has_next: page.has_next,
+        has_prev: page.has_prev,
+        next_cursor: users.length ? encodeUserCursor(sortKind, users[users.length - 1]) : null,
+        prev_cursor: users.length ? encodeUserCursor(sortKind, users[0]) : null,
       },
     });
   } catch (err) {
     console.error('[adminRoutes] users error:', err.message);
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/users/appeals', authAdmin, async (req, res) => {
+  try {
+    const snapshot = await db.ref('admin_appeals')
+      .orderByChild('appeal_at')
+      .limitToLast(100)
+      .once('value');
+    const appeals = [];
+    snapshot.forEach(child => {
+      const user = child.val();
+      if (user && typeof user === 'object') {
+        appeals.push({
+          uid: child.key,
+          username: user.username || child.key,
+          ban_reason: user.ban_reason || '',
+          appeal_at: Number(user.appeal_at) || 0,
+        });
+      }
+    });
+    appeals.sort((a, b) => b.appeal_at - a.appeal_at);
+    return res.status(200).json({ success: true, appeals });
+  } catch (err) {
+    console.error('[adminRoutes] user appeals error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat permintaan banding.' });
   }
 });
 
@@ -575,7 +666,15 @@ router.post('/users/:uid/ban', authAdmin, async (req, res) => {
 // POST /api/admin/users/:uid/unban — unban a user
 router.post('/users/:uid/unban', authAdmin, async (req, res) => {
   try {
-    await db.ref(`users/${req.params.uid}`).update({ banned: false, ban_reason: null, banned_at: null, appeal_pending: false, appeal_at: null });
+    const uid = req.params.uid;
+    await db.ref('/').update({
+      [`users/${uid}/banned`]: false,
+      [`users/${uid}/ban_reason`]: null,
+      [`users/${uid}/banned_at`]: null,
+      [`users/${uid}/appeal_pending`]: false,
+      [`users/${uid}/appeal_at`]: null,
+      [`admin_appeals/${uid}`]: null,
+    });
     return res.status(200).json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });

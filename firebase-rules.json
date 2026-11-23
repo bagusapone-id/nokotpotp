@@ -6,11 +6,19 @@
     },
 
     "users": {
+      ".indexOn": ["created_at", "username_lower"],
       "$uid": {
         ".read": "auth !== null && auth.uid === $uid",
-        ".write": "false",
-        ".indexOn": ["username"]
+        ".write": "false"
       }
+    },
+
+    "admin_audit_logs": {
+      ".indexOn": ["created_at"]
+    },
+
+    "admin_appeals": {
+      ".indexOn": ["appeal_at"]
     },
 
     "orders": {

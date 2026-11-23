@@ -4,6 +4,9 @@ const authUser = require('../middleware/authUser');
 const authAdmin = require('../middleware/authAdmin');
 const { db } = require('../config/firebase');
 const { requestOtp, resendOtp, submitOtp, completeOrder, OrderError } = require('../services/orderService');
+const { installAdminAudit } = require('../services/adminAuditService');
+
+installAdminAudit(router);
 
 router.get('/active', authUser, async (req, res) => {
   try {

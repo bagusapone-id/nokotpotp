@@ -73,6 +73,15 @@ node scripts/migrateReferralCodes.js
 
 Script aman dijalankan ulang; kode referral lama yang berupa UID akan diganti.
 
+Sebelum memakai pencarian dan paginasi cursor di Admin Panel, jalankan migrasi indeks user satu kali:
+
+```bash
+node scripts/migrateAdminUserIndexes.js
+node set-db-rules.js
+```
+
+Paste rules yang dicetak ke Firebase Console dan terbitkan rules tersebut. Migrasi menambahkan `created_at` dan `username_lower` pada akun lama serta membangun indeks banding aktif; script aman dijalankan ulang.
+
 ### 3. Seed Data Firebase (Manual)
 
 Di Firebase Realtime Database, buat struktur data awal:
@@ -138,7 +147,7 @@ Lalu tambah stok nomor dari **Admin Panel ? Tambah Stok**.
 
 - ?? **Beli Nomor Instant** � Timer 5 menit, stok di-lock atomik
 - ?? **User Panel** � Tab Indo/Luar, saldo real-time, timer countdown
-- ?? **Admin Panel** � Monitor order, input OTP, complete, tambah stok
+- ?? **Admin Panel** � Monitor order, input OTP, kelola stok/user/penarikan, dan audit aktivitas admin
 - ?? **Notifikasi Telegram** � OTP request & resend auto-notify admin
 - ?? **Resend OTP** � Cooldown 60 detik anti-spam
 - ?? **Auto-Refund** � Cancel order = saldo kembali 100%

@@ -6,6 +6,7 @@ let withdrawalRefreshTimer = null;
 let currentAdminTab = "orders";
 let withdrawalsLoadInProgress = false;
 let usersLoadInProgress = false;
+let auditLoadInProgress = false;
 let eventStatusLoadInProgress = false;
 let ordersLoadInProgress = false;
 let stockLoadInProgress = false;
@@ -15,7 +16,6 @@ let stockLoaded = false;
 let ordersLoadError = false;
 let stockLoadError = false;
 let bulkCancelInProgress = false;
-let deletingWithdrawalHistory = false;
 
 // ── Auth ──
 firebaseAuth.onAuthStateChanged(async (user) => {
@@ -27,8 +27,21 @@ async function verifyAdmin() {
   try {
     const res = await adminFetch("/api/admin/verify");
     if (res.ok) showApp();
-    else { document.getElementById("splash-screen")?.remove(); hide("login-screen"); show("access-denied","flex"); }
-  } catch { document.getElementById("splash-screen")?.remove(); hide("login-screen"); show("access-denied","flex"); }
+    else if (res.status === 401 || res.status === 403) {
+      showAccessDenied("Akun ini tidak memiliki hak akses admin.");
+    } else {
+      showAccessDenied("Gagal memverifikasi akses admin. Periksa koneksi lalu coba lagi.");
+    }
+  } catch {
+    showAccessDenied("Tidak dapat terhubung untuk memverifikasi akses admin. Periksa koneksi lalu coba lagi.");
+  }
+}
+
+function showAccessDenied(message) {
+  document.getElementById("splash-screen")?.remove();
+  hide("login-screen");
+  document.getElementById("access-denied-message").textContent = message;
+  show("access-denied", "flex");
 }
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
@@ -47,10 +60,17 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 });
 
 document.getElementById("logout-btn").addEventListener("click", () => firebaseAuth.signOut());
+document.getElementById("access-denied-logout-btn").addEventListener("click", async () => {
+  await firebaseAuth.signOut();
+});
 
 async function adminFetch(url, opts = {}) {
   if (adminUser) adminToken = await adminUser.getIdToken();
-  return fetch(url, { ...opts, headers: { "Content-Type":"application/json", "Authorization":"Bearer "+adminToken, ...(opts.headers||{}) } });
+  const response = await fetch(url, { ...opts, headers: { "Content-Type":"application/json", "Authorization":"Bearer "+adminToken, ...(opts.headers||{}) } });
+  if (response.headers.get("X-Admin-Audit-Status") === "failed") {
+    show("admin-audit-warning");
+  }
+  return response;
 }
 
 async function safeJson(res) {
@@ -87,7 +107,6 @@ function initAdmin() {
       if (currentAdminTab === "orders") loadOrders();
       if (currentAdminTab === "stock") loadStock();
       if (currentAdminTab === "withdrawals") loadWithdrawals();
-      if (currentAdminTab === "users") loadUsers(usersPagination.page, { silent: true });
       if (currentAdminTab === "notifications") loadEventStatus();
     }, 5000);
   }
@@ -96,7 +115,7 @@ function initAdmin() {
 // ── Nav tabs ──
 window.showAdminTab = function(tab) {
   currentAdminTab = tab;
-  ["orders","stock","countries","notifications","withdrawals","users"].forEach(t => {
+  ["orders","stock","countries","notifications","withdrawals","users","audit"].forEach(t => {
     const el = document.getElementById("tab-"+t);
     if (el) el.style.display = "none";
     const nav = document.getElementById("nav-"+t);
@@ -111,6 +130,7 @@ window.showAdminTab = function(tab) {
   if (tab === 'users') loadUsers();
   if (tab === 'notifications') loadEventStatus();
   if (tab === 'withdrawals') loadWithdrawals();
+  if (tab === 'audit') loadAdminAuditLogs();
 };
 
 // ── Orders ──
@@ -189,50 +209,50 @@ function renderOrders() {
 
     const otpBlock = (isOtp || isResend) ? (
       '<div style="background:rgba(2,6,23,.55);border:1px solid '+(isResend?'rgba(244,63,94,.25)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:8px">' +
-        (isResend ? '<div style="font-size:.75rem;color:#fb7185;display:flex;align-items:center;gap:5px;font-weight:600"><i class="fa-solid fa-rotate-right" style="font-size:11px"></i>User minta kirim ulang OTP ('+o.resend_count+'x)</div>' : '') +
-        '<div id="otp-err-'+id+'" style="display:none;color:#fda4af;font-size:.75rem;align-items:center;gap:5px">' +
+        (isResend ? '<div style="font-size:.75rem;color:#fb7185;display:flex;align-items:center;gap:5px;font-weight:600"><i class="fa-solid fa-rotate-right" style="font-size:11px"></i>User minta kirim ulang OTP ('+escapeHtml(o.resend_count)+'x)</div>' : '') +
+        '<div id="otp-err-'+escapeHtml(id)+'" style="display:none;color:#fda4af;font-size:.75rem;align-items:center;gap:5px">' +
           '<i class="fa-solid fa-circle-exclamation" style="font-size:11px"></i><span></span>' +
         '</div>' +
         '<div style="display:flex;gap:7px">' +
-          '<input type="text" id="otp-inp-'+id+'" placeholder="Kode OTP (4-8 digit)" maxlength="8"' +
+          '<input type="text" id="otp-inp-'+escapeHtml(id)+'" placeholder="Kode OTP (4-8 digit)" maxlength="8"' +
             ' style="flex:1;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#e2e8f0;font-family:\'Geist Mono\',monospace;font-size:.875rem;height:38px;padding:0 10px;outline:none;letter-spacing:.1em"/>' +
-          '<button onclick="submitOtp(\''+id+'\')"' +
+          '<button onclick="submitOtp('+htmlJsArg(id)+')"' +
             ' style="background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.25);color:#c084fc;border-radius:9px;height:38px;padding:0 14px;font-size:.8125rem;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px">' +
             '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i>Kirim' +
           '</button>' +
         '</div>' +
-        (o.otp_code ? '<div style="font-size:.75rem;color:#34d399;display:flex;align-items:center;gap:5px"><i class="fa-solid fa-circle-check" style="font-size:11px"></i>OTP terkirim: <strong style="font-family:\'Geist Mono\',monospace;letter-spacing:.1em">'+o.otp_code+'</strong></div>' : '') +
-        '<button onclick="completeOrder(\''+id+'\')"' +
+        (o.otp_code ? '<div style="font-size:.75rem;color:#34d399;display:flex;align-items:center;gap:5px"><i class="fa-solid fa-circle-check" style="font-size:11px"></i>OTP terkirim: <strong style="font-family:\'Geist Mono\',monospace;letter-spacing:.1em">'+escapeHtml(o.otp_code)+'</strong></div>' : '') +
+        '<button onclick="completeOrder('+htmlJsArg(id)+')"' +
           ' style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:9px;height:38px;font-size:.8125rem;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
           '<i class="fa-solid fa-circle-check" style="font-size:12px"></i> Done / Selesai' +
         '</button>' +
-        '<button onclick="adminCancelOrder(\''+id+'\')"' +
+        '<button onclick="adminCancelOrder('+htmlJsArg(id)+')"' +
           ' style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:9px;height:34px;font-size:.8125rem;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
           '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batalkan & Refund' +
         '</button>' +
       '</div>'
     ) : '<div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">' +
         '<div style="font-size:.75rem;color:#334155;font-style:italic">Menunggu user klik minta OTP...</div>' +
-        '<button onclick="adminCancelOrder(\''+id+'\')"' +
+        '<button onclick="adminCancelOrder('+htmlJsArg(id)+')"' +
           ' style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:9px;height:34px;font-size:.8125rem;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">' +
           '<i class="fa-solid fa-rotate-left" style="font-size:11px"></i> Batalkan & Refund' +
         '</button>' +
       '</div>';
 
-    return '<div class="card fu" style="padding:12px 14px" id="card-'+id+'">' +
+    return '<div class="card fu" style="padding:12px 14px" id="card-'+escapeHtml(id)+'">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">' +
         '<div style="min-width:0;flex:1">' +
-          '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.625rem;color:#1e293b;margin-bottom:3px">'+id+'</div>' +
-          '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0;margin-bottom:1px">'+(o.username||o.user_id)+'</div>' +
-          '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.875rem;color:#cbd5e1;margin-bottom:2px">'+o.phone_number+'</div>' +
-          '<div style="font-size:.6875rem;color:#475569"><i class="fa-solid fa-location-dot" style="font-size:10px;margin-right:3px"></i>'+(o.country_name||o.country_key)+'</div>' +
+          '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.625rem;color:#1e293b;margin-bottom:3px">'+escapeHtml(id)+'</div>' +
+          '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0;margin-bottom:1px">'+escapeHtml(o.username||o.user_id)+'</div>' +
+          '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.875rem;color:#cbd5e1;margin-bottom:2px">'+escapeHtml(o.phone_number)+'</div>' +
+          '<div style="font-size:.6875rem;color:#475569"><i class="fa-solid fa-location-dot" style="font-size:10px;margin-right:3px"></i>'+escapeHtml(o.country_name||o.country_key)+'</div>' +
         '</div>' +
         '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px">' +
           badge +
-          '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:'+tClr+';display:flex;align-items:center;gap:4px" id="timer-'+id+'">' +
+          '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:.875rem;color:'+tClr+';display:flex;align-items:center;gap:4px" id="timer-'+escapeHtml(id)+'">' +
             '<i class="fa-regular fa-clock" style="font-size:10px"></i>'+m+':'+s+
           '</div>' +
-          '<div style="font-size:.6875rem;color:#334155"><i class="fa-solid fa-rotate-right" style="font-size:10px;margin-right:2px"></i>Resend: '+(o.resend_count||0)+'x</div>' +
+          '<div style="font-size:.6875rem;color:#334155"><i class="fa-solid fa-rotate-right" style="font-size:10px;margin-right:2px"></i>Resend: '+escapeHtml(o.resend_count||0)+'x</div>' +
         '</div>' +
       '</div>' +
       otpBlock +
@@ -373,7 +393,7 @@ function updateStockFilterCountry() {
   const cur = sel.value;
   const keys = [...new Set(Object.values(stockData).map(s=>s.country_key))];
   sel.innerHTML = '<option value="">Semua Negara</option>' +
-    keys.map(k => { const c=countriesData[k]; return '<option value="'+k+'"'+(cur===k?" selected":"")+'>'+(c?(c.flag||"")+" "+c.country_name:k)+'</option>'; }).join("");
+    keys.map(k => { const c=countriesData[k]; return '<option value="'+escapeHtml(k)+'"'+(cur===k?" selected":"")+'>'+(c?escapeHtml((c.flag||"")+" "+c.country_name):escapeHtml(k))+'</option>'; }).join("");
 }
 
 window.renderStockList = function() {
@@ -393,14 +413,15 @@ window.renderStockList = function() {
   container.innerHTML = entries.map(([stockId,s]) => {
     const c = countriesData[s.country_key];
     const locked = s.status === "LOCKED";
+    const safeStockId = escapeHtml(stockId);
     const attrs = locked
       ? 'title="Terkunci dalam order aktif"'
-      : 'onmousedown="startLongPress(\'stock\',\''+stockId+'\')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'stock\',\''+stockId+'\')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"';
-    return '<div id="si-'+stockId+'" '+attrs+' style="display:flex;align-items:center;gap:8px;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;cursor:'+(locked?'default':'pointer')+';user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
-      '<div id="lp-'+stockId+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
-      '<span style="font-size:1rem;line-height:1;flex-shrink:0;position:relative">'+(c?c.flag||"":"")+'</span>' +
-      '<span style="font-family:\'Geist Mono\',monospace;font-size:.75rem;color:#94a3b8;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative">'+s.number+'</span>' +
-      '<span class="'+(sClr[s.status]||"s-exp")+'" style="font-size:.625rem;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;position:relative">'+s.status+'</span>' +
+      : 'onmousedown="startLongPress(\'stock\','+htmlJsArg(stockId)+')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'stock\','+htmlJsArg(stockId)+')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"';
+    return '<div id="si-'+safeStockId+'" '+attrs+' style="display:flex;align-items:center;gap:8px;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;cursor:'+(locked?'default':'pointer')+';user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
+      '<div id="lp-'+safeStockId+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
+      '<span style="font-size:1rem;line-height:1;flex-shrink:0;position:relative">'+escapeHtml(c?c.flag||"":"")+'</span>' +
+      '<span style="font-family:\'Geist Mono\',monospace;font-size:.75rem;color:#94a3b8;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative">'+escapeHtml(s.number)+'</span>' +
+      '<span class="'+(sClr[s.status]||"s-exp")+'" style="font-size:.625rem;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;position:relative">'+escapeHtml(s.status)+'</span>' +
     '</div>';
   }).join("");
 };
@@ -419,7 +440,7 @@ function populateCountrySelect() {
   const sel = document.getElementById("stock-country");
   const filtered = Object.entries(countriesData).filter(([,c]) => c.tab === currentStockTab);
   sel.innerHTML = '<option value="">Pilih negara...</option>' +
-    filtered.map(([k,c]) => '<option value="'+k+'">'+(c.flag||"")+" "+c.country_name+" — "+formatRupiah(c.price)+'</option>').join("");
+    filtered.map(([k,c]) => '<option value="'+escapeHtml(k)+'">'+escapeHtml((c.flag||"")+" "+c.country_name+" — "+formatRupiah(c.price))+'</option>').join("");
 }
 
 document.getElementById("stock-numbers").addEventListener("input", function() {
@@ -503,18 +524,18 @@ function renderCountriesList() {
       ? '<span style="background:rgba(244,63,94,.12);color:#fb7185;border:1px solid rgba(244,63,94,.2);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:2px"></i>Offline</span>'
       : '';
     const toggleBtn = isOffline
-      ? '<button onclick="event.stopPropagation();toggleCountryOffline(\''+k+'\',false)" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Online-kan"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:3px"></i>Online-kan</button>'
-      : '<button onclick="event.stopPropagation();toggleCountryOffline(\''+k+'\',true)" style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.18);color:#fb7185;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Offline-kan"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:3px"></i>Offline-kan</button>';
-    return '<div id="ci-'+k+'" onmousedown="startLongPress(\'country\',\''+k+'\')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'country\',\''+k+'\')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()" style="display:flex;align-items:center;justify-content:space-between;background:'+(isOffline?'rgba(244,63,94,.05)':'rgba(2,6,23,.55)')+';border:1px solid '+(isOffline?'rgba(244,63,94,.15)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
-      '<div id="lp-'+k+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
+      ? '<button onclick="event.stopPropagation();toggleCountryOffline('+htmlJsArg(k)+',false)" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Online-kan"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:3px"></i>Online-kan</button>'
+      : '<button onclick="event.stopPropagation();toggleCountryOffline('+htmlJsArg(k)+',true)" style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.18);color:#fb7185;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Offline-kan"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:3px"></i>Offline-kan</button>';
+    return '<div id="ci-'+escapeHtml(k)+'" onmousedown="startLongPress(\'country\','+htmlJsArg(k)+')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()" ontouchstart="startLongPress(\'country\','+htmlJsArg(k)+')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()" style="display:flex;align-items:center;justify-content:space-between;background:'+(isOffline?'rgba(244,63,94,.05)':'rgba(2,6,23,.55)')+';border:1px solid '+(isOffline?'rgba(244,63,94,.15)':'rgba(255,255,255,.05)')+';border-radius:10px;padding:10px 12px;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;overflow:hidden">' +
+    '<div id="lp-'+escapeHtml(k)+'" style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(244,63,94,.12);transition:width 0.5s linear;pointer-events:none"></div>' +
       '<div style="display:flex;align-items:center;gap:10px;min-width:0;position:relative">' +
-        '<span style="font-size:1.375rem;line-height:1;flex-shrink:0;opacity:'+(isOffline?'.4':'1')+'">'+(v.flag||"")+'</span>' +
+        '<span style="font-size:1.375rem;line-height:1;flex-shrink:0;opacity:'+(isOffline?'.4':'1')+'">'+escapeHtml(v.flag||"")+'</span>' +
         '<div style="min-width:0">' +
           '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;flex-wrap:wrap">' +
-            '<span style="font-size:.875rem;font-weight:700;color:'+(isOffline?'#64748b':'#e2e8f0')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.country_name+'</span>'+tb+offlineBadge+
+            '<span style="font-size:.875rem;font-weight:700;color:'+(isOffline?'#64748b':'#e2e8f0')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(v.country_name)+'</span>'+tb+offlineBadge+
           '</div>' +
-          '<span style="font-family:\'Geist Mono\',monospace;font-size:.625rem;color:#334155">'+k+'</span>' +
-          (isOffline && v.offline_reason ? '<div style="font-size:.625rem;color:#ef4444;margin-top:2px"><i class="fa-solid fa-circle-info" style="font-size:9px;margin-right:2px"></i>'+v.offline_reason+'</div>' : '') +
+          '<span style="font-family:\'Geist Mono\',monospace;font-size:.625rem;color:#334155">'+escapeHtml(k)+'</span>' +
+          (isOffline && v.offline_reason ? '<div style="font-size:.625rem;color:#ef4444;margin-top:2px"><i class="fa-solid fa-circle-info" style="font-size:9px;margin-right:2px"></i>'+escapeHtml(v.offline_reason)+'</div>' : '') +
         '</div>' +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative">' +
@@ -647,35 +668,45 @@ window.processWithdrawal = async function(uid, withdrawalId, action, amount) {
   }
 };
 
-window.deleteAllWithdrawalHistory = async function() {
-  if (deletingWithdrawalHistory) return;
-
-  const confirmed = await Dialog.confirmDanger(
-    "Hapus Semua Riwayat Penarikan?",
-    "Riwayat penarikan <strong style='color:#fb7185'>semua user dan semua status</strong> akan dihapus permanen. Permintaan yang masih berjalan ikut terhapus, tetapi saldo yang tertahan tidak otomatis dikembalikan.",
-    "Ya, Hapus Semua"
-  );
-  if (!confirmed) return;
-
-  const button = document.getElementById("delete-all-withdrawal-history-btn");
-  deletingWithdrawalHistory = true;
-  button.disabled = true;
-  button.style.opacity = ".5";
+window.loadAdminAuditLogs = async function() {
+  const container = document.getElementById("admin-audit-list");
+  if (!container || auditLoadInProgress) return;
+  auditLoadInProgress = true;
   try {
-    const res = await adminFetch("/api/admin/withdrawals/history", { method:"DELETE" });
+    const res = await adminFetch("/api/admin/audit-logs");
     const data = await safeJson(res);
-    if (!res.ok) {
-      await Dialog.alert("error", "Gagal Menghapus", data.message || "Riwayat penarikan tidak berhasil dihapus.");
+    if (!res.ok) throw new Error(data.message || "Gagal memuat audit log.");
+    const logs = Array.isArray(data.logs) ? data.logs : [];
+    if (!logs.length) {
+      container.innerHTML = '<div style="text-align:center;padding:24px;color:#64748b;font-size:.8125rem">Belum ada aktivitas admin tercatat.</div>';
       return;
     }
-    await loadWithdrawals();
-    await Dialog.alert("success", "Riwayat Dihapus", data.message || "Semua riwayat penarikan telah dihapus.");
-  } catch {
-    await Dialog.alert("error", "Koneksi Bermasalah", "Periksa koneksi internet sebelum mencoba lagi.");
+
+    container.innerHTML = logs.map(log => {
+      const succeeded = log.outcome === "SUCCESS";
+      const date = new Date(Number(log.created_at));
+      const timestamp = Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("id-ID");
+      const details = Object.entries(log.details || {})
+        .map(([key, value]) => escapeHtml(key) + ": " + escapeHtml(value))
+        .join(" · ");
+      return '<div style="background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:11px 12px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+          '<div style="font-size:.8125rem;font-weight:700;color:#e2e8f0;overflow-wrap:anywhere">' + escapeHtml(log.action) + '</div>' +
+          '<span style="font-size:.625rem;font-weight:700;color:' + (succeeded ? '#34d399' : '#fbbf24') + ';white-space:nowrap">' +
+            escapeHtml(log.outcome || "UNKNOWN") + ' · ' + escapeHtml(log.status_code) +
+          '</span>' +
+        '</div>' +
+        '<div style="font-size:.6875rem;color:#64748b;margin-top:5px;overflow-wrap:anywhere">Admin: ' + escapeHtml(log.admin_uid) +
+          (log.target_id ? ' · Target: ' + escapeHtml(log.target_id) : '') +
+        '</div>' +
+        (details ? '<div style="font-size:.6875rem;color:#94a3b8;margin-top:4px;overflow-wrap:anywhere">' + details + '</div>' : '') +
+        '<div style="font-size:.625rem;color:#475569;margin-top:5px">' + escapeHtml(timestamp) + '</div>' +
+      '</div>';
+    }).join("");
+  } catch (error) {
+    container.textContent = error.message || "Gagal memuat audit log.";
   } finally {
-    deletingWithdrawalHistory = false;
-    button.disabled = false;
-    button.style.opacity = "1";
+    auditLoadInProgress = false;
   }
 };
 
@@ -689,6 +720,10 @@ function escapeHtml(value) {
   }[character]));
 }
 
+function htmlJsArg(value) {
+  return escapeHtml(JSON.stringify(String(value)));
+}
+
 function formatWithdrawalDate(timestamp) {
   const date = new Date(Number(timestamp));
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("id-ID");
@@ -700,7 +735,7 @@ window.deleteStock = async function(stockId) {
   if (!stock) return;
   const ok = await Dialog.confirmDanger(
     "Hapus Stok?",
-    "Nomor <strong style='color:#e2e8f0;font-family:\"JetBrains Mono\",monospace'>"+stock.number+"</strong> akan dihapus permanen.",
+    "Nomor <strong style='color:#e2e8f0;font-family:\"JetBrains Mono\",monospace'>"+escapeHtml(stock.number)+"</strong> akan dihapus permanen.",
     "Ya, Hapus"
   );
   if (!ok) return;
@@ -723,22 +758,22 @@ window.toggleCountryOffline = async function(key, goOffline) {
     // Minta reason
     const ok = await Dialog.confirmDanger(
       "Offline-kan Negara?",
-      '<div style="margin-bottom:8px">Negara <strong style="color:#e2e8f0">'+(country.flag||"")+" "+country.country_name+'</strong> tidak bisa dibeli user.</div>' +
+      '<div style="margin-bottom:8px">Negara <strong style="color:#e2e8f0">'+escapeHtml((country.flag||"")+" "+country.country_name)+'</strong> tidak bisa dibeli user.</div>' +
       '<textarea id="offline-reason-input" placeholder="Alasan (contoh: Sedang maintenance, stok habis sementara...)" style="width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e2e8f0;font-family:inherit;font-size:.8125rem;padding:10px;resize:none;outline:none;height:72px;box-sizing:border-box;margin-top:4px"></textarea>',
       "Ya, Offline-kan"
     );
     if (!ok) return;
     const reason = document.getElementById('offline-reason-input')?.value?.trim() || 'Stok sedang tidak tersedia sementara.';
     try {
-      const res = await adminFetch('/api/admin/country/'+key+'/offline', { method:'POST', body:JSON.stringify({ offline:true, reason }) });
+      const res = await adminFetch('/api/admin/country/'+encodeURIComponent(key)+'/offline', { method:'POST', body:JSON.stringify({ offline:true, reason }) });
       const data = await safeJson(res);
       if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal offline-kan negara.');
     } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
   } else {
-    const ok = await Dialog.confirm('Online-kan Negara?', 'Negara <strong style="color:#e2e8f0">'+(country.flag||"")+" "+country.country_name+'</strong> bisa dibeli kembali oleh user.');
+    const ok = await Dialog.confirm('Online-kan Negara?', 'Negara <strong style="color:#e2e8f0">'+escapeHtml((country.flag||"")+" "+country.country_name)+'</strong> bisa dibeli kembali oleh user.');
     if (!ok) return;
     try {
-      const res = await adminFetch('/api/admin/country/'+key+'/offline', { method:'POST', body:JSON.stringify({ offline:false }) });
+      const res = await adminFetch('/api/admin/country/'+encodeURIComponent(key)+'/offline', { method:'POST', body:JSON.stringify({ offline:false }) });
       const data = await safeJson(res);
       if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal online-kan negara.');
     } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi internet.'); }
@@ -749,7 +784,7 @@ window.toggleCountryOffline = async function(key, goOffline) {
 window.deleteCountry = async function(key) {
   const country = countriesData[key];
   if (!country) {
-    await Dialog.alert("error", "Error", "Data negara tidak ditemukan (key: "+key+"). Coba refresh halaman.");
+    await Dialog.alert("error", "Error", "Data negara tidak ditemukan (key: "+escapeHtml(key)+"). Coba refresh halaman.");
     return;
   }
   const avail = Object.values(stockData).filter(s=>s.country_key===key&&['AVAILABLE','LOCKED'].includes(s.status)).length;
@@ -758,7 +793,7 @@ window.deleteCountry = async function(key) {
     (avail > 0
       ? "<strong style='color:#fb7185'>⚠️ Masih ada "+avail+" stok aktif!</strong><br><br>"
       : "") +
-    "Negara <strong style='color:#e2e8f0'>"+(country.flag||"")+" "+country.country_name+"</strong> akan dihapus permanen.",
+    "Negara <strong style='color:#e2e8f0'>"+escapeHtml((country.flag||"")+" "+country.country_name)+"</strong> akan dihapus permanen.",
     "Ya, Hapus"
   );
   if (!ok) return;
@@ -893,11 +928,11 @@ function renderNotifList() {
         '<i class="fa-solid '+cfg.icon+'" style="color:'+cfg.color+';font-size:13px"></i>' +
       '</div>' +
       '<div style="min-width:0;flex:1">' +
-        '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0;margin-bottom:2px">'+n.title+'</div>' +
-        '<div style="font-size:.75rem;color:#64748b;margin-bottom:4px;line-height:1.4">'+n.message+'</div>' +
+        '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0;margin-bottom:2px">'+escapeHtml(n.title)+'</div>' +
+        '<div style="font-size:.75rem;color:#64748b;margin-bottom:4px;line-height:1.4">'+escapeHtml(n.message)+'</div>' +
         '<div style="font-size:.625rem;color:#334155">'+date+'</div>' +
       '</div>' +
-      '<button onclick="deleteNotif(\''+id+'\')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
+      '<button onclick="deleteNotif('+htmlJsArg(id)+')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
         '<i class="fa-solid fa-trash" style="font-size:10px"></i>' +
       '</button>' +
     '</div>';
@@ -938,56 +973,162 @@ window.deleteNotif = async function(id) {
 
 // ── Users ──
 let usersData = {};
+let appealsData = [];
+let appealsLoadInProgress = false;
+let queuedAppealsRefresh = false;
 const balanceAdjustmentsInProgress = new Set();
 const userSearchInput = document.getElementById("user-search");
 
-if (userSearchInput) userSearchInput.addEventListener("input", renderUsers);
+let userSearchDebounceTimer = null;
+if (userSearchInput) {
+  userSearchInput.addEventListener("input", () => {
+    clearTimeout(userSearchDebounceTimer);
+    userSearchDebounceTimer = setTimeout(() => loadUsers({
+      direction: "next",
+      cursor: null,
+      page: 1,
+    }), 250);
+  });
+}
 
 function listenUsers() {
   loadUsers();
 }
 
-// State paginasi users
-let usersPagination = { page: 1, totalPages: 1, total: 0 };
+let usersPagination = {
+  page: 1,
+  has_next: false,
+  has_prev: false,
+  next_cursor: null,
+  prev_cursor: null,
+};
+let usersPageRequest = { direction: "next", cursor: null, page: 1 };
+let queuedUsersRequest = null;
 
-async function loadUsers(page, options = {}) {
-  page = page || usersPagination.page || 1;
+async function loadUsers(request) {
+  request = request || usersPageRequest;
   const container = document.getElementById("users-list");
-  if (!container || usersLoadInProgress) return;
-  usersLoadInProgress = true;
-  if (!options.silent) {
-    container.innerHTML = '<div class="sk" style="height:52px"></div><div class="sk" style="height:52px;margin-top:7px"></div>';
+  if (!container) return;
+  if (usersLoadInProgress) {
+    queuedUsersRequest = request;
+    return;
   }
+  usersLoadInProgress = true;
+  container.innerHTML = '<div class="sk" style="height:52px"></div><div class="sk" style="height:52px;margin-top:7px"></div>';
   try {
-    const res = await adminFetch('/api/admin/users?page=' + page + '&limit=50' + (options.silent ? '&quiet=1' : ''));
+    const search = userSearchInput ? userSearchInput.value.trim() : '';
+    const params = new URLSearchParams({ limit: "50" });
+    if (search) params.set("q", search);
+    if (request.cursor) {
+      params.set("cursor", request.cursor);
+      params.set("direction", request.direction);
+    }
+    const res = await adminFetch('/api/admin/users?' + params.toString());
     const data = await safeJson(res);
-    if (!options.silent) console.log('[loadUsers] response:', res.status, data);
-    if (data.success) {
-      usersData = {};
-      data.users.forEach(u => { usersData[u.uid] = u; });
-      usersPagination = data.pagination || { page: 1, totalPages: 1, total: data.users.length };
-      renderUsers();
-      renderUsersPagination();
-    } else {
-      container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#fb7185;font-size:.8125rem">' + (data.message||'Gagal load users') + '</div>';
-    }
-  } catch(e) {
-    console.error('[loadUsers] error:', e);
-    if (!options.silent || !Object.keys(usersData).length) {
-      container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#fb7185;font-size:.8125rem">Koneksi bermasalah.</div>';
-    }
+    if (!res.ok || !data.success) throw new Error(data.message || "Gagal memuat user.");
+    usersData = {};
+    data.users.forEach(user => { usersData[user.uid] = user; });
+    usersPageRequest = request;
+    usersPagination = {
+      ...data.pagination,
+      page: request.page || 1,
+    };
+    renderUsers();
+    renderUsersPagination();
+    loadAdminAppeals();
+  } catch (error) {
+    console.error('[loadUsers] error:', error);
+    container.textContent = error.message || "Gagal memuat user.";
   } finally {
     usersLoadInProgress = false;
+    if (queuedUsersRequest) {
+      const nextRequest = queuedUsersRequest;
+      queuedUsersRequest = null;
+      loadUsers(nextRequest);
+    }
   }
 }
 
+window.refreshAdminUsers = function() {
+  return loadUsers();
+};
+
+window.loadUsersPrevious = function() {
+  if (!usersPagination.has_prev) return;
+  return loadUsers({
+    direction: "previous",
+    cursor: usersPagination.prev_cursor,
+    page: Math.max(1, usersPagination.page - 1),
+  });
+};
+
+window.loadUsersNext = function() {
+  if (!usersPagination.has_next) return;
+  return loadUsers({
+    direction: "next",
+    cursor: usersPagination.next_cursor,
+    page: usersPagination.page + 1,
+  });
+};
+
+async function loadAdminAppeals() {
+  if (appealsLoadInProgress) {
+    queuedAppealsRefresh = true;
+    return;
+  }
+  appealsLoadInProgress = true;
+  try {
+    const res = await adminFetch('/api/admin/users/appeals');
+    const data = await safeJson(res);
+    if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memuat permintaan banding.');
+    appealsData = Array.isArray(data.appeals) ? data.appeals : [];
+    renderAdminAppeals();
+  } catch (error) {
+    const list = document.getElementById('appeals-list');
+    const section = document.getElementById('appeals-section');
+    if (section) section.style.display = 'block';
+    if (list) list.textContent = error.message || 'Gagal memuat permintaan banding.';
+  } finally {
+    appealsLoadInProgress = false;
+    if (queuedAppealsRefresh) {
+      queuedAppealsRefresh = false;
+      loadAdminAppeals();
+    }
+  }
+}
+
+function renderAdminAppeals() {
+  const section = document.getElementById('appeals-section');
+  const list = document.getElementById('appeals-list');
+  const count = document.getElementById('appeal-count');
+  if (!section || !list) return;
+  if (!appealsData.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  if (count) count.textContent = appealsData.length;
+  list.innerHTML = appealsData.map(user =>
+    '<div style="display:flex;align-items:center;gap:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px">' +
+      '<i class="fa-solid fa-flag" style="color:#fbbf24;font-size:14px;flex-shrink:0"></i>' +
+      '<div style="min-width:0;flex:1">' +
+        '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0">' + escapeHtml(user.username || user.uid) + '</div>' +
+        '<div style="font-size:.6875rem;color:#334155">Alasan ban: ' + escapeHtml(user.ban_reason || '-') + '</div>' +
+      '</div>' +
+      '<button onclick="unbanUser(' + htmlJsArg(user.uid) + ')" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
+        '<i class="fa-solid fa-unlock" style="font-size:10px"></i>Unbatasi' +
+      '</button>' +
+    '</div>'
+  ).join('');
+}
+
 function renderUsersPagination() {
-  // Hapus nav lama jika ada
   const existing = document.getElementById('users-pagination-nav');
   if (existing) existing.remove();
 
   const p = usersPagination;
-  if (!p || p.total_pages <= 1) return;
+  if (!p || (!p.has_prev && !p.has_next)) return;
 
   const container = document.getElementById("users-list");
   if (!container || !container.parentElement) return;
@@ -996,11 +1137,11 @@ function renderUsersPagination() {
   nav.id = 'users-pagination-nav';
   nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px';
   nav.innerHTML =
-    '<button onclick="loadUsers(' + Math.max(1, p.page - 1) + ')" ' +
+    '<button onclick="loadUsersPrevious()" ' +
       'style="height:32px;padding:0 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#64748b" ' +
       (p.has_prev ? '' : 'disabled') + '>← Prev</button>' +
-    '<span style="font-size:.6875rem;color:#334155">' + p.page + ' / ' + p.total_pages + ' (' + p.total + ' users)</span>' +
-    '<button onclick="loadUsers(' + Math.min(p.total_pages, p.page + 1) + ')" ' +
+    '<span style="font-size:.6875rem;color:#334155">Halaman ' + p.page + ' · ' + Object.keys(usersData).length + ' user</span>' +
+    '<button onclick="loadUsersNext()" ' +
       'style="height:32px;padding:0 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#64748b" ' +
       (p.has_next ? '' : 'disabled') + '>Next →</button>';
   container.parentElement.insertBefore(nav, container.nextSibling);
@@ -1018,35 +1159,9 @@ function renderUsers() {
       )
     : allEntries;
 
-  // Render appeals section
-  const appeals = allEntries.filter(([,u]) => u.banned && u.appeal_pending);
-  const appealsSection = document.getElementById('appeals-section');
-  const appealsList = document.getElementById('appeals-list');
-  const appealCount = document.getElementById('appeal-count');
-  if (appealsSection && appealsList) {
-    if (appeals.length > 0) {
-      appealsSection.style.display = 'block';
-      if (appealCount) appealCount.textContent = appeals.length;
-      appealsList.innerHTML = appeals.map(([uid, u]) =>
-        '<div style="display:flex;align-items:center;gap:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px">' +
-          '<i class="fa-solid fa-flag" style="color:#fbbf24;font-size:14px;flex-shrink:0"></i>' +
-          '<div style="min-width:0;flex:1">' +
-            '<div style="font-size:.875rem;font-weight:700;color:#e2e8f0">'+(u.username||uid)+'</div>' +
-            '<div style="font-size:.6875rem;color:#334155">Alasan ban: '+(u.ban_reason||'-')+'</div>' +
-          '</div>' +
-          '<button onclick="unbanUser(\''+uid+'\')" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
-            '<i class="fa-solid fa-unlock" style="font-size:10px"></i>Unbatasi' +
-          '</button>' +
-        '</div>'
-      ).join('');
-    } else {
-      appealsSection.style.display = 'none';
-    }
-  }
-
   if (!entries.length) {
     const message = query ? "Tidak ada user yang cocok dengan pencarian." : "Belum ada user.";
-    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">' + message + '</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px 0;color:#334155;font-size:.8125rem">' + escapeHtml(message) + '</div>';
     return;
   }
 
@@ -1058,19 +1173,19 @@ function renderUsers() {
           '<i class="fa-solid '+(isBanned?'fa-ban':'fa-user')+'" style="font-size:13px;color:'+(isBanned?'#fb7185':'#c084fc')+'"></i>' +
         '</div>' +
         '<div style="min-width:0;flex:1">' +
-          '<div style="font-size:.875rem;font-weight:700;color:'+(isBanned?'#fb7185':'#e2e8f0')+'">'+(u.username||uid)+'</div>' +
+          '<div style="font-size:.875rem;font-weight:700;color:'+(isBanned?'#fb7185':'#e2e8f0')+'">'+escapeHtml(u.username||uid)+'</div>' +
           '<div style="font-size:.6875rem;color:#334155;margin-top:1px">' +
             'Saldo: <span style="color:#34d399;font-weight:600">'+formatRupiah(u.balance||0)+'</span>' +
-            (isBanned ? ' &nbsp;·&nbsp; <span style="color:#fb7185">Banned: '+(u.ban_reason||'-')+'</span>' : '') +
+            (isBanned ? ' &nbsp;·&nbsp; <span style="color:#fb7185">Banned: '+escapeHtml(u.ban_reason||'-')+'</span>' : '') +
           '</div>' +
         '</div>' +
-        '<button onclick="'+(isBanned?'unbanUser':'banUser')+'(\''+uid+'\')" style="background:'+(isBanned?'rgba(16,185,129,.1)':'rgba(244,63,94,.1)')+';border:1px solid '+(isBanned?'rgba(16,185,129,.2)':'rgba(244,63,94,.2)')+';color:'+(isBanned?'#34d399':'#fb7185')+';border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
+        '<button onclick="'+(isBanned?'unbanUser':'banUser')+'('+htmlJsArg(uid)+')" style="background:'+(isBanned?'rgba(16,185,129,.1)':'rgba(244,63,94,.1)')+';border:1px solid '+(isBanned?'rgba(16,185,129,.2)':'rgba(244,63,94,.2)')+';color:'+(isBanned?'#34d399':'#fb7185')+';border-radius:8px;height:32px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">' +
           '<i class="fa-solid '+(isBanned?'fa-unlock':'fa-ban')+'" style="font-size:10px"></i>'+(isBanned?'Unban':'Ban')+
         '</button>' +
       '</div>' +
       '<div style="display:flex;gap:7px;margin-top:9px">' +
-        '<button onclick="adjustUserBalance(\''+uid+'\',\'add\')" class="btn btn-primary btn-sm" style="flex:1"><i class="fa-solid fa-plus"></i> Tambah saldo</button>' +
-        '<button onclick="adjustUserBalance(\''+uid+'\',\'subtract\')" class="btn btn-rose btn-sm" style="flex:1"><i class="fa-solid fa-minus"></i> Kurangi saldo</button>' +
+        '<button onclick="adjustUserBalance('+htmlJsArg(uid)+',\'add\')" class="btn btn-primary btn-sm" style="flex:1"><i class="fa-solid fa-plus"></i> Tambah saldo</button>' +
+        '<button onclick="adjustUserBalance('+htmlJsArg(uid)+',\'subtract\')" class="btn btn-rose btn-sm" style="flex:1"><i class="fa-solid fa-minus"></i> Kurangi saldo</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -1138,14 +1253,14 @@ window.banUser = async function(uid) {
   if (!user) return;
   const ok = await Dialog.confirmDanger(
     "Ban User?",
-    '<div style="margin-bottom:10px">User: <strong style="color:#e2e8f0">'+(user.username||uid)+'</strong></div>' +
+    '<div style="margin-bottom:10px">User: <strong style="color:#e2e8f0">'+escapeHtml(user.username||uid)+'</strong></div>' +
     '<textarea id="ban-reason-input" placeholder="Alasan ban..." style="width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e2e8f0;font-family:inherit;font-size:.8125rem;padding:10px;resize:none;outline:none;height:72px;box-sizing:border-box;margin-top:4px"></textarea>',
     "Ya, Ban"
   );
   if (!ok) return;
   const reason = document.getElementById('ban-reason-input')?.value?.trim() || 'Pelanggaran kebijakan';
   try {
-    const res = await adminFetch('/api/admin/users/'+uid+'/ban', { method:'POST', body:JSON.stringify({ reason }) });
+    const res = await adminFetch('/api/admin/users/'+encodeURIComponent(uid)+'/ban', { method:'POST', body:JSON.stringify({ reason }) });
     const data = await safeJson(res);
     if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal ban user.');
     else loadUsers();
@@ -1153,12 +1268,12 @@ window.banUser = async function(uid) {
 };
 
 window.unbanUser = async function(uid) {
-  const user = usersData[uid];
+  const user = usersData[uid] || appealsData.find(appeal => appeal.uid === uid);
   if (!user) return;
-  const ok = await Dialog.confirm('Unban User?', 'User <strong style="color:#e2e8f0">'+(user.username||uid)+'</strong> akan di-unban dan bisa login kembali.');
+  const ok = await Dialog.confirm('Unban User?', 'User <strong style="color:#e2e8f0">'+escapeHtml(user.username||uid)+'</strong> akan di-unban dan bisa login kembali.');
   if (!ok) return;
   try {
-    const res = await adminFetch('/api/admin/users/'+uid+'/unban', { method:'POST' });
+    const res = await adminFetch('/api/admin/users/'+encodeURIComponent(uid)+'/unban', { method:'POST' });
     const data = await safeJson(res);
     if (!res.ok) await Dialog.alert('error','Gagal', data.message||'Gagal unban user.');
     else loadUsers();

@@ -173,7 +173,16 @@ router.post('/appeal', async (req, res) => {
     if (!user.banned) return res.status(400).json({ error: 'NOT_BANNED', message: 'Akun tidak dibatasi.' });
     if (user.appeal_pending) return res.status(409).json({ error: 'ALREADY_APPEALED', message: 'Banding sudah dikirim sebelumnya.' });
 
-    await db.ref(`users/${uid}`).update({ appeal_pending: true, appeal_at: Date.now() });
+    const appealAt = Date.now();
+    await db.ref('/').update({
+      [`users/${uid}/appeal_pending`]: true,
+      [`users/${uid}/appeal_at`]: appealAt,
+      [`admin_appeals/${uid}`]: {
+        username: user.username || uid,
+        ban_reason: user.ban_reason || '',
+        appeal_at: appealAt,
+      },
+    });
     return res.status(200).json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: 'SERVER_ERROR', message: err.message });

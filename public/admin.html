@@ -132,7 +132,10 @@
       <i class="fa-solid fa-ban" style="color:#fb7185;font-size:18px"></i>
     </div>
     <div class="tt2" style="margin-bottom:6px">Akses Ditolak</div>
-    <div class="tb" style="margin-bottom:16px">Anda tidak memiliki hak akses admin.</div>
+    <div id="access-denied-message" class="tb" style="margin-bottom:16px">Anda tidak memiliki hak akses admin.</div>
+    <button id="access-denied-logout-btn" class="btn btn-ghost btn-full btn-h" style="margin-bottom:8px">
+      <i class="fa-solid fa-right-from-bracket" style="font-size:12px"></i> Keluar dari akun ini
+    </button>
     <button onclick="window.location.href='/'" class="btn btn-ghost btn-full btn-h">
       <i class="fa-solid fa-arrow-left" style="font-size:12px"></i> Ke Panel User
     </button>
@@ -159,6 +162,10 @@
     </div>
   </header>
 
+  <div id="admin-audit-warning" role="alert" style="display:none;padding:10px 18px;background:rgba(245,158,11,.1);border-bottom:1px solid rgba(245,158,11,.2);color:#fbbf24;font-size:.75rem">
+    Aksi admin berhasil, tetapi audit log gagal disimpan. Coba lagi setelah koneksi pulih dan periksa log server.
+  </div>
+
   <!-- Nav tabs -->
   <div style="padding:8px 18px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:4px;overflow-x:auto;scrollbar-width:none">
     <button onclick="showAdminTab('orders')" id="nav-orders" class="nav-tab active">
@@ -180,6 +187,9 @@
     </button>
     <button onclick="showAdminTab('users')" id="nav-users" class="nav-tab">
       <i class="fa-solid fa-users" style="font-size:12px"></i> Users
+    </button>
+    <button onclick="showAdminTab('audit')" id="nav-audit" class="nav-tab">
+      <i class="fa-solid fa-clipboard-list" style="font-size:12px"></i> Audit
     </button>
   </div>
 
@@ -454,11 +464,8 @@
 
     <!-- ── TAB WITHDRAWALS ── -->
     <div id="tab-withdrawals" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;margin-bottom:12px;background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.16);border-radius:12px">
-        <div style="font-size:.75rem;color:#94a3b8;line-height:1.5">Hapus riwayat penarikan semua user, termasuk permintaan yang masih berjalan. Saldo tidak otomatis dikembalikan.</div>
-        <button id="delete-all-withdrawal-history-btn" onclick="deleteAllWithdrawalHistory()" style="flex-shrink:0;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.28);color:#fb7185;border-radius:9px;min-height:38px;padding:0 12px;font-size:.75rem;font-weight:700;cursor:pointer">
-          <i class="fa-solid fa-trash" style="font-size:11px;margin-right:4px"></i>Hapus Semua Riwayat
-        </button>
+      <div style="padding:12px;margin-bottom:12px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.16);border-radius:12px">
+        <div style="font-size:.75rem;color:#94a3b8;line-height:1.5">Riwayat penarikan disimpan sebagai catatan operasional dan tidak dapat dihapus massal dari panel ini.</div>
       </div>
       <div id="withdrawal-list" style="display:flex;flex-direction:column;gap:10px">
         <div class="sk" style="height:100px"></div>
@@ -476,15 +483,37 @@
           </div>
           <div id="appeals-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px"></div>
         </div>
-        <div class="tt3" style="margin-bottom:10px;display:flex;align-items:center;gap:7px">
-          <i class="fa-solid fa-users" style="color:#a855f7;font-size:12px"></i> Semua User
+        <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="tt3" style="display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-users" style="color:#a855f7;font-size:12px"></i> Semua User
+          </div>
+          <button onclick="refreshAdminUsers()" class="btn btn-ghost btn-sm" aria-label="Muat ulang daftar user">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
         </div>
         <div class="inp-wrap" style="margin-bottom:10px">
           <i class="inp-ico fa-solid fa-magnifying-glass"></i>
-          <input id="user-search" class="inp" type="search" placeholder="Cari username, UID, atau kode referral" aria-label="Cari user"/>
+          <input id="user-search" class="inp" type="search" placeholder="Awalan username, UID lengkap, atau kode referral lengkap" aria-label="Cari user"/>
         </div>
         <div id="users-list" style="display:flex;flex-direction:column;gap:7px">
           <div class="sk" style="height:52px"></div>
+          <div class="sk" style="height:52px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-audit" style="display:none">
+      <div class="card" style="padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+          <div class="tt3" style="display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-clipboard-list" style="color:#a855f7;font-size:12px"></i> Aktivitas Admin
+          </div>
+          <button onclick="loadAdminAuditLogs()" class="btn btn-ghost btn-sm" aria-label="Muat ulang audit log">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <div class="tb" style="margin-bottom:10px">100 perubahan admin terbaru, termasuk hasil aksi dan target.</div>
+        <div id="admin-audit-list" style="display:flex;flex-direction:column;gap:7px">
           <div class="sk" style="height:52px"></div>
         </div>
       </div>

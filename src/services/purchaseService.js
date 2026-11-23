@@ -19,8 +19,11 @@ function generateOrderId() {
 async function ensureUserRecord(uid, username) {
   const snap = await db.ref(`users/${uid}`).once('value');
   if (!snap.exists()) {
+    const cleanUsername = String(username || uid).trim();
     await db.ref(`users/${uid}`).set({
-      username: username || uid,
+      username: cleanUsername,
+      username_lower: String(cleanUsername).trim().toLowerCase(),
+      created_at: Date.now(),
       balance: 0,
       withdrawable_balance: 0,
     });

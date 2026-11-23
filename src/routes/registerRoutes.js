@@ -85,9 +85,12 @@ router.post('/', registerLimiter, async (req, res) => {
     }
 
     const ownReferralCode = await createUniqueReferralCode(uid);
+    const cleanUsername = String(username).trim();
     const updates = {
       [`users/${uid}`]: {
-        username: String(username).trim(),
+        username: cleanUsername,
+        username_lower: cleanUsername.toLowerCase(),
+        created_at: Date.now(),
         balance: 0,
         withdrawable_balance: 0,
         referral_code: ownReferralCode,
@@ -98,7 +101,7 @@ router.post('/', registerLimiter, async (req, res) => {
       const joinedAt = Date.now();
       updates[`referral_attributions/${uid}`] = { referrer_id: referrerId, created_at: joinedAt };
       updates[`referrals/${referrerId}/${uid}`] = {
-        username: String(username).trim(),
+        username: cleanUsername,
         joined_at: joinedAt,
       };
     }

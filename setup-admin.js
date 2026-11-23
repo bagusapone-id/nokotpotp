@@ -55,6 +55,8 @@ async function setup() {
     // Set balance in Firebase
     await db.ref(`users/${testUser.uid}`).set({
       username: 'test_user',
+      username_lower: 'test_user',
+      created_at: Date.now(),
       balance: 100000,
     });
     console.log('Test user balance set: Rp 100.000');

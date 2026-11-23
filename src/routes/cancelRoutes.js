@@ -5,6 +5,9 @@ const authAdmin = require('../middleware/authAdmin');
 const { db } = require('../config/firebase');
 const { cancelOrder, CancelError } = require('../services/cancelService');
 const { refundOrderBalance } = require('../services/balanceService');
+const { installAdminAudit } = require('../services/adminAuditService');
+
+installAdminAudit(router);
 
 async function refundOrderToUser(uid, orderId, order) {
   const userRef = db.ref(`users/${uid}`);
