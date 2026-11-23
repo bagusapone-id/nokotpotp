@@ -273,10 +273,9 @@
     .search-inp::placeholder{color:var(--text3)}
     .search-ico{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:11px;pointer-events:none}
 
-    /* Country 2-col grid */
-    .country-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 18px;margin-bottom:14px}
-    /* single-col fallback when user-panel renders list items */
-    #country-list{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 18px;margin-bottom:14px}
+    /* Country list — vertikal */
+    .country-grid{display:flex;flex-direction:column;gap:7px;padding:0 18px;margin-bottom:14px}
+    #country-list{display:flex;flex-direction:column;gap:7px;padding:0 18px;margin-bottom:14px}
 
     /* Bottom nav — floating pill */
     .bottom-nav{
@@ -548,10 +547,9 @@
 
       <!-- Country list (2-col grid via CSS) -->
       <div id="country-list">
-        <div class="sk" style="height:88px"></div>
-        <div class="sk" style="height:88px"></div>
-        <div class="sk" style="height:88px"></div>
-        <div class="sk" style="height:88px"></div>
+        <div class="sk" style="height:60px"></div>
+        <div class="sk" style="height:60px"></div>
+        <div class="sk" style="height:60px"></div>
       </div>
 
     </div>
