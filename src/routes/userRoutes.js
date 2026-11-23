@@ -10,6 +10,48 @@ const {
 } = require('../services/depositAccessService');
 const isAdminUser = require('../utils/isAdminUser');
 
+const STOCK_COUNTS_CACHE_MS = 2000;
+let stockCountsCache = null;
+let stockCountsCacheAt = 0;
+let stockCountsLoad = null;
+
+async function getAvailableStockCounts() {
+  if (stockCountsCache && Date.now() - stockCountsCacheAt < STOCK_COUNTS_CACHE_MS) {
+    return stockCountsCache;
+  }
+  if (stockCountsLoad) return stockCountsLoad;
+
+  stockCountsLoad = (async () => {
+    const snapshot = await db.ref('phone_stocks').once('value');
+    const counts = {};
+    snapshot.forEach(child => {
+      const stock = child.val();
+      if (stock && stock.status === 'AVAILABLE' && typeof stock.country_key === 'string') {
+        counts[stock.country_key] = (counts[stock.country_key] || 0) + 1;
+      }
+    });
+    stockCountsCache = counts;
+    stockCountsCacheAt = Date.now();
+    return counts;
+  })();
+
+  try {
+    return await stockCountsLoad;
+  } finally {
+    stockCountsLoad = null;
+  }
+}
+
+router.get('/stock-summary', authUser, async (req, res) => {
+  try {
+    const availableCounts = await getAvailableStockCounts();
+    return res.status(200).json({ success: true, available_counts: availableCounts });
+  } catch (err) {
+    console.error('[userRoutes] stock summary error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat jumlah stok.' });
+  }
+});
+
 // GET /api/user/referrals — referral link, invited users, and earned commissions
 router.get('/referrals', authUser, async (req, res) => {
   const uid = req.user.uid;

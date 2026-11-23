@@ -147,10 +147,37 @@ router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res
   }
 });
 
+router.get('/orders', authAdmin, async (req, res) => {
+  try {
+    const snapshot = await db.ref('orders').once('value');
+    const orders = {};
+    snapshot.forEach(child => {
+      const order = child.val();
+      if (order && ['WAITING_OTP', 'OTP_REQUESTED'].includes(order.status)) {
+        orders[child.key] = order;
+      }
+    });
+    return res.status(200).json({ success: true, orders });
+  } catch (err) {
+    console.error('[adminRoutes] active orders error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat order aktif.' });
+  }
+});
+
 /**
  * POST /api/admin/stock
  * Single stock entry (legacy, kept for compatibility)
  */
+router.get('/stock', authAdmin, async (req, res) => {
+  try {
+    const snapshot = await db.ref('phone_stocks').once('value');
+    return res.status(200).json({ success: true, stock: snapshot.val() || {} });
+  } catch (err) {
+    console.error('[adminRoutes] stock list error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat stok.' });
+  }
+});
+
 router.post('/stock', authAdmin, async (req, res) => {
   const { phone_number, country_key } = req.body;
   if (!phone_number || !country_key) {

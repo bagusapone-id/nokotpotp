@@ -5,6 +5,32 @@ const authAdmin = require('../middleware/authAdmin');
 const { db } = require('../config/firebase');
 const { requestOtp, resendOtp, submitOtp, completeOrder, OrderError } = require('../services/orderService');
 
+router.get('/active', authUser, async (req, res) => {
+  try {
+    const snapshot = await db.ref('orders')
+      .orderByChild('user_id')
+      .equalTo(req.user.uid)
+      .once('value');
+    const orders = {};
+    snapshot.forEach(child => {
+      const order = child.val();
+      if (order && ['WAITING_OTP', 'OTP_REQUESTED'].includes(order.status)) {
+        orders[child.key] = {
+          phone_number: order.phone_number,
+          expires_at: order.expires_at,
+          country_name: order.country_name,
+          status: order.status,
+          price: order.price,
+        };
+      }
+    });
+    return res.status(200).json({ success: true, orders });
+  } catch (err) {
+    console.error('[orderRoutes] active orders error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat order aktif.' });
+  }
+});
+
 /**
  * POST /api/orders/:id/request-otp
  * User: signals they have requested OTP from WhatsApp

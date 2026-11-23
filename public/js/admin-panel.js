@@ -7,6 +7,13 @@ let currentAdminTab = "orders";
 let withdrawalsLoadInProgress = false;
 let usersLoadInProgress = false;
 let eventStatusLoadInProgress = false;
+let ordersLoadInProgress = false;
+let stockLoadInProgress = false;
+let ordersTimerInterval = null;
+let ordersLoaded = false;
+let stockLoaded = false;
+let ordersLoadError = false;
+let stockLoadError = false;
 let bulkCancelInProgress = false;
 let deletingWithdrawalHistory = false;
 
@@ -77,6 +84,8 @@ function initAdmin() {
   if (!withdrawalRefreshTimer) {
     withdrawalRefreshTimer = setInterval(() => {
       if (!adminUser || document.visibilityState === "hidden") return;
+      if (currentAdminTab === "orders") loadOrders();
+      if (currentAdminTab === "stock") loadStock();
       if (currentAdminTab === "withdrawals") loadWithdrawals();
       if (currentAdminTab === "users") loadUsers(usersPagination.page, { silent: true });
       if (currentAdminTab === "notifications") loadEventStatus();
@@ -97,6 +106,8 @@ window.showAdminTab = function(tab) {
   if (tabEl) tabEl.style.display = "block";
   const navEl = document.getElementById("nav-"+tab);
   if (navEl) navEl.classList.add("active");
+  if (tab === 'orders') loadOrders();
+  if (tab === 'stock') loadStock();
   if (tab === 'users') loadUsers();
   if (tab === 'notifications') loadEventStatus();
   if (tab === 'withdrawals') loadWithdrawals();
@@ -104,19 +115,8 @@ window.showAdminTab = function(tab) {
 
 // ── Orders ──
 function listenOrders() {
-  firebaseDB.ref("orders").on("value", (snap) => {
-    ordersData = {};
-    if (snap.exists()) snap.forEach(c => {
-      const o = c.val();
-      // Hanya tampilkan yang masih aktif
-      if (o.status === "WAITING_OTP" || o.status === "OTP_REQUESTED") ordersData[c.key] = o;
-    });
-    renderOrders();
-  }, error => {
-    document.getElementById("order-list").textContent = "Gagal memuat order realtime: " + error.message;
-  });
-  // Update timer setiap detik tanpa re-render penuh
-  setInterval(() => {
+  loadOrders();
+  if (!ordersTimerInterval) ordersTimerInterval = setInterval(() => {
     Object.keys(ordersData).forEach(id => {
       const o = ordersData[id];
       const rem = Math.max(0, Math.floor((o.expires_at - Date.now()) / 1000));
@@ -129,6 +129,29 @@ function listenOrders() {
       }
     });
   }, 1000);
+}
+
+async function loadOrders() {
+  const container = document.getElementById("order-list");
+  if (!adminUser || ordersLoadInProgress) return;
+  ordersLoadInProgress = true;
+  try {
+    const response = await adminFetch("/api/admin/orders");
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.message || "Gagal memuat order aktif.");
+    const nextOrders = data.orders || {};
+    if (!ordersLoaded || ordersLoadError || JSON.stringify(nextOrders) !== JSON.stringify(ordersData)) {
+      ordersData = nextOrders;
+      renderOrders();
+    }
+    ordersLoaded = true;
+    ordersLoadError = false;
+  } catch (error) {
+    container.textContent = "Gagal memperbarui order aktif: " + error.message;
+    ordersLoadError = true;
+  } finally {
+    ordersLoadInProgress = false;
+  }
 }
 
 function renderOrders() {
@@ -313,12 +336,29 @@ window.adminCancelAllActiveOrders = async function() {
 
 // ── Stock ──
 function listenStock() {
-  firebaseDB.ref("phone_stocks").on("value", (snap) => {
-    stockData = snap.val() || {};
-    renderStockList(); updateStockCounts(); updateStockFilterCountry();
-  }, error => {
-    document.getElementById("stock-list").textContent = "Gagal memuat stok realtime: " + error.message;
-  });
+  loadStock();
+}
+
+async function loadStock() {
+  if (!adminUser || stockLoadInProgress) return;
+  stockLoadInProgress = true;
+  try {
+    const response = await adminFetch("/api/admin/stock");
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.message || "Gagal memuat stok.");
+    const nextStock = data.stock || {};
+    if (!stockLoaded || stockLoadError || JSON.stringify(nextStock) !== JSON.stringify(stockData)) {
+      stockData = nextStock;
+      renderStockList(); updateStockCounts(); updateStockFilterCountry();
+    }
+    stockLoaded = true;
+    stockLoadError = false;
+  } catch (error) {
+    document.getElementById("stock-list").textContent = "Gagal memperbarui stok: " + error.message;
+    stockLoadError = true;
+  } finally {
+    stockLoadInProgress = false;
+  }
 }
 
 function updateStockCounts() {

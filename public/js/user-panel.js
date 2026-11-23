@@ -12,9 +12,9 @@ let orderListenerRef = null;
 let balanceListenerRef = null;
 let connectionListenerRef = null;
 let countriesListenerRef = null;
-let stockListenerRef = null;
 let notificationsListenerRef = null;
-let activeOrdersQueryRef = null;
+let stockRefreshTimer = null;
+let activeOrdersRefreshTimer = null;
 let banListenerRef = null;
 let depositEventListenerRef = null;
 let depositStatusListenerRef = null;
@@ -477,9 +477,7 @@ function cleanupListeners() {
     balanceListenerRef,
     connectionListenerRef,
     countriesListenerRef,
-    stockListenerRef,
     notificationsListenerRef,
-    activeOrdersQueryRef,
     banListenerRef,
     depositEventListenerRef,
     depositStatusListenerRef,
@@ -489,12 +487,12 @@ function cleanupListeners() {
   balanceListenerRef = null;
   connectionListenerRef = null;
   countriesListenerRef = null;
-  stockListenerRef = null;
   notificationsListenerRef = null;
-  activeOrdersQueryRef = null;
   banListenerRef = null;
   depositEventListenerRef = null;
   depositStatusListenerRef = null;
+  if (stockRefreshTimer) { clearInterval(stockRefreshTimer); stockRefreshTimer = null; }
+  if (activeOrdersRefreshTimer) { clearInterval(activeOrdersRefreshTimer); activeOrdersRefreshTimer = null; }
   if (depositCheckInterval) { clearInterval(depositCheckInterval); depositCheckInterval = null; }
   if (_notifTimer) { clearInterval(_notifTimer); _notifTimer = null; }
   currentDeposit = null;
@@ -544,7 +542,7 @@ function hideError() {
 }
 
 async function apiFetch(url, opts = {}) {
-  if (currentUser) idToken = await currentUser.getIdToken(true);
+  if (currentUser) idToken = await currentUser.getIdToken();
   return fetch(url, {
     ...opts,
     headers: {
@@ -602,8 +600,10 @@ function setupBalanceListener() {
 
 // ---- Countries + Stock ----
 let countriesData = {};
-let stockData = {};
+let stockCounts = {};
 let countrySearchQuery = "";
+let stockSummaryLoadInProgress = false;
+let stockSummaryLastError = "";
 
 function setupCountriesAndStockListener() {
   countriesListenerRef = firebaseDB.ref("countries");
@@ -613,21 +613,40 @@ function setupCountriesAndStockListener() {
   }, error => {
     showError("Gagal memperbarui daftar negara: " + error.message);
   });
-  stockListenerRef = firebaseDB.ref("phone_stocks");
-  stockListenerRef.on("value", (snap) => {
-    stockData = snap.val() || {};
-    renderCountryList();
-  }, error => {
-    showError("Gagal memperbarui stok realtime: " + error.message);
-  });
+  loadStockCounts();
+  if (!stockRefreshTimer) {
+    stockRefreshTimer = setInterval(() => {
+      if (document.visibilityState !== "hidden") loadStockCounts();
+    }, 5000);
+  }
+}
+
+async function loadStockCounts() {
+  if (!currentUser || stockSummaryLoadInProgress) return;
+  stockSummaryLoadInProgress = true;
+  try {
+    const response = await apiFetch("/api/user/stock-summary");
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.message || "Gagal memuat jumlah stok.");
+    const nextCounts = data.available_counts || {};
+    if (JSON.stringify(nextCounts) !== JSON.stringify(stockCounts)) {
+      stockCounts = nextCounts;
+      renderCountryList();
+    }
+    const errorText = document.getElementById("error-banner-text");
+    if (stockSummaryLastError && errorText.textContent === stockSummaryLastError) hideError();
+    stockSummaryLastError = "";
+  } catch (error) {
+    const message = "Gagal memperbarui jumlah stok: " + error.message;
+    if (message !== stockSummaryLastError) showError(message);
+    stockSummaryLastError = message;
+  } finally {
+    stockSummaryLoadInProgress = false;
+  }
 }
 
 function getStockCount(countryKey) {
-  let n = 0;
-  for (const k in stockData) {
-    if (stockData[k].country_key === countryKey && stockData[k].status === "AVAILABLE") n++;
-  }
-  return n;
+  return Number(stockCounts[countryKey]) || 0;
 }
 
 window.switchTab = function(tab) {
@@ -737,24 +756,40 @@ const orderStates = {};
 
 function checkForActiveOrder() {
   if (!currentUser) return;
-  activeOrdersQueryRef = firebaseDB.ref("orders").orderByChild("user_id").equalTo(currentUser.uid);
-  activeOrdersQueryRef.on("value", (snap) => {
+  loadActiveOrders();
+  if (!activeOrdersRefreshTimer) {
+    activeOrdersRefreshTimer = setInterval(() => {
+      if (document.visibilityState !== "hidden") loadActiveOrders();
+    }, 5000);
+  }
+}
+
+let activeOrdersLoadInProgress = false;
+
+async function loadActiveOrders() {
+  if (!currentUser || activeOrdersLoadInProgress) return;
+  activeOrdersLoadInProgress = true;
+  try {
+    const response = await apiFetch("/api/orders/active");
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.message || "Gagal memuat order aktif.");
     const activeIds = new Set();
-    snap.forEach((child) => {
-      const o = child.val();
+    Object.entries(data.orders || {}).forEach(([orderId, o]) => {
       if (["WAITING_OTP", "OTP_REQUESTED"].includes(o.status)) {
-        activeIds.add(child.key);
-        addActiveOrderCard(child.key, o.phone_number, o.expires_at, o.country_name, o.status, o.price);
+        activeIds.add(orderId);
+        addActiveOrderCard(orderId, o.phone_number, o.expires_at, o.country_name, o.status, o.price);
       } else {
-        removeOrderCard(child.key);
+        removeOrderCard(orderId);
       }
     });
     Object.keys(orderStates).forEach(id => {
       if (!activeIds.has(id)) removeOrderCard(id);
     });
-  }, error => {
-    showError("Gagal memantau order secara realtime: " + error.message);
-  });
+  } catch (error) {
+    showError("Gagal memperbarui order aktif: " + error.message);
+  } finally {
+    activeOrdersLoadInProgress = false;
+  }
 }
 
 function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initialStatus, price) {
