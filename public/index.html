@@ -20,18 +20,11 @@
   <meta name="twitter:description" content="Beli nomor virtual WA dan nokos WA murah untuk verifikasi OTP WhatsApp. Tersedia nomor Indonesia dan luar negeri.">
   <meta name="twitter:image" content="https://nokosotp.neru.web.id/og-image.svg">
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "NOKOTPOTP",
-    "url": "https://nokosotp.neru.web.id/",
-    "description": "Layanan nomor virtual WhatsApp dan verifikasi OTP dengan pilihan nomor Indonesia dan luar negeri.",
-    "inLanguage": "id-ID"
-  }
+  {"@context":"https://schema.org","@type":"WebSite","name":"NOKOTPOTP","url":"https://nokosotp.neru.web.id/","description":"Layanan nomor virtual WhatsApp dan verifikasi OTP dengan pilihan nomor Indonesia dan luar negeri.","inLanguage":"id-ID"}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -39,36 +32,43 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html{font-size:15px}
-    body{margin:0;background:#f8f7f4;color:#1a1a1a;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    body{margin:0;background:#06090f;color:#e6edf3;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
     ::-webkit-scrollbar{width:0}
     .hidden{display:none!important}
 
     :root{
-      --bg:#f8f7f4;
-      --bg2:#f0ede8;
-      --surface:#ffffff;
-      --border:#e5e2dc;
-      --border2:#d4d0c8;
-      --text:#1a1a1a;
-      --text2:#6b6860;
-      --text3:#9b9890;
-      --accent:#16a34a;
-      --accent-light:#dcfce7;
-      --accent-mid:#bbf7d0;
-      --accent-text:#15803d;
-      --red:#dc2626;
-      --red-light:#fee2e2;
-      --amber:#d97706;
-      --amber-light:#fef3c7;
-      --sky:#0284c7;
-      --sky-light:#e0f2fe;
+      --bg:#06090f;
+      --s1:#0d1117;
+      --s2:#161b22;
+      --s3:#21262d;
+      --line:#30363d;
+      --line2:#484f58;
+      --g:#3fb950;
+      --g-dim:rgba(63,185,80,.12);
+      --g-bdr:rgba(63,185,80,.28);
+      --g-text:#3fb950;
+      --sky:#58a6ff;
+      --sky-dim:rgba(88,166,255,.1);
+      --sky-bdr:rgba(88,166,255,.25);
+      --amber:#d29922;
+      --amber-dim:rgba(210,153,34,.1);
+      --amber-bdr:rgba(210,153,34,.28);
+      --rose:#f85149;
+      --rose-dim:rgba(248,81,73,.1);
+      --rose-bdr:rgba(248,81,73,.25);
+      --text:#e6edf3;
+      --text2:#848d97;
+      --text3:#484f58;
       --mono:'JetBrains Mono',monospace;
     }
 
+    /* ── Reset ── */
+    button,input,select,textarea{font-family:inherit}
+
     /* ── Typography ── */
-    .tt1{font-size:1.1875rem;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1.2}
+    .tt1{font-size:1.125rem;font-weight:800;color:var(--text);letter-spacing:-.025em;line-height:1.2}
     .tt2{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.3}
-    .tt3{font-size:.875rem;font-weight:600;color:var(--text);line-height:1.4}
+    .tt3{font-size:.875rem;font-weight:600;color:var(--text)}
     .tb{font-size:.8125rem;color:var(--text2);line-height:1.55}
     .tl{font-size:.625rem;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
     .tm{font-family:var(--mono);font-weight:700;color:var(--text)}
@@ -76,49 +76,72 @@
 
     /* ── Layout ── */
     .page-wrap{display:flex;flex-direction:column;align-items:center;min-height:100dvh}
-    .page-col{width:100%;max-width:400px;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+    .page-col{width:100%;max-width:400px;min-height:100dvh;display:flex;flex-direction:column}
 
-    /* ── Surface / Card ── */
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px}
-    .inset{background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+    /* ── Cards ── */
+    .card{background:var(--s1);border:1px solid var(--line);border-radius:12px}
+    .inset{background:var(--s2);border:1px solid var(--line);border-radius:9px}
 
     /* ── Buttons ── */
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .12s,transform .1s;-webkit-user-select:none;user-select:none;white-space:nowrap}
-    .btn:active{transform:scale(.97);opacity:.88}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .12s,transform .1s;-webkit-user-select:none;user-select:none;white-space:nowrap}
+    .btn:active{transform:scale(.97);opacity:.85}
     .btn:disabled{opacity:.35;pointer-events:none}
     .btn-full{width:100%}
-    .btn-h{height:44px;padding:0 18px}
-    .btn-sm{height:32px;padding:0 12px;font-size:.8125rem;border-radius:8px}
-    .btn-xs{height:28px;padding:0 10px;font-size:.75rem;border-radius:7px}
-    .btn-icon{width:36px;height:36px;padding:0;border-radius:9px;flex-shrink:0}
-    .btn-primary{background:var(--accent);color:#fff}
-    .btn-primary:hover{background:#15803d}
-    .btn-sky{background:var(--sky-light);border:1px solid #bae6fd;color:var(--sky)}
-    .btn-amber{background:var(--amber-light);border:1px solid #fde68a;color:var(--amber)}
-    .btn-rose{background:var(--red-light);border:1px solid #fecaca;color:var(--red)}
-    .btn-ghost{background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+    .btn-h{height:42px;padding:0 18px}
+    .btn-sm{height:30px;padding:0 11px;font-size:.8125rem;border-radius:7px}
+    .btn-xs{height:26px;padding:0 9px;font-size:.75rem;border-radius:6px}
+    .btn-icon{width:34px;height:34px;padding:0;border-radius:8px;flex-shrink:0;background:var(--s1);border:1px solid var(--line);color:var(--text2)}
+    .btn-primary{background:var(--g-text);color:#0d1117;font-weight:700}
+    .btn-sky{background:var(--sky-dim);border:1px solid var(--sky-bdr);color:var(--sky)}
+    .btn-amber{background:var(--amber-dim);border:1px solid var(--amber-bdr);color:var(--amber)}
+    .btn-rose{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:var(--rose)}
+    .btn-ghost{background:var(--s2);border:1px solid var(--line);color:var(--text2)}
 
     /* ── Input ── */
-    .inp{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;height:46px;padding:0 14px 0 40px;outline:none;transition:border-color .15s}
+    .inp{width:100%;background:var(--s2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:'Inter',sans-serif;font-size:.875rem;height:42px;padding:0 13px 0 38px;outline:none;transition:border-color .15s}
     .inp::placeholder{color:var(--text3)}
-    .inp:focus{border-color:var(--accent)}
+    .inp:focus{border-color:var(--g-bdr)}
     .inp-wrap{position:relative}
-    .inp-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+    .inp-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+
+    /* Field row style (login) */
+    .field-row{display:flex;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:9px;transition:border-color .15s;overflow:hidden}
+    .field-row:focus-within{border-color:var(--g-bdr)}
+    .field-ico{width:38px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;flex-shrink:0}
+    .field-inp{flex:1;height:42px;border:none;background:transparent;color:var(--text);font:400 .875rem 'Inter',sans-serif;outline:none;padding-right:12px}
+    .field-inp::placeholder{color:var(--text3)}
+
+    /* ── Captcha ── */
+    .human-check{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--line);border-radius:9px;background:var(--s2);cursor:pointer;transition:border-color .15s}
+    .human-check:focus-within{border-color:var(--g-bdr)}
+    .human-check.is-checked{border-color:var(--g-bdr);background:var(--g-dim)}
+    .human-check input{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    .human-check-box{width:20px;height:20px;flex-shrink:0;display:grid;place-items:center;border:1.5px solid var(--line2);border-radius:4px;background:var(--s3);color:transparent;transition:background .15s,border-color .15s}
+    .human-check-box i{font-size:11px;opacity:0}
+    .human-check-box .human-check-spinner{display:none}
+    .human-check.is-verifying .human-check-box{border-color:var(--g-bdr);background:var(--g-dim);color:var(--g-text)}
+    .human-check.is-verifying .human-check-box .human-check-spinner{display:block;opacity:1;animation:spin .8s linear infinite}
+    .human-check input:checked+.human-check-box{border-color:var(--g-text);background:var(--g-text)}
+    .human-check input:checked+.human-check-box .human-check-check{opacity:1;color:#0d1117}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .human-check-copy{flex:1;color:var(--text2);font-size:.8125rem;font-weight:500}
+    .human-check-brand{display:flex;align-items:center;flex-shrink:0}
+    .human-check-brand img{width:22px;height:22px;border-radius:5px;display:block}
 
     /* ── Alerts ── */
-    .alert{display:flex;align-items:flex-start;gap:9px;border-radius:10px;padding:11px 13px;font-size:.8125rem;font-weight:500;line-height:1.45}
-    .alert-r{background:var(--red-light);border:1px solid #fecaca;color:#991b1b}
-    .alert-g{background:var(--accent-light);border:1px solid var(--accent-mid);color:var(--accent-text)}
+    .alert{display:flex;align-items:flex-start;gap:8px;border-radius:9px;padding:10px 12px;font-size:.8125rem;font-weight:500;line-height:1.45}
+    .alert-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#ffa198}
+    .alert-g{background:var(--g-dim);border:1px solid var(--g-bdr);color:var(--g-text)}
     .alert i{flex-shrink:0;margin-top:1px;font-size:12px}
 
     /* ── Badge ── */
     .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.6875rem;font-weight:600;white-space:nowrap;flex-shrink:0}
-    .badge-g{background:var(--accent-light);border:1px solid var(--accent-mid);color:var(--accent-text)}
-    .badge-r{background:var(--red-light);border:1px solid #fecaca;color:var(--red)}
+    .badge-g{background:var(--g-dim);border:1px solid var(--g-bdr);color:var(--g-text)}
+    .badge-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:var(--rose)}
 
     /* ── Skeleton ── */
     @keyframes sh{from{background-position:-400px 0}to{background-position:400px 0}}
-    .sk{background:linear-gradient(90deg,#eeebe6 25%,#e4e1dc 50%,#eeebe6 75%);background-size:800px 100%;animation:sh 1.4s infinite;border-radius:10px}
+    .sk{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:800px 100%;animation:sh 1.4s infinite;border-radius:9px}
 
     /* ── Animations ── */
     @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -127,70 +150,218 @@
     .bk{animation:bk 1.6s ease-in-out infinite}
     @keyframes sp{0%,100%{opacity:.2;transform:scale(.75)}50%{opacity:1;transform:scale(1)}}
 
-    /* ── Bottom Nav ── */
-    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);display:flex;justify-content:space-around;padding:8px 10px max(8px,env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border)}
-    .bottom-nav a{min-width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text3);text-decoration:none;font-size:.5625rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+    /* ═══════════════════════════════════════
+       LOGIN SCREEN
+    ═══════════════════════════════════════ */
+    #login-screen{
+      position:fixed;inset:0;z-index:10;
+      display:flex;flex-direction:column;
+      overflow-y:auto;
+      background:var(--bg);
+    }
+    /* subtle grid texture */
+    #login-screen::before{
+      content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:
+        linear-gradient(rgba(63,185,80,.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(63,185,80,.025) 1px,transparent 1px);
+      background-size:32px 32px;
+    }
+
+    .login-branding{
+      flex:1;position:relative;z-index:1;
+      display:flex;flex-direction:column;justify-content:center;
+      padding:52px 28px 32px;
+      min-height:260px;
+    }
+    .login-eyebrow{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 10px;border:1px solid var(--g-bdr);
+      border-radius:20px;background:var(--g-dim);
+      font-size:.625rem;font-weight:700;color:var(--g-text);
+      letter-spacing:.1em;text-transform:uppercase;
+      margin-bottom:18px;width:fit-content;
+    }
+    .login-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--g-text)}
+    .login-h1{
+      font-size:2.75rem;font-weight:900;color:var(--text);
+      letter-spacing:-.05em;line-height:.95;margin-bottom:14px;
+    }
+    .login-h1 em{color:var(--g-text);font-style:normal}
+    .login-sub{font-size:.8125rem;color:var(--text2);line-height:1.6;max-width:270px}
+
+    .login-form-panel{
+      position:relative;z-index:1;
+      background:var(--s1);
+      border-top:1px solid var(--line);
+      padding:24px 20px 36px;
+    }
+
+    /* Tab — underline */
+    .auth-tab-bar{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:20px}
+    .auth-tab-btn{
+      flex:1;height:36px;border:none;background:transparent;
+      color:var(--text2);font:600 .8125rem 'Inter',sans-serif;
+      cursor:pointer;position:relative;transition:color .15s;
+    }
+    .auth-tab-btn.active{color:var(--text)}
+    .auth-tab-btn.active::after{
+      content:"";position:absolute;bottom:-1px;left:0;right:0;
+      height:2px;background:var(--g-text);border-radius:2px 2px 0 0;
+    }
+
+    /* ═══════════════════════════════════════
+       APP SCREEN
+    ═══════════════════════════════════════ */
+
+    /* Topbar */
+    .app-topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 18px 0;
+      background:var(--bg);
+    }
+    .app-topbar-brand{display:flex;align-items:center;gap:8px}
+    .app-topbar-dot{width:7px;height:7px;border-radius:50%;background:var(--g-text)}
+    .app-topbar-name{font-size:.9375rem;font-weight:800;color:var(--text);letter-spacing:-.02em}
+    .app-topbar-right{display:flex;align-items:center;gap:7px}
+
+    /* Hero balance */
+    .balance-hero{padding:24px 18px 20px;background:var(--bg)}
+    .bal-label{font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+    .bal-amount{
+      font-family:var(--mono);font-size:2.25rem;font-weight:700;
+      color:var(--text);letter-spacing:-.06em;line-height:1;
+      display:flex;align-items:baseline;gap:6px;
+    }
+    .bal-amount-currency{color:var(--g-text);font-size:1.1rem;font-weight:600}
+    .bal-stale{color:var(--amber);font-size:11px;display:none}
+    .bal-actions{display:flex;gap:7px;margin-top:16px}
+    .bal-action-btn{
+      flex:1;height:36px;border:1px solid var(--line);border-radius:8px;
+      background:var(--s1);color:var(--text2);
+      font:600 .75rem 'Inter',sans-serif;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:5px;
+      transition:border-color .12s,background .12s,color .12s;
+    }
+    .bal-action-btn.top-up{
+      background:var(--g-dim);border-color:var(--g-bdr);color:var(--g-text);
+    }
+
+    /* Divider */
+    .h-line{height:1px;background:var(--line);margin:0 0 14px}
+
+    /* Tab pills (segmented) */
+    .seg-tabs{display:flex;gap:5px;padding:0 18px;margin-bottom:12px}
+    .seg-tab{
+      height:30px;padding:0 13px;border-radius:30px;
+      border:1px solid var(--line);background:transparent;
+      color:var(--text3);font:600 .75rem 'Inter',sans-serif;
+      cursor:pointer;transition:all .12s;
+      display:flex;align-items:center;gap:5px;
+    }
+    .seg-tab.active{background:var(--s2);border-color:var(--line2);color:var(--text)}
+
+    /* Search */
+    .search-wrap{padding:0 18px;margin-bottom:12px;position:relative}
+    .search-inp{
+      width:100%;height:38px;background:var(--s1);
+      border:1px solid var(--line);border-radius:9px;
+      color:var(--text);font:400 .875rem 'Inter',sans-serif;
+      padding:0 13px 0 36px;outline:none;transition:border-color .15s;
+    }
+    .search-inp:focus{border-color:var(--line2)}
+    .search-inp::placeholder{color:var(--text3)}
+    .search-ico{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:11px;pointer-events:none}
+
+    /* Country 2-col grid */
+    .country-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 18px;margin-bottom:14px}
+    /* single-col fallback when user-panel renders list items */
+    #country-list{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 18px;margin-bottom:14px}
+
+    /* Bottom nav — floating pill */
+    .bottom-nav{
+      position:fixed;z-index:20;left:50%;bottom:0;
+      transform:translateX(-50%);
+      width:min(100%,400px);
+      padding:10px 20px max(16px,env(safe-area-inset-bottom));
+      background:linear-gradient(to top,var(--bg) 55%,transparent);
+      pointer-events:none;
+    }
+    .nav-pill{
+      display:flex;background:var(--s1);border:1px solid var(--line);
+      border-radius:30px;overflow:hidden;pointer-events:all;
+    }
+    .bottom-nav a{
+      flex:1;height:46px;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:3px;
+      color:var(--text3);text-decoration:none;
+      font-size:.5rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      transition:color .15s,background .15s;border-radius:30px;
+    }
     .bottom-nav a i{font-size:17px}
-    .bottom-nav a.active{color:var(--accent)}
-    .bottom-nav a.active i{color:var(--accent)}
+    .bottom-nav a.active{background:var(--s2);color:var(--text)}
+    .bottom-nav a.active i{color:var(--g-text)}
 
-    /* ── Tab pill ── */
-    .tab-pill{flex:1;height:34px;border-radius:8px;font-size:.8125rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:background .12s,color .12s;border:none;background:transparent;color:var(--text3)}
-    .tab-pill.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
-
-    /* ── Deposit chip ── */
-    .deposit-chip.active{background:var(--sky-light);border-color:#bae6fd;color:var(--sky)}
-
-    /* ── Human check (captcha) ── */
-    .human-check{display:flex;align-items:center;gap:13px;min-height:58px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg2);cursor:pointer;transition:border-color .15s}
-    .human-check:hover{border-color:var(--border2)}
-    .human-check:focus-within{border-color:var(--accent)}
-    .human-check.is-checked{border-color:var(--accent);background:var(--accent-light)}
-    .human-check input{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-    .human-check-box{width:22px;height:22px;flex-shrink:0;display:grid;place-items:center;border:2px solid var(--border2);border-radius:5px;background:var(--surface);color:transparent;transition:background .15s,border-color .15s}
-    .human-check-box i{font-size:12px;opacity:0}
-    .human-check-box .human-check-spinner{display:none}
-    .human-check.is-verifying .human-check-box{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
-    .human-check.is-verifying .human-check-box .human-check-spinner{display:block;opacity:1;animation:spin .8s linear infinite}
-    .human-check input:checked+.human-check-box{border-color:var(--accent);background:var(--accent)}
-    .human-check input:checked+.human-check-box .human-check-check{opacity:1;color:#fff}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .human-check-copy{flex:1;color:var(--text2);font-size:.875rem;font-weight:500}
-    .human-check-brand{display:flex;align-items:center;flex-shrink:0}
-    .human-check-brand img{display:block;width:24px;height:24px;border-radius:6px}
-
-    /* ── Math challenge ── */
-    .math-challenge-overlay{z-index:100}
-    .math-challenge-dialog{position:relative;width:100%;max-width:300px;padding:20px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface)}
-    .math-challenge-close{position:absolute;top:10px;right:10px;color:var(--text3);background:var(--bg2);border:1px solid var(--border)}
-    .math-challenge-title{margin:0 32px 14px 0;color:var(--text);font-size:.9375rem;font-weight:700}
-    .math-challenge-question{margin-bottom:12px;padding:14px;border:1.5px solid var(--border);border-radius:9px;background:var(--bg2);color:var(--text);text-align:center;font-size:1.5rem;font-weight:800;font-family:var(--mono);letter-spacing:.04em}
-    .math-challenge-input{width:100%;height:44px;padding:0 12px;border:1.5px solid var(--border);border-radius:9px;outline:none;background:var(--surface);color:var(--text);font:inherit;font-size:.9375rem}
-    .math-challenge-input:focus{border-color:var(--accent)}
-    .math-challenge-error{margin-top:8px;color:var(--red);font-size:.75rem}
-
-    /* ── Overlay backdrop ── */
-    .promo-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.35)}
+    /* ── Promo overlay (feature promo) ── */
+    .promo-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.55)}
     .promo-overlay.hidden{display:none}
-    .promo-dialog{position:relative;width:100%;max-width:360px;padding:24px 20px 20px;border:1.5px solid var(--border);border-radius:16px;background:var(--surface)}
-    .promo-close{position:absolute;top:12px;right:12px;color:var(--text3)}
-    .promo-title{max-width:270px;margin:0 32px 8px 0;color:var(--text);font-size:1.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+    .promo-dialog{
+      position:relative;width:100%;max-width:360px;
+      padding:22px 18px 18px;
+      border:1px solid var(--line2);border-radius:14px;
+      background:var(--s1);
+    }
+    .promo-close{position:absolute;top:12px;right:12px;color:var(--text2)}
+    .promo-title{max-width:270px;margin:0 32px 7px 0;color:var(--text);font-size:1rem;font-weight:800;letter-spacing:-.02em;line-height:1.3}
     .promo-description{margin:0;color:var(--text2);font-size:.8rem;line-height:1.6}
-    .promo-options{display:grid;gap:9px;margin-top:16px}
-    .promo-option{display:flex;align-items:center;gap:11px;padding:12px;border:1.5px solid var(--border);border-radius:11px;background:var(--bg2);color:inherit;text-decoration:none;transition:border-color .12s,background .12s}
-    .promo-option:hover,.promo-option:focus-visible{border-color:var(--accent);background:var(--accent-light);outline:none}
+    .promo-options{display:grid;gap:8px;margin-top:14px}
+    .promo-option{
+      display:flex;align-items:center;gap:11px;padding:11px;
+      border:1px solid var(--line);border-radius:10px;
+      background:var(--s2);color:inherit;text-decoration:none;
+      transition:border-color .12s,background .12s;
+    }
+    .promo-option:hover,.promo-option:focus-visible{border-color:var(--g-bdr);background:var(--g-dim);outline:none}
     .promo-option:active{transform:scale(.99)}
-    .promo-option-icon{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--accent-light);color:var(--accent-text);font-size:14px}
+    .promo-option-icon{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--g-dim);color:var(--g-text);font-size:13px}
     .promo-option-copy{flex:1}
     .promo-option-title{margin-bottom:2px;color:var(--text);font-size:.8125rem;font-weight:700}
     .promo-option-description{color:var(--text2);font-size:.6875rem;line-height:1.4}
     .promo-option-arrow{color:var(--text3);font-size:10px}
 
+    /* ── Math challenge ── */
+    .math-challenge-overlay{z-index:100}
+    .math-challenge-dialog{
+      position:relative;width:100%;max-width:300px;
+      padding:20px;border:1px solid var(--line2);border-radius:14px;
+      background:var(--s1);
+    }
+    .math-challenge-close{position:absolute;top:10px;right:10px;color:var(--text2)}
+    .math-challenge-title{margin:0 32px 14px 0;color:var(--text);font-size:.9375rem;font-weight:700}
+    .math-challenge-question{
+      margin-bottom:12px;padding:14px;
+      border:1px solid var(--line);border-radius:9px;
+      background:var(--s2);color:var(--text);
+      text-align:center;font-size:1.5rem;font-weight:800;
+      font-family:var(--mono);letter-spacing:.04em;
+    }
+    .math-challenge-input{
+      width:100%;height:42px;padding:0 12px;
+      border:1px solid var(--line);border-radius:9px;outline:none;
+      background:var(--s2);color:var(--text);font:inherit;font-size:.9375rem;
+    }
+    .math-challenge-input:focus{border-color:var(--g-bdr)}
+    .math-challenge-error{margin-top:8px;color:var(--rose);font-size:.75rem}
+
     /* ── Custom Dialog ── */
     #dialog-overlay.show{display:flex!important}
 
-    /* ── Login screen specific ── */
-    #login-screen{background:var(--bg)}
+    /* ── Deposit chip active ── */
+    .deposit-chip.active{background:var(--sky-dim);border-color:var(--sky-bdr);color:var(--sky)}
+
+    /* ── Tab pill (generic) ── */
+    .tab-pill{flex:1;height:30px;border-radius:30px;font-size:.75rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:all .12s;border:1px solid transparent;background:transparent;color:var(--text3)}
+    .tab-pill.active{background:var(--s2);border-color:var(--line2);color:var(--text)}
   </style>
 </head>
 <body>
@@ -198,199 +369,205 @@
 <!-- Splash -->
 <div id="splash-screen" style="position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px">
   <div style="display:flex;align-items:center;gap:10px">
-    <img src="/logo.svg" alt="" width="38" height="38"/>
-    <span style="font-size:1.125rem;font-weight:800;color:var(--text);letter-spacing:-.02em">NOKOTPOTP</span>
+    <img src="/logo.svg" alt="" width="34" height="34"/>
+    <span style="font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-.02em">NOKOTPOTP</span>
   </div>
   <div style="display:flex;gap:5px">
-    <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:sp .9s ease-in-out infinite"></span>
-    <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:sp .9s ease-in-out .18s infinite"></span>
-    <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:sp .9s ease-in-out .36s infinite"></span>
+    <span style="width:5px;height:5px;border-radius:50%;background:var(--g-text);animation:sp .9s ease-in-out infinite"></span>
+    <span style="width:5px;height:5px;border-radius:50%;background:var(--g-text);animation:sp .9s ease-in-out .18s infinite"></span>
+    <span style="width:5px;height:5px;border-radius:50%;background:var(--g-text);animation:sp .9s ease-in-out .36s infinite"></span>
   </div>
 </div>
+<style>@keyframes sp{0%,100%{opacity:.2;transform:scale(.75)}50%{opacity:1;transform:scale(1)}}</style>
 
 <div class="page-wrap">
 <div class="page-col">
 
-<!-- ══ LOGIN ══ -->
-<div id="login-screen" style="position:fixed;inset:0;z-index:10;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;padding:28px 20px">
-  <div style="width:100%;max-width:340px">
+<!-- ══════════════════════════════════════════
+     LOGIN / REGISTER SCREEN
+══════════════════════════════════════════ -->
+<div id="login-screen">
+  <!-- Branding hero -->
+  <div class="login-branding fu">
+    <div class="login-eyebrow">
+      <span class="login-eyebrow-dot"></span>
+      Nomor Virtual WA
+    </div>
+    <h1 class="login-h1" aria-label="NOKOTPOTP">Noko<em>TP</em><br/>OTP.</h1>
+    <p class="login-sub">Platform nomor virtual WA terbesar. 5k+ pengguna, stok real-time.</p>
+  </div>
 
-    <!-- Brand mark -->
-    <div style="text-align:center;margin-bottom:28px" class="fu">
-      <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:var(--accent-light);border:1.5px solid var(--accent-mid);margin-bottom:12px">
-        <img src="/logo.svg" alt="" width="30" height="30"/>
-      </div>
-      <h1 style="margin:0 0 4px;font-size:1.3rem;font-weight:800;color:var(--text);letter-spacing:-.02em" aria-label="NOKOTPOTP">NOKOTPOTP</h1>
-      <p style="margin:0;font-size:.75rem;color:var(--text2)">Nomor virtual WA &amp; OTP · 5k+ pengguna</p>
+  <!-- Form panel -->
+  <div class="login-form-panel">
+    <!-- Tabs -->
+    <div class="auth-tab-bar">
+      <button id="tab-login-btn" class="auth-tab-btn active" onclick="showAuthTab('login')">Masuk</button>
+      <button id="tab-register-btn" class="auth-tab-btn" onclick="showAuthTab('register')">Daftar</button>
     </div>
 
-    <!-- Card -->
-    <div class="card" style="padding:0;overflow:hidden">
-      <!-- Tab bar -->
-      <div style="display:flex;border-bottom:1px solid var(--border);padding:4px;gap:4px;background:var(--bg2)">
-        <button id="tab-login-btn" onclick="showAuthTab('login')" class="tab-pill active">Masuk</button>
-        <button id="tab-register-btn" onclick="showAuthTab('register')" class="tab-pill">Daftar</button>
-      </div>
-
-      <div style="padding:20px">
-        <!-- Alerts -->
-        <div id="auth-error" class="alert alert-r hidden" style="margin-bottom:12px">
-          <i class="fa-solid fa-circle-exclamation"></i><span id="auth-error-text"></span>
-        </div>
-        <div id="auth-success" class="alert alert-g hidden" style="margin-bottom:12px">
-          <i class="fa-solid fa-circle-check"></i><span id="auth-success-text"></span>
-        </div>
-
-        <!-- Login form -->
-        <form id="login-form" novalidate style="display:flex;flex-direction:column;gap:11px">
-          <div class="inp-wrap">
-            <i class="inp-ico fa-solid fa-envelope"></i>
-            <input class="inp" type="email" id="login-email" required placeholder="Alamat email" autocomplete="email"/>
-          </div>
-          <div class="inp-wrap">
-            <i class="inp-ico fa-solid fa-lock"></i>
-            <input class="inp" type="password" id="login-password" required placeholder="Password" autocomplete="current-password"/>
-          </div>
-          <label class="human-check">
-            <input id="login-human-check" type="checkbox"/>
-            <span class="human-check-box" aria-hidden="true">
-              <i class="fa-solid fa-check human-check-check"></i>
-              <i class="fa-solid fa-spinner human-check-spinner"></i>
-            </span>
-            <span class="human-check-copy">Saya bukan robot</span>
-            <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
-          </label>
-          <button id="login-submit" type="submit" class="btn btn-primary btn-full btn-h" disabled>Masuk</button>
-        </form>
-
-        <!-- Register form -->
-        <form id="register-form" novalidate style="display:none;flex-direction:column;gap:11px">
-          <div class="inp-wrap">
-            <i class="inp-ico fa-solid fa-at"></i>
-            <input class="inp" type="text" id="reg-username" required placeholder="Username"/>
-          </div>
-          <div class="inp-wrap">
-            <i class="inp-ico fa-solid fa-ticket"></i>
-            <input class="inp" type="text" id="reg-referral-code" placeholder="Kode referral (opsional)" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateReferralCodeInput()"/>
-          </div>
-          <div id="reg-referral-code-status" role="status" style="display:none;font-size:.6875rem;margin-top:-7px"></div>
-          <div class="inp-wrap">
-            <i class="inp-ico fa-solid fa-envelope"></i>
-            <input class="inp" type="email" id="reg-email" required placeholder="Alamat email" autocomplete="email"/>
-          </div>
-          <div class="inp-wrap">
-            <i class="inp-ico fa-solid fa-lock"></i>
-            <input class="inp" type="password" id="reg-password" required placeholder="Password (min. 6)" autocomplete="new-password"/>
-          </div>
-          <label class="human-check">
-            <input id="register-human-check" type="checkbox"/>
-            <span class="human-check-box" aria-hidden="true">
-              <i class="fa-solid fa-check human-check-check"></i>
-              <i class="fa-solid fa-spinner human-check-spinner"></i>
-            </span>
-            <span class="human-check-copy">Saya bukan robot</span>
-            <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
-          </label>
-          <button id="register-submit" type="submit" class="btn btn-primary btn-full btn-h" disabled>Buat Akun</button>
-        </form>
-      </div>
+    <!-- Alerts -->
+    <div id="auth-error" class="alert alert-r hidden" style="margin-bottom:12px">
+      <i class="fa-solid fa-circle-exclamation"></i><span id="auth-error-text"></span>
+    </div>
+    <div id="auth-success" class="alert alert-g hidden" style="margin-bottom:12px">
+      <i class="fa-solid fa-circle-check"></i><span id="auth-success-text"></span>
     </div>
 
+    <!-- Login form -->
+    <form id="login-form" novalidate style="display:flex;flex-direction:column;gap:10px">
+      <div class="field-row">
+        <div class="field-ico"><i class="fa-solid fa-envelope"></i></div>
+        <input class="field-inp" type="email" id="login-email" required placeholder="Alamat email" autocomplete="email"/>
+      </div>
+      <div class="field-row">
+        <div class="field-ico"><i class="fa-solid fa-lock"></i></div>
+        <input class="field-inp" type="password" id="login-password" required placeholder="Password" autocomplete="current-password"/>
+      </div>
+      <label class="human-check">
+        <input id="login-human-check" type="checkbox"/>
+        <span class="human-check-box" aria-hidden="true">
+          <i class="fa-solid fa-check human-check-check"></i>
+          <i class="fa-solid fa-spinner human-check-spinner"></i>
+        </span>
+        <span class="human-check-copy">Saya bukan robot</span>
+        <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
+      </label>
+      <button id="login-submit" type="submit" class="btn btn-primary btn-full btn-h" disabled>
+        Masuk <i class="fa-solid fa-arrow-right" style="font-size:11px"></i>
+      </button>
+    </form>
+
+    <!-- Register form -->
+    <form id="register-form" novalidate style="display:none;flex-direction:column;gap:10px">
+      <div class="field-row">
+        <div class="field-ico"><i class="fa-solid fa-at"></i></div>
+        <input class="field-inp" type="text" id="reg-username" required placeholder="Username"/>
+      </div>
+      <div class="field-row">
+        <div class="field-ico"><i class="fa-solid fa-ticket"></i></div>
+        <input class="field-inp" type="text" id="reg-referral-code" placeholder="Kode referral (opsional)" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateReferralCodeInput()"/>
+      </div>
+      <div id="reg-referral-code-status" role="status" style="display:none;font-size:.6875rem;margin-top:-6px"></div>
+      <div class="field-row">
+        <div class="field-ico"><i class="fa-solid fa-envelope"></i></div>
+        <input class="field-inp" type="email" id="reg-email" required placeholder="Alamat email" autocomplete="email"/>
+      </div>
+      <div class="field-row">
+        <div class="field-ico"><i class="fa-solid fa-lock"></i></div>
+        <input class="field-inp" type="password" id="reg-password" required placeholder="Password (min. 6)" autocomplete="new-password"/>
+      </div>
+      <label class="human-check">
+        <input id="register-human-check" type="checkbox"/>
+        <span class="human-check-box" aria-hidden="true">
+          <i class="fa-solid fa-check human-check-check"></i>
+          <i class="fa-solid fa-spinner human-check-spinner"></i>
+        </span>
+        <span class="human-check-copy">Saya bukan robot</span>
+        <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
+      </label>
+      <button id="register-submit" type="submit" class="btn btn-primary btn-full btn-h" disabled>
+        Buat Akun <i class="fa-solid fa-arrow-right" style="font-size:11px"></i>
+      </button>
+    </form>
   </div>
 </div>
 
 
-<!-- ══ MAIN APP ══ -->
-<div id="app-screen" style="display:none;flex:1;flex-direction:column">
+<!-- ══════════════════════════════════════════
+     APP SCREEN
+══════════════════════════════════════════ -->
+<div id="app-screen" style="display:none;flex:1;flex-direction:column;background:var(--bg)">
 
-  <!-- Header -->
-  <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:var(--bg)">
-    <div style="display:flex;align-items:center;gap:9px">
-      <div style="width:32px;height:32px;border-radius:9px;background:var(--accent-light);border:1px solid var(--accent-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <img src="/logo.svg" alt="" width="20" height="20"/>
-      </div>
-      <div>
-        <div style="font-size:.9375rem;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1">NOKOTPOTP</div>
-        <div id="connection-banner" style="display:none;align-items:center;gap:4px;margin-top:1px">
-          <span class="bk" style="width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block"></span>
-          <span style="font-size:.5625rem;font-weight:600;color:var(--red)">Offline</span>
-        </div>
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <div class="app-topbar-brand">
+      <div class="app-topbar-dot"></div>
+      <span class="app-topbar-name">NOKOTPOTP</span>
+      <div id="connection-banner" style="display:none;align-items:center;gap:4px;margin-left:6px">
+        <span class="bk" style="width:5px;height:5px;border-radius:50%;background:var(--rose);display:inline-block"></span>
+        <span style="font-size:.5625rem;font-weight:600;color:var(--rose)">Offline</span>
       </div>
     </div>
-    <button id="logout-btn" class="btn btn-icon btn-ghost" aria-label="Keluar">
-      <i class="fa-solid fa-right-from-bracket" style="font-size:13px;color:var(--text3)"></i>
-    </button>
-  </header>
+    <div class="app-topbar-right">
+      <button id="logout-btn" class="btn btn-icon" aria-label="Keluar">
+        <i class="fa-solid fa-right-from-bracket" style="font-size:12px"></i>
+      </button>
+    </div>
+  </div>
 
   <!-- Error banner -->
-  <div id="error-banner" class="alert alert-r hidden fu" style="margin:0 16px 8px">
+  <div id="error-banner" class="alert alert-r hidden fu" style="margin:10px 18px 0">
     <i class="fa-solid fa-circle-exclamation"></i>
     <span id="error-banner-text" style="flex:1"></span>
-    <button onclick="hideError()" style="background:none;border:none;cursor:pointer;color:var(--red);padding:0;flex-shrink:0;font-size:13px"><i class="fa-solid fa-xmark"></i></button>
+    <button onclick="hideError()" style="background:none;border:none;cursor:pointer;color:var(--rose);padding:0;flex-shrink:0;font-size:13px"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
   <!-- Notification banners -->
-  <div id="notif-banners" style="display:flex;flex-direction:column;gap:5px;padding:0 16px;margin-bottom:4px"></div>
+  <div id="notif-banners" style="display:flex;flex-direction:column;gap:5px;padding:0 18px;margin-top:6px"></div>
 
   <!-- Scroll area -->
-  <div style="flex:1;overflow-y:auto;padding:0 16px 88px;background:var(--bg)">
+  <div style="flex:1;overflow-y:auto;padding-bottom:80px">
 
     <!-- SHOP -->
     <div id="shop-section">
 
-      <!-- Balance row -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;margin-bottom:12px">
-        <div>
-          <div class="tl" style="margin-bottom:3px">Saldo kamu</div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span id="balance-display" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--accent);letter-spacing:-.03em">Rp 0</span>
-            <i id="balance-stale" class="fa-solid fa-triangle-exclamation" style="display:none;color:var(--amber);font-size:10px"></i>
-          </div>
+      <!-- Hero balance -->
+      <div class="balance-hero">
+        <div class="bal-label">Saldo kamu</div>
+        <div class="bal-amount">
+          <span class="bal-amount-currency">Rp</span>
+          <span id="balance-display" style="font-family:var(--mono);font-size:2.25rem;font-weight:700;color:var(--text);letter-spacing:-.06em">0</span>
+          <i id="balance-stale" class="fa-solid fa-triangle-exclamation bal-stale" style="display:none;font-size:12px"></i>
         </div>
-        <button onclick="openDepositModal()" class="btn btn-primary btn-sm" style="gap:5px">
-          <i class="fa-solid fa-plus" style="font-size:11px"></i> Top-Up
-        </button>
-      </div>
-
-      <!-- Section title -->
-      <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <h2 style="margin:0;font-size:.9375rem;font-weight:700;color:var(--text)">Pilih Layanan</h2>
-          <p style="margin:2px 0 0;font-size:.75rem;color:var(--text2)">Stok real-time</p>
+        <div class="bal-actions">
+          <button onclick="openDepositModal()" class="bal-action-btn top-up">
+            <i class="fa-solid fa-plus" style="font-size:11px"></i> Top-Up
+          </button>
+          <a href="/withdrawal" class="bal-action-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px">
+            <i class="fa-solid fa-wallet" style="font-size:11px"></i> Tarik
+          </a>
+          <a href="/referral" class="bal-action-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px">
+            <i class="fa-solid fa-user-group" style="font-size:11px"></i> Referral
+          </a>
         </div>
       </div>
 
-      <!-- Tab pills -->
-      <div style="display:flex;background:var(--bg2);border:1.5px solid var(--border);border-radius:11px;padding:4px;gap:4px;margin-bottom:11px">
-        <button id="tab-indo" onclick="switchTab('indo')" class="tab-pill active"><span>🇮🇩</span> Nokos Indo</button>
-        <button id="tab-luar" onclick="switchTab('luar')" class="tab-pill"><i class="fa-solid fa-earth-asia" style="font-size:12px"></i> Nokos Luar</button>
+      <div class="h-line"></div>
+
+      <!-- Tabs segmented -->
+      <div class="seg-tabs">
+        <button id="tab-indo" onclick="switchTab('indo')" class="seg-tab active">🇮🇩 Nokos Indo</button>
+        <button id="tab-luar" onclick="switchTab('luar')" class="seg-tab"><i class="fa-solid fa-earth-asia" style="font-size:11px"></i> Nokos Luar</button>
       </div>
 
-      <!-- Country search -->
-      <div class="inp-wrap" style="margin-bottom:11px">
-        <i class="inp-ico fa-solid fa-magnifying-glass"></i>
-        <input id="country-search" class="inp" type="search" placeholder="Cari negara atau layanan..." autocomplete="off" oninput="searchCountries(this.value)" aria-label="Cari negara atau layanan" style="padding-left:38px"/>
+      <!-- Search -->
+      <div class="search-wrap">
+        <i class="search-ico fa-solid fa-magnifying-glass"></i>
+        <input id="country-search" class="search-inp" type="search" placeholder="Cari negara atau layanan..." autocomplete="off" oninput="searchCountries(this.value)" aria-label="Cari negara atau layanan"/>
       </div>
 
-      <!-- Country list -->
-      <div id="country-list" style="display:flex;flex-direction:column;gap:7px">
-        <div class="sk" style="height:60px"></div>
-        <div class="sk" style="height:60px"></div>
-        <div class="sk" style="height:60px"></div>
+      <!-- Country list (2-col grid via CSS) -->
+      <div id="country-list">
+        <div class="sk" style="height:88px"></div>
+        <div class="sk" style="height:88px"></div>
+        <div class="sk" style="height:88px"></div>
+        <div class="sk" style="height:88px"></div>
       </div>
 
     </div>
 
     <!-- Active orders -->
-    <div id="active-orders-container" style="margin-top:11px;display:flex;flex-direction:column;gap:9px"></div>
+    <div id="active-orders-container" style="margin-top:10px;display:flex;flex-direction:column;gap:9px;padding:0 18px"></div>
 
   </div>
 
-  <!-- Bottom nav -->
+  <!-- Bottom nav floating pill -->
   <nav class="bottom-nav" aria-label="Navigasi utama">
-    <a href="/" class="active" aria-current="page"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
-    <a href="/withdrawal"><i class="fa-solid fa-wallet"></i><span>Tarik</span></a>
-    <a href="/referral"><i class="fa-solid fa-user-group"></i><span>Referral</span></a>
+    <div class="nav-pill">
+      <a href="/" class="active" aria-current="page"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
+      <a href="/withdrawal"><i class="fa-solid fa-wallet"></i><span>Tarik</span></a>
+      <a href="/referral"><i class="fa-solid fa-user-group"></i><span>Referral</span></a>
+    </div>
   </nav>
 </div>
 
@@ -406,7 +583,7 @@
     <form id="math-challenge-form" novalidate>
       <input id="math-challenge-answer" class="math-challenge-input" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="Jawaban" aria-label="Jawaban" required/>
       <div id="math-challenge-error" class="math-challenge-error" role="alert" hidden></div>
-      <button type="submit" class="btn btn-primary btn-full" style="height:42px;margin-top:10px">Kirim</button>
+      <button type="submit" class="btn btn-primary btn-full" style="height:40px;margin-top:10px">Kirim</button>
     </form>
   </div>
 </div>
@@ -415,11 +592,11 @@
 <!-- ══ FEATURE PROMO MODAL ══ -->
 <div id="feature-promo-modal" class="promo-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="feature-promo-title" aria-hidden="true" onclick="if(event.target===this)closeFeaturePromoModal()">
   <div class="promo-dialog fu">
-    <button id="feature-promo-close" type="button" class="btn btn-icon btn-ghost promo-close" aria-label="Tutup" onclick="closeFeaturePromoModal()">
+    <button id="feature-promo-close" type="button" class="btn btn-icon promo-close" aria-label="Tutup" onclick="closeFeaturePromoModal()">
       <i class="fa-solid fa-xmark"></i>
     </button>
     <h2 id="feature-promo-title" class="promo-title">Tarik saldo &amp; kumpulkan komisi</h2>
-    <p class="promo-description">Tarik saldo utama mulai Rp 1.000. Undang teman dan dapat komisi 50% dari setiap deposit berhasil.</p>
+    <p class="promo-description">Tarik saldo mulai Rp 1.000. Undang teman dan dapat komisi 50% dari setiap deposit berhasil.</p>
     <div class="promo-options">
       <a href="/withdrawal" class="promo-option">
         <span class="promo-option-icon"><i class="fa-solid fa-wallet"></i></span>
@@ -443,22 +620,22 @@
 
 
 <!-- ══ BANNED MODAL ══ -->
-<div id="banned-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:24px">
-  <div class="card fu" style="width:100%;max-width:320px;padding:24px;text-align:center">
-    <div style="width:44px;height:44px;border-radius:12px;background:var(--amber-light);border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
-      <i class="fa-solid fa-triangle-exclamation" style="color:var(--amber);font-size:18px"></i>
+<div id="banned-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:24px">
+  <div class="card fu" style="width:100%;max-width:320px;padding:22px;text-align:center">
+    <div style="width:42px;height:42px;border-radius:10px;background:var(--amber-dim);border:1px solid var(--amber-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 13px">
+      <i class="fa-solid fa-triangle-exclamation" style="color:var(--amber);font-size:17px"></i>
     </div>
     <div style="font-size:.9375rem;font-weight:700;color:var(--text);margin-bottom:5px">Akun Dibatasi</div>
     <div style="font-size:.8125rem;color:var(--text2);margin-bottom:12px;line-height:1.55">Akun kamu sedang dibatasi oleh admin.</div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:11px;margin-bottom:16px;text-align:left">
+    <div style="background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:14px;text-align:left">
       <div class="tl" style="margin-bottom:3px">Alasan</div>
       <div id="banned-reason" style="font-size:.8125rem;color:var(--text);font-weight:600">-</div>
     </div>
-    <div id="appeal-sent-info" style="display:none;background:var(--accent-light);border:1px solid var(--accent-mid);border-radius:9px;padding:10px;margin-bottom:14px;font-size:.8125rem;color:var(--accent-text)">
+    <div id="appeal-sent-info" style="display:none;background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:8px;padding:9px;margin-bottom:12px;font-size:.8125rem;color:var(--g-text)">
       <i class="fa-solid fa-circle-check" style="margin-right:5px"></i>Banding sudah dikirim. Tunggu review admin.
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button id="appeal-btn" onclick="submitAppeal()" class="btn btn-primary btn-full" style="height:42px;font-size:.8125rem">
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button id="appeal-btn" onclick="submitAppeal()" class="btn btn-primary btn-full" style="height:40px;font-size:.8125rem">
         <i class="fa-solid fa-flag" style="font-size:11px"></i> Ajukan Banding
       </button>
       <button onclick="logoutBanned()" class="btn btn-ghost btn-full" style="height:38px;font-size:.8125rem">
@@ -470,14 +647,14 @@
 
 
 <!-- ══ TIMEOUT MODAL ══ -->
-<div id="timeout-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)">
-  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:20px 20px 32px">
-    <div style="width:32px;height:3px;border-radius:3px;background:var(--border2);margin:0 auto 20px"></div>
-    <div style="width:44px;height:44px;border-radius:12px;background:var(--red-light);border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
-      <i class="fa-solid fa-hourglass-end" style="color:var(--red);font-size:17px"></i>
+<div id="timeout-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:16px 16px 0 0;border-bottom:none;padding:20px 20px 32px">
+    <div style="width:30px;height:3px;border-radius:3px;background:var(--line2);margin:0 auto 20px"></div>
+    <div style="width:42px;height:42px;border-radius:10px;background:var(--rose-dim);border:1px solid var(--rose-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 11px">
+      <i class="fa-solid fa-hourglass-end" style="color:var(--rose);font-size:16px"></i>
     </div>
     <div class="tt2" style="text-align:center;margin-bottom:5px">Waktu Habis</div>
-    <div class="tb" style="text-align:center;margin-bottom:18px;line-height:1.6">OTP tidak masuk dalam 5 menit. Batalkan untuk mendapat <strong style="color:var(--accent)">refund penuh</strong>.</div>
+    <div class="tb" style="text-align:center;margin-bottom:16px;line-height:1.6">OTP tidak masuk dalam 5 menit. Batalkan untuk mendapat <strong style="color:var(--g-text)">refund penuh</strong>.</div>
     <div id="cancel-result" class="hidden" style="margin-bottom:10px"></div>
     <button id="cancel-order-btn" class="btn btn-rose btn-full btn-h">
       <i class="fa-solid fa-rotate-left" style="font-size:12px"></i> Batalkan &amp; Dapatkan Refund
@@ -487,80 +664,72 @@
 
 
 <!-- ══ SUCCESS MODAL ══ -->
-<div id="success-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)">
-  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:20px 20px 32px">
-    <div style="width:32px;height:3px;border-radius:3px;background:var(--border2);margin:0 auto 20px"></div>
-    <div style="width:44px;height:44px;border-radius:12px;background:var(--accent-light);border:1px solid var(--accent-mid);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
-      <i class="fa-solid fa-circle-check" style="color:var(--accent);font-size:18px"></i>
+<div id="success-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:16px 16px 0 0;border-bottom:none;padding:20px 20px 32px">
+    <div style="width:30px;height:3px;border-radius:3px;background:var(--line2);margin:0 auto 20px"></div>
+    <div style="width:42px;height:42px;border-radius:10px;background:var(--g-dim);border:1px solid var(--g-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 11px">
+      <i class="fa-solid fa-circle-check" style="color:var(--g-text);font-size:17px"></i>
     </div>
     <div class="tt2" style="text-align:center;margin-bottom:5px">Berhasil</div>
-    <p id="success-message" class="tb" style="text-align:center;margin-bottom:18px;line-height:1.6"></p>
+    <p id="success-message" class="tb" style="text-align:center;margin-bottom:16px;line-height:1.6"></p>
     <button onclick="closeSuccessModal()" class="btn btn-primary btn-full btn-h">OK, Tutup</button>
   </div>
 </div>
 
 
 <!-- ══ DEPOSIT MODAL ══ -->
-<div id="deposit-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(0,0,0,.4);padding:16px">
-  <div class="card fu" style="width:100%;max-width:400px;max-height:92dvh;border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden">
+<div id="deposit-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px">
+  <div class="card fu" style="width:100%;max-width:400px;max-height:92dvh;border-radius:14px;padding:0;display:flex;flex-direction:column;overflow:hidden">
 
-    <!-- Modal header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
-      <div class="tt3" style="margin:0">Top-Up Saldo</div>
-      <button onclick="closeDepositModal()" style="width:30px;height:30px;border:none;background:var(--bg2);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">
-        <i class="fa-solid fa-xmark" style="color:var(--text3);font-size:13px"></i>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);flex-shrink:0">
+      <div class="tt3">Top-Up Saldo</div>
+      <button onclick="closeDepositModal()" class="btn btn-icon" style="width:28px;height:28px;border-radius:7px">
+        <i class="fa-solid fa-xmark" style="font-size:12px"></i>
       </button>
     </div>
 
-    <!-- Scrollable content -->
-    <div style="flex:1;overflow-y:auto;padding:18px">
+    <div style="flex:1;overflow-y:auto;padding:16px">
 
       <!-- Step 1: Amount -->
       <div id="deposit-step-amount">
-        <p class="tb" style="margin:0 0 14px">Pilih atau masukkan nominal top-up:</p>
+        <p class="tb" style="margin:0 0 13px">Pilih atau masukkan nominal top-up:</p>
 
-        <!-- Event banner -->
-        <div id="deposit-event-banner" style="display:none;background:var(--amber-light);border:1.5px solid #fde68a;border-radius:11px;padding:12px 14px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-            <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:12px"></i>
+        <div id="deposit-event-banner" style="display:none;background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:11px 13px;margin-bottom:13px">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+            <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:11px"></i>
             <span style="font-size:.8125rem;font-weight:700;color:var(--amber)">🎉 Bonus Deposit 100%</span>
           </div>
-          <div style="font-size:.75rem;color:#78350f;line-height:1.6">
-            Deposit minimal <strong>Rp25.000</strong> dan dapatkan bonus saldo <strong>100%</strong>.<br>
+          <div style="font-size:.75rem;color:#a16207;line-height:1.6">
+            Deposit minimal <strong style="color:var(--amber)">Rp25.000</strong> dan dapatkan bonus saldo <strong style="color:var(--amber)">100%</strong>.<br/>
             Rp25.000 → <strong>Rp50.000</strong> &nbsp;·&nbsp; Rp100.000 → <strong>Rp200.000</strong>
           </div>
-          <div style="font-size:.6875rem;color:#92400e;margin-top:5px">Berlaku 1× per akun selama event aktif.</div>
+          <div style="font-size:.6875rem;color:#92400e;margin-top:4px">Berlaku 1× per akun selama event aktif.</div>
         </div>
 
-        <!-- Preview saldo -->
-        <div id="deposit-preview" style="display:none;background:var(--accent-light);border:1.5px solid var(--accent-mid);border-radius:10px;padding:11px 13px;margin-bottom:12px">
-          <div class="tl" style="margin-bottom:4px;color:var(--accent-text)">Saldo yang akan kamu terima</div>
-          <div style="display:flex;align-items:center;gap:8px">
+        <div id="deposit-preview" style="display:none;background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:10px 12px;margin-bottom:11px">
+          <div class="tl" style="margin-bottom:3px;color:var(--g-text)">Saldo yang akan kamu terima</div>
+          <div style="display:flex;align-items:center;gap:7px">
             <span id="deposit-preview-orig" style="font-size:.875rem;color:var(--text3);text-decoration:line-through;font-family:var(--mono)"></span>
-            <i class="fa-solid fa-arrow-right" style="font-size:10px;color:var(--text3)"></i>
-            <span id="deposit-preview-final" style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:var(--mono)"></span>
-            <span style="background:var(--amber-light);color:var(--amber);font-size:.625rem;font-weight:700;padding:2px 6px;border-radius:20px;border:1px solid #fde68a">2×</span>
+            <i class="fa-solid fa-arrow-right" style="font-size:9px;color:var(--text3)"></i>
+            <span id="deposit-preview-final" style="font-size:1.1rem;font-weight:700;color:var(--g-text);font-family:var(--mono)"></span>
+            <span style="background:var(--amber-dim);color:var(--amber);font-size:.625rem;font-weight:700;padding:2px 6px;border-radius:20px;border:1px solid var(--amber-bdr)">2×</span>
           </div>
         </div>
 
-        <!-- Quick chips -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px">
-          <button onclick="selectDepositAmount(10000)" data-amount="10000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 10.000</button>
-          <button onclick="selectDepositAmount(15000)" data-amount="15000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 15.000</button>
-          <button onclick="selectDepositAmount(25000)" data-amount="25000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 25.000</button>
-          <button onclick="selectDepositAmount(50000)" data-amount="50000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 50.000</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px">
+          <button onclick="selectDepositAmount(10000)" data-amount="10000" class="deposit-chip btn btn-ghost" style="height:46px;font-size:.875rem;font-weight:600">Rp 10.000</button>
+          <button onclick="selectDepositAmount(15000)" data-amount="15000" class="deposit-chip btn btn-ghost" style="height:46px;font-size:.875rem;font-weight:600">Rp 15.000</button>
+          <button onclick="selectDepositAmount(25000)" data-amount="25000" class="deposit-chip btn btn-ghost" style="height:46px;font-size:.875rem;font-weight:600">Rp 25.000</button>
+          <button onclick="selectDepositAmount(50000)" data-amount="50000" class="deposit-chip btn btn-ghost" style="height:46px;font-size:.875rem;font-weight:600">Rp 50.000</button>
         </div>
 
-        <!-- Manual input -->
-        <div class="inp-wrap" style="margin-bottom:12px">
+        <div class="inp-wrap" style="margin-bottom:11px">
           <i class="inp-ico fa-solid fa-wallet"></i>
           <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="5000" step="1000" oninput="onDepositAmountInput(this.value)"/>
         </div>
 
-        <!-- Alert -->
-        <div id="deposit-amount-alert" style="display:none;align-items:center;gap:8px;background:var(--red-light);border:1px solid #fecaca;border-radius:9px;padding:10px 12px;margin-bottom:12px;font-size:.8125rem;color:var(--red)">
-          <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0"></i>
-          <span></span>
+        <div id="deposit-amount-alert" style="display:none;align-items:center;gap:7px;background:var(--rose-dim);border:1px solid var(--rose-bdr);border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:.8125rem;color:var(--rose)">
+          <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0"></i><span></span>
         </div>
 
         <button onclick="proceedToMethod()" class="btn btn-primary btn-full btn-h">
@@ -568,48 +737,45 @@
         </button>
       </div>
 
-      <!-- Step 2: Payment method -->
+      <!-- Step 2: Method -->
       <div id="deposit-step-method" style="display:none">
-        <div style="background:var(--accent-light);border:1.5px solid var(--accent-mid);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
-          <div class="tl" style="color:var(--accent-text);margin-bottom:3px">Nominal Top-Up</div>
-          <div id="deposit-selected-amount" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--accent)">Rp 0</div>
+        <div style="background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:11px;margin-bottom:13px;text-align:center">
+          <div class="tl" style="color:var(--g-text);margin-bottom:3px">Nominal Top-Up</div>
+          <div id="deposit-selected-amount" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--g-text)">Rp 0</div>
         </div>
-
-        <p class="tb" style="margin:0 0 11px">Pilih metode pembayaran:</p>
-
-        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
-          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
-            <i class="fa-solid fa-link" style="font-size:13px;color:var(--text3);width:20px"></i>
+        <p class="tb" style="margin:0 0 10px">Pilih metode pembayaran:</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:13px">
+          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
+            <i class="fa-solid fa-link" style="font-size:12px;color:var(--text3);width:18px"></i>
             <span style="flex:1;text-align:left">Payment Link</span>
           </button>
-          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
-            <i class="fa-solid fa-qrcode" style="font-size:13px;color:var(--text3);width:20px"></i>
+          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
+            <i class="fa-solid fa-qrcode" style="font-size:12px;color:var(--text3);width:18px"></i>
             <span style="flex:1;text-align:left">QRIS</span>
           </button>
-          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
-            <i class="fa-solid fa-building-columns" style="font-size:13px;color:var(--text3);width:20px"></i>
+          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
+            <i class="fa-solid fa-building-columns" style="font-size:12px;color:var(--text3);width:18px"></i>
             <span style="flex:1;text-align:left">BNI Virtual Account</span>
           </button>
-          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
-            <i class="fa-solid fa-building-columns" style="font-size:13px;color:var(--text3);width:20px"></i>
+          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
+            <i class="fa-solid fa-building-columns" style="font-size:12px;color:var(--text3);width:18px"></i>
             <span style="flex:1;text-align:left">BRI Virtual Account</span>
           </button>
         </div>
-
-        <button onclick="backToAmount()" class="btn btn-ghost btn-full" style="height:40px">
+        <button onclick="backToAmount()" class="btn btn-ghost btn-full" style="height:38px">
           <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Kembali
         </button>
       </div>
 
       <!-- Step 3: Payment instructions -->
       <div id="deposit-step-payment" style="display:none">
-        <div style="background:var(--amber-light);border:1.5px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
-          <div style="font-size:.8125rem;color:var(--amber);display:flex;align-items:center;justify-content:center;gap:6px">
+        <div style="background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:9px;padding:11px;margin-bottom:13px;text-align:center">
+          <div style="font-size:.8125rem;color:var(--amber);display:flex;align-items:center;justify-content:center;gap:5px">
             <i class="fa-solid fa-hourglass-half"></i> Menunggu Pembayaran...
           </div>
         </div>
-        <div id="deposit-payment-instructions" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;margin-bottom:14px"></div>
-        <button onclick="backToMethodSelect()" class="btn btn-ghost btn-full" style="height:40px">
+        <div id="deposit-payment-instructions" style="background:var(--s2);border:1px solid var(--line);border-radius:9px;margin-bottom:13px"></div>
+        <button onclick="backToMethodSelect()" class="btn btn-ghost btn-full" style="height:38px">
           <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Pilih Metode Lain
         </button>
       </div>
@@ -620,13 +786,13 @@
 
 
 <!-- ══ CUSTOM DIALOG ══ -->
-<div id="dialog-overlay" style="display:none;position:fixed;inset:0;z-index:99;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)">
-  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:20px 20px 28px">
-    <div style="width:32px;height:3px;border-radius:3px;background:var(--border2);margin:0 auto 18px"></div>
-    <div id="dialog-icon-wrap" style="margin:0 auto 12px;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center"></div>
+<div id="dialog-overlay" style="display:none;position:fixed;inset:0;z-index:99;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:16px 16px 0 0;border-bottom:none;padding:20px 20px 28px">
+    <div style="width:30px;height:3px;border-radius:3px;background:var(--line2);margin:0 auto 16px"></div>
+    <div id="dialog-icon-wrap" style="margin:0 auto 11px;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center"></div>
     <div id="dialog-title" class="tt2" style="text-align:center;margin-bottom:5px"></div>
-    <div id="dialog-body" class="tb" style="text-align:center;margin-bottom:20px;line-height:1.6"></div>
-    <div id="dialog-btns" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="dialog-body" class="tb" style="text-align:center;margin-bottom:18px;line-height:1.6"></div>
+    <div id="dialog-btns" style="display:flex;flex-direction:column;gap:7px"></div>
   </div>
 </div>
 
@@ -641,10 +807,10 @@
 const Dialog = (() => {
   let _resolve = null;
   const _config = {
-    confirm: { icon:'fa-solid fa-circle-question',     bg:'var(--sky-light)',   bdr:'#bae6fd',           color:'var(--sky)' },
-    warn:    { icon:'fa-solid fa-triangle-exclamation', bg:'var(--amber-light)', bdr:'#fde68a',           color:'var(--amber)' },
-    success: { icon:'fa-solid fa-circle-check',         bg:'var(--accent-light)',bdr:'var(--accent-mid)', color:'var(--accent)' },
-    error:   { icon:'fa-solid fa-circle-exclamation',   bg:'var(--red-light)',   bdr:'#fecaca',           color:'var(--red)' },
+    confirm: { icon:'fa-solid fa-circle-question',     bg:'var(--sky-dim)',   bdr:'var(--sky-bdr)',   color:'var(--sky)' },
+    warn:    { icon:'fa-solid fa-triangle-exclamation', bg:'var(--amber-dim)', bdr:'var(--amber-bdr)', color:'var(--amber)' },
+    success: { icon:'fa-solid fa-circle-check',         bg:'var(--g-dim)',     bdr:'var(--g-bdr)',     color:'var(--g-text)' },
+    error:   { icon:'fa-solid fa-circle-exclamation',   bg:'var(--rose-dim)',  bdr:'var(--rose-bdr)',  color:'var(--rose)' },
   };
   function _close() {
     const o = document.getElementById('dialog-overlay');
@@ -654,8 +820,8 @@ const Dialog = (() => {
     const cfg = _config[type] || _config.confirm;
     const wrap = document.getElementById('dialog-icon-wrap');
     wrap.style.background = cfg.bg;
-    wrap.style.border = '1.5px solid ' + cfg.bdr;
-    wrap.innerHTML = '<i class="' + cfg.icon + '" style="color:' + cfg.color + ';font-size:18px"></i>';
+    wrap.style.border = '1px solid ' + cfg.bdr;
+    wrap.innerHTML = '<i class="' + cfg.icon + '" style="color:' + cfg.color + ';font-size:17px"></i>';
     document.getElementById('dialog-title').textContent = title;
     document.getElementById('dialog-body').innerHTML = body;
     const btnsEl = document.getElementById('dialog-btns');
@@ -663,7 +829,7 @@ const Dialog = (() => {
     buttons.forEach(b => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-full ' + b.cls;
-      btn.style.height = '44px'; btn.style.fontSize = '.875rem';
+      btn.style.height = '42px'; btn.style.fontSize = '.875rem';
       btn.innerHTML = b.label;
       btn.onclick = () => { const r = _resolve; _close(); if (r) r(b.value); };
       btnsEl.appendChild(btn);
@@ -678,8 +844,8 @@ const Dialog = (() => {
       { label:'Batal',         cls:'btn-ghost',   value:false },
     ]),
     confirmDanger: (title, body, okLabel='Ya, Lanjutkan') => _show('warn', title, body, [
-      { label:okLabel,  cls:'btn-rose',  value:true },
-      { label:'Batal',  cls:'btn-ghost', value:false },
+      { label:okLabel, cls:'btn-rose',  value:true },
+      { label:'Batal', cls:'btn-ghost', value:false },
     ]),
     alert: (type, title, body) => _show(type, title, body, [
       { label:'OK', cls:'btn-ghost', value:true },
