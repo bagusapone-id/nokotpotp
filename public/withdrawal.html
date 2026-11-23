@@ -65,10 +65,10 @@
 
     /* Amount field */
     .field-label{font-size:.6875rem;font-weight:700;color:var(--text2);letter-spacing:.04em;margin-bottom:7px;display:block}
-    .amount-row{display:flex;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:9px;transition:border-color .15s;overflow:hidden}
+    .amount-row{display:flex;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:9px;transition:border-color .15s}
     .amount-row:focus-within{border-color:var(--g-bdr)}
-    .amount-currency{padding:0 12px;font-family:var(--mono);font-size:.875rem;font-weight:700;color:var(--g-text);flex-shrink:0}
-    .amount-inp{flex:1;height:46px;border:none;background:transparent;color:var(--text);font-family:var(--mono);font-size:1.1rem;font-weight:700;outline:none;padding-right:12px}
+    .amount-currency{padding:0 10px 0 12px;font-family:var(--mono);font-size:.875rem;font-weight:700;color:var(--g-text);flex-shrink:0;user-select:none}
+    .amount-inp{flex:1;height:46px;border:none;background:transparent;color:var(--text);font-family:var(--mono);font-size:1.1rem;font-weight:700;outline:none;padding:0 12px 0 0;min-width:0}
     .amount-inp::placeholder{color:var(--text3);font-size:.875rem}
     .preset-row{display:flex;gap:6px;margin-top:8px}
     .preset-btn{flex:1;height:30px;border:1px solid var(--line);border-radius:7px;background:var(--s2);color:var(--text2);font-size:.6875rem;font-weight:700;cursor:pointer;transition:all .12s}
@@ -227,7 +227,7 @@
 
           <div class="summary-row">
             <span>Biaya admin</span>
-            <strong>Rp 0 · Gratis</strong>
+            <strong>Rp 0</strong>
           </div>
 
           <button id="withdrawal-submit" class="submit-btn" type="submit">
