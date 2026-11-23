@@ -31,7 +31,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -39,199 +39,264 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html{font-size:15px}
-    body{margin:0;background:#020617;color:#94a3b8;font-family:'Geist',system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
-    .hidden{display:none!important}
-    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);display:flex;justify-content:space-around;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:rgba(2,6,23,.96);border-top:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
-    .bottom-nav a{min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#64748b;text-decoration:none;font-size:.625rem;font-weight:600}
-    .bottom-nav a i{font-size:16px}
-    .bottom-nav a.active{color:#34d399}
-    .promo-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.84);backdrop-filter:blur(10px)}
-    .promo-overlay.hidden{display:none}
-    .promo-dialog{position:relative;width:100%;max-width:380px;padding:26px 22px 22px;border:1px solid rgba(148,163,184,.16);border-radius:20px;background:linear-gradient(160deg,#111c2c,#0b1220 75%);box-shadow:0 28px 80px rgba(0,0,0,.48)}
-    .promo-close{position:absolute;top:14px;right:14px;color:#94a3b8}
-    .promo-title{max-width:290px;margin:0 28px 8px 0;color:#f8fafc;font-size:1.25rem;font-weight:800;letter-spacing:-.03em;line-height:1.2}
-    .promo-description{margin:0;color:#94a3b8;font-size:.8125rem;line-height:1.6}
-    .promo-options{display:grid;gap:10px;margin-top:20px}
-    .promo-option{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid rgba(148,163,184,.15);border-radius:13px;background:rgba(15,23,42,.72);color:inherit;text-decoration:none;transition:border-color .15s,background .15s,transform .15s}
-    .promo-option:hover,.promo-option:focus-visible{border-color:rgba(52,211,153,.45);background:rgba(16,185,129,.08);outline:none}
-    .promo-option:active{transform:scale(.99)}
-    .promo-option-icon{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(16,185,129,.1);color:#34d399;font-size:15px}
-    .promo-option-copy{flex:1}
-    .promo-option-title{margin-bottom:3px;color:#f1f5f9;font-size:.8125rem;font-weight:700}
-    .promo-option-description{color:#94a3b8;font-size:.6875rem;line-height:1.45}
-    .promo-option-arrow{color:#64748b;font-size:11px}
-    .tm, .tt1, .tt2, .tt3{font-family:'Geist',system-ui,sans-serif}
-    .mono, code, [style*="Geist Mono"]{font-family:'Geist Mono',monospace!important}
+    body{margin:0;background:#f8f7f4;color:#1a1a1a;font-family:'Inter',system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
     ::-webkit-scrollbar{width:0}
+    .hidden{display:none!important}
+
     :root{
-      --card:rgba(15,23,42,0.75);
-      --border:rgba(255,255,255,0.07);
-      --inset:rgba(2,6,23,0.55);
-      --green-dim:rgba(16,185,129,0.1);
-      --green-bdr:rgba(16,185,129,0.18);
-      --amber-dim:rgba(245,158,11,0.1);
-      --amber-bdr:rgba(245,158,11,0.2);
-      --rose-dim:rgba(244,63,94,0.1);
-      --rose-bdr:rgba(244,63,94,0.2);
-      --sky-dim:rgba(14,165,233,0.1);
-      --sky-bdr:rgba(14,165,233,0.2);
+      --bg:#f8f7f4;
+      --bg2:#f0ede8;
+      --surface:#ffffff;
+      --border:#e5e2dc;
+      --border2:#d4d0c8;
+      --text:#1a1a1a;
+      --text2:#6b6860;
+      --text3:#9b9890;
+      --accent:#16a34a;
+      --accent-light:#dcfce7;
+      --accent-mid:#bbf7d0;
+      --accent-text:#15803d;
+      --red:#dc2626;
+      --red-light:#fee2e2;
+      --amber:#d97706;
+      --amber-light:#fef3c7;
+      --sky:#0284c7;
+      --sky-light:#e0f2fe;
+      --mono:'JetBrains Mono',monospace;
     }
-    /* Cards */
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-    .inset{background:var(--inset);border:1px solid rgba(255,255,255,.05);border-radius:10px}
-    /* Typography */
-    .tt1{font-size:1.25rem;font-weight:800;color:#f1f5f9;letter-spacing:-.025em;line-height:1.2}
-    .tt2{font-size:.9375rem;font-weight:700;color:#e2e8f0;line-height:1.3}
-    .tb {font-size:.8125rem;font-weight:400;color:#64748b;line-height:1.5}
-    .tl {font-size:.625rem;font-weight:600;color:#475569;letter-spacing:.07em;text-transform:uppercase}
-    .tm {font-family:'Geist Mono',monospace;font-weight:700;color:#f1f5f9}
-    /* Buttons */
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;transition:transform .12s,opacity .12s;-webkit-user-select:none;user-select:none;white-space:nowrap}
-    .btn:active{transform:scale(.96);opacity:.85}
-    .btn:disabled{opacity:.3;pointer-events:none}
+
+    /* ── Typography ── */
+    .tt1{font-size:1.1875rem;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1.2}
+    .tt2{font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.3}
+    .tt3{font-size:.875rem;font-weight:600;color:var(--text);line-height:1.4}
+    .tb{font-size:.8125rem;color:var(--text2);line-height:1.55}
+    .tl{font-size:.625rem;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+    .tm{font-family:var(--mono);font-weight:700;color:var(--text)}
+    .mono{font-family:var(--mono)!important}
+
+    /* ── Layout ── */
+    .page-wrap{display:flex;flex-direction:column;align-items:center;min-height:100dvh}
+    .page-col{width:100%;max-width:400px;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+
+    /* ── Surface / Card ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px}
+    .inset{background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+
+    /* ── Buttons ── */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .12s,transform .1s;-webkit-user-select:none;user-select:none;white-space:nowrap}
+    .btn:active{transform:scale(.97);opacity:.88}
+    .btn:disabled{opacity:.35;pointer-events:none}
     .btn-full{width:100%}
-    .btn-h{height:46px;padding:0 18px}
-    .btn-sm{height:32px;padding:0 12px;font-size:.75rem;border-radius:9px}
-    .btn-xs{height:28px;padding:0 10px;font-size:.6875rem;border-radius:8px}
-    .btn-icon{width:36px;height:36px;padding:0;border-radius:10px;flex-shrink:0}
-    .btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
-    .btn-sky  {background:var(--sky-dim);border:1px solid var(--sky-bdr);color:#38bdf8}
-    .btn-amber{background:var(--amber-dim);border:1px solid var(--amber-bdr);color:#fbbf24}
-    .btn-rose {background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fb7185}
-    .btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--border);color:#64748b}
-    /* Input */
-    .inp{width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.09);border-radius:11px;color:#e2e8f0;font-family:'Inter',sans-serif;font-size:.9rem;height:46px;padding:0 14px 0 38px;outline:none;transition:border-color .15s}
-    .inp::placeholder{color:#1e293b}
-    .inp:focus{border-color:rgba(16,185,129,.4)}
+    .btn-h{height:44px;padding:0 18px}
+    .btn-sm{height:32px;padding:0 12px;font-size:.8125rem;border-radius:8px}
+    .btn-xs{height:28px;padding:0 10px;font-size:.75rem;border-radius:7px}
+    .btn-icon{width:36px;height:36px;padding:0;border-radius:9px;flex-shrink:0}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{background:#15803d}
+    .btn-sky{background:var(--sky-light);border:1px solid #bae6fd;color:var(--sky)}
+    .btn-amber{background:var(--amber-light);border:1px solid #fde68a;color:var(--amber)}
+    .btn-rose{background:var(--red-light);border:1px solid #fecaca;color:var(--red)}
+    .btn-ghost{background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+
+    /* ── Input ── */
+    .inp{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;height:46px;padding:0 14px 0 40px;outline:none;transition:border-color .15s}
+    .inp::placeholder{color:var(--text3)}
+    .inp:focus{border-color:var(--accent)}
     .inp-wrap{position:relative}
-    .inp-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#334155;font-size:12px;pointer-events:none}
-    .human-check{display:flex;align-items:center;gap:13px;min-height:64px;padding:11px 14px;border:1px solid #d5dbe2;border-radius:8px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
-    .human-check:hover{border-color:#aeb8c2}
-    .human-check:focus-within{border-color:#41a978;box-shadow:0 0 0 3px rgba(65,169,120,.16)}
-    .human-check.is-checked{border-color:#8bc9a7;background:#f6fbf7}
-    .human-check input{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-    .human-check-box{width:24px;height:24px;flex-shrink:0;display:grid;place-items:center;border:2px solid #aeb7c0;border-radius:3px;background:#fff;color:#fff;transition:background .15s,border-color .15s}
-    .human-check-box i{font-size:13px;opacity:0}
-    .human-check-box .human-check-spinner{display:none}
-    .human-check.is-verifying .human-check-box{border-color:#41a978;background:#f6fbf7;color:#25965c}
-    .human-check.is-verifying .human-check-box .human-check-spinner{display:block;opacity:1;animation:human-check-spin .8s linear infinite}
-    .human-check input:checked+.human-check-box{border-color:#25965c;background:#25965c}
-    .human-check input:checked+.human-check-box .human-check-check{opacity:1}
-    @keyframes human-check-spin{to{transform:rotate(360deg)}}
-    .human-check-copy{flex:1;color:#303942;font-size:.9rem;font-weight:500}
-    .human-check-mark{color:#4b8c68;font-size:19px}
-    .human-check-brand{display:flex;align-items:center;flex-shrink:0}
-    .human-check-brand img{display:block;width:28px;height:28px}
-    .math-challenge-overlay{z-index:100}
-    .math-challenge-dialog{position:relative;width:100%;max-width:320px;padding:20px;border:1px solid #d5dbe2;border-radius:12px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-    .math-challenge-close{position:absolute;top:10px;right:10px;color:#64748b;background:#f8fafc;border:1px solid #d5dbe2}
-    .math-challenge-title{margin:0 32px 16px 0;color:#303942;font-size:1rem;font-weight:700}
-    .math-challenge-question{margin-bottom:12px;padding:14px;border:1px solid #d5e8dc;border-radius:8px;background:#f6fbf7;color:#303942;text-align:center;font-size:1.5rem;font-weight:800;letter-spacing:.04em}
-    .math-challenge-input{width:100%;height:44px;padding:0 12px;border:1px solid #d5dbe2;border-radius:8px;outline:none;background:#fff;color:#303942;font:inherit;font-size:.9rem}
-    .math-challenge-input:focus{border-color:#41a978;box-shadow:0 0 0 3px rgba(65,169,120,.16)}
-    .math-challenge-error{margin-top:8px;color:#c2414b;font-size:.75rem}
-    /* Tab pill */
-    .tab-pill{flex:1;height:34px;border-radius:8px;font-size:.8125rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:background .15s,color .15s;border:none;background:transparent;color:#475569}
-    .tab-pill.active{background:rgba(255,255,255,.09);color:#f1f5f9}
-    /* Badge */
-    .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.6875rem;font-weight:600;white-space:nowrap;flex-shrink:0}
-    .badge-g{background:var(--green-dim);border:1px solid var(--green-bdr);color:#34d399}
-    .badge-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fb7185}
-    /* Alert */
-    .alert{display:flex;align-items:flex-start;gap:8px;border-radius:10px;padding:10px 12px;font-size:.8125rem;font-weight:500;line-height:1.4}
-    .alert-r{background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#fda4af}
-    .alert-g{background:var(--green-dim);border:1px solid var(--green-bdr);color:#6ee7b7}
+    .inp-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+
+    /* ── Alerts ── */
+    .alert{display:flex;align-items:flex-start;gap:9px;border-radius:10px;padding:11px 13px;font-size:.8125rem;font-weight:500;line-height:1.45}
+    .alert-r{background:var(--red-light);border:1px solid #fecaca;color:#991b1b}
+    .alert-g{background:var(--accent-light);border:1px solid var(--accent-mid);color:var(--accent-text)}
     .alert i{flex-shrink:0;margin-top:1px;font-size:12px}
-    /* Animations */
-    @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    .fu{animation:fu .2s cubic-bezier(.4,0,.2,1) both}
-    @keyframes bk{0%,100%{opacity:1}50%{opacity:.25}}
-    .bk{animation:bk 1.8s ease-in-out infinite}
-    /* Skeleton */
+
+    /* ── Badge ── */
+    .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.6875rem;font-weight:600;white-space:nowrap;flex-shrink:0}
+    .badge-g{background:var(--accent-light);border:1px solid var(--accent-mid);color:var(--accent-text)}
+    .badge-r{background:var(--red-light);border:1px solid #fecaca;color:var(--red)}
+
+    /* ── Skeleton ── */
     @keyframes sh{from{background-position:-400px 0}to{background-position:400px 0}}
-    .sk{background:linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.06) 50%,rgba(255,255,255,.03) 75%);background-size:800px 100%;animation:sh 1.4s infinite;border-radius:10px}
-    /* Deposit chip active */
-    .deposit-chip.active{background:var(--sky-dim);border-color:var(--sky-bdr);color:#38bdf8}
+    .sk{background:linear-gradient(90deg,#eeebe6 25%,#e4e1dc 50%,#eeebe6 75%);background-size:800px 100%;animation:sh 1.4s infinite;border-radius:10px}
+
+    /* ── Animations ── */
+    @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .fu{animation:fu .18s ease both}
+    @keyframes bk{0%,100%{opacity:1}50%{opacity:.3}}
+    .bk{animation:bk 1.6s ease-in-out infinite}
+    @keyframes sp{0%,100%{opacity:.2;transform:scale(.75)}50%{opacity:1;transform:scale(1)}}
+
+    /* ── Bottom Nav ── */
+    .bottom-nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,400px);display:flex;justify-content:space-around;padding:8px 10px max(8px,env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border)}
+    .bottom-nav a{min-width:72px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text3);text-decoration:none;font-size:.5625rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+    .bottom-nav a i{font-size:17px}
+    .bottom-nav a.active{color:var(--accent)}
+    .bottom-nav a.active i{color:var(--accent)}
+
+    /* ── Tab pill ── */
+    .tab-pill{flex:1;height:34px;border-radius:8px;font-size:.8125rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:background .12s,color .12s;border:none;background:transparent;color:var(--text3)}
+    .tab-pill.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+
+    /* ── Deposit chip ── */
+    .deposit-chip.active{background:var(--sky-light);border-color:#bae6fd;color:var(--sky)}
+
+    /* ── Human check (captcha) ── */
+    .human-check{display:flex;align-items:center;gap:13px;min-height:58px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg2);cursor:pointer;transition:border-color .15s}
+    .human-check:hover{border-color:var(--border2)}
+    .human-check:focus-within{border-color:var(--accent)}
+    .human-check.is-checked{border-color:var(--accent);background:var(--accent-light)}
+    .human-check input{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    .human-check-box{width:22px;height:22px;flex-shrink:0;display:grid;place-items:center;border:2px solid var(--border2);border-radius:5px;background:var(--surface);color:transparent;transition:background .15s,border-color .15s}
+    .human-check-box i{font-size:12px;opacity:0}
+    .human-check-box .human-check-spinner{display:none}
+    .human-check.is-verifying .human-check-box{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+    .human-check.is-verifying .human-check-box .human-check-spinner{display:block;opacity:1;animation:spin .8s linear infinite}
+    .human-check input:checked+.human-check-box{border-color:var(--accent);background:var(--accent)}
+    .human-check input:checked+.human-check-box .human-check-check{opacity:1;color:#fff}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .human-check-copy{flex:1;color:var(--text2);font-size:.875rem;font-weight:500}
+    .human-check-brand{display:flex;align-items:center;flex-shrink:0}
+    .human-check-brand img{display:block;width:24px;height:24px;border-radius:6px}
+
+    /* ── Math challenge ── */
+    .math-challenge-overlay{z-index:100}
+    .math-challenge-dialog{position:relative;width:100%;max-width:300px;padding:20px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface)}
+    .math-challenge-close{position:absolute;top:10px;right:10px;color:var(--text3);background:var(--bg2);border:1px solid var(--border)}
+    .math-challenge-title{margin:0 32px 14px 0;color:var(--text);font-size:.9375rem;font-weight:700}
+    .math-challenge-question{margin-bottom:12px;padding:14px;border:1.5px solid var(--border);border-radius:9px;background:var(--bg2);color:var(--text);text-align:center;font-size:1.5rem;font-weight:800;font-family:var(--mono);letter-spacing:.04em}
+    .math-challenge-input{width:100%;height:44px;padding:0 12px;border:1.5px solid var(--border);border-radius:9px;outline:none;background:var(--surface);color:var(--text);font:inherit;font-size:.9375rem}
+    .math-challenge-input:focus{border-color:var(--accent)}
+    .math-challenge-error{margin-top:8px;color:var(--red);font-size:.75rem}
+
+    /* ── Overlay backdrop ── */
+    .promo-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.35)}
+    .promo-overlay.hidden{display:none}
+    .promo-dialog{position:relative;width:100%;max-width:360px;padding:24px 20px 20px;border:1.5px solid var(--border);border-radius:16px;background:var(--surface)}
+    .promo-close{position:absolute;top:12px;right:12px;color:var(--text3)}
+    .promo-title{max-width:270px;margin:0 32px 8px 0;color:var(--text);font-size:1.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+    .promo-description{margin:0;color:var(--text2);font-size:.8rem;line-height:1.6}
+    .promo-options{display:grid;gap:9px;margin-top:16px}
+    .promo-option{display:flex;align-items:center;gap:11px;padding:12px;border:1.5px solid var(--border);border-radius:11px;background:var(--bg2);color:inherit;text-decoration:none;transition:border-color .12s,background .12s}
+    .promo-option:hover,.promo-option:focus-visible{border-color:var(--accent);background:var(--accent-light);outline:none}
+    .promo-option:active{transform:scale(.99)}
+    .promo-option-icon{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--accent-light);color:var(--accent-text);font-size:14px}
+    .promo-option-copy{flex:1}
+    .promo-option-title{margin-bottom:2px;color:var(--text);font-size:.8125rem;font-weight:700}
+    .promo-option-description{color:var(--text2);font-size:.6875rem;line-height:1.4}
+    .promo-option-arrow{color:var(--text3);font-size:10px}
+
     /* ── Custom Dialog ── */
-    #dialog-overlay.show { display: flex !important; }
-</style>
+    #dialog-overlay.show{display:flex!important}
+
+    /* ── Login screen specific ── */
+    #login-screen{background:var(--bg)}
+  </style>
 </head>
 <body>
 
-<!-- Loading splash — hilang setelah Firebase auth selesai -->
-<div id="splash-screen" style="position:fixed;inset:0;z-index:999;background:#020617;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+<!-- Splash -->
+<div id="splash-screen" style="position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px">
   <div style="display:flex;align-items:center;gap:10px">
-    <img src="/logo.svg" alt="" width="42" height="42"/>
-    <div style="font-size:1.125rem;font-weight:800;color:#f1f5f9;letter-spacing:-.02em">NOKOTPOTP</div>
+    <img src="/logo.svg" alt="" width="38" height="38"/>
+    <span style="font-size:1.125rem;font-weight:800;color:var(--text);letter-spacing:-.02em">NOKOTPOTP</span>
   </div>
   <div style="display:flex;gap:5px">
-    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:sp .9s ease-in-out infinite"></span>
-    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:sp .9s ease-in-out .2s infinite"></span>
-    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:sp .9s ease-in-out .4s infinite"></span>
+    <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:sp .9s ease-in-out infinite"></span>
+    <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:sp .9s ease-in-out .18s infinite"></span>
+    <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:sp .9s ease-in-out .36s infinite"></span>
   </div>
 </div>
-<style>
-  @keyframes sp{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
-</style>
 
-<div style="display:flex;flex-direction:column;align-items:center;min-height:100dvh">
-<div style="width:100%;max-width:400px;height:100dvh;display:flex;flex-direction:column">
-
+<div class="page-wrap">
+<div class="page-col">
 
 <!-- ══ LOGIN ══ -->
-<div id="login-screen" style="position:fixed;inset:0;z-index:10;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;padding:24px 18px;background:#020617">
+<div id="login-screen" style="position:fixed;inset:0;z-index:10;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;padding:28px 20px">
   <div style="width:100%;max-width:340px">
 
-    <div style="text-align:center;margin-bottom:22px" class="fu">
-      <div style="display:flex;align-items:center;justify-content:center;gap:10px">
-        <img src="/logo.svg" alt="" width="38" height="38"/>
-        <h1 class="tt1" aria-label="NOKOTPOTP - Nomor Virtual WhatsApp dan Verifikasi OTP" style="font-size:1.375rem;margin:0">NOKOTPOTP</h1>
+    <!-- Brand mark -->
+    <div style="text-align:center;margin-bottom:28px" class="fu">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:16px;background:var(--accent-light);border:1.5px solid var(--accent-mid);margin-bottom:12px">
+        <img src="/logo.svg" alt="" width="30" height="30"/>
       </div>
-      <div class="tb" style="margin-top:4px;font-size:.75rem">Situs OTP WhatsApp Terbesar & Terpercaya lebih dari 5k++ Pengguna di Indonesia</div>
+      <h1 style="margin:0 0 4px;font-size:1.3rem;font-weight:800;color:var(--text);letter-spacing:-.02em" aria-label="NOKOTPOTP">NOKOTPOTP</h1>
+      <p style="margin:0;font-size:.75rem;color:var(--text2)">Nomor virtual WA &amp; OTP · 5k+ pengguna</p>
     </div>
 
-  <div class="card" style="padding:20px;width:100%">
-    <!-- Tab -->
-    <div style="display:flex;background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px;margin-bottom:16px">
-      <button id="tab-login-btn" onclick="showAuthTab('login')" class="tab-pill active">Masuk</button>
-      <button id="tab-register-btn" onclick="showAuthTab('register')" class="tab-pill">Daftar</button>
+    <!-- Card -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <!-- Tab bar -->
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:4px;gap:4px;background:var(--bg2)">
+        <button id="tab-login-btn" onclick="showAuthTab('login')" class="tab-pill active">Masuk</button>
+        <button id="tab-register-btn" onclick="showAuthTab('register')" class="tab-pill">Daftar</button>
+      </div>
+
+      <div style="padding:20px">
+        <!-- Alerts -->
+        <div id="auth-error" class="alert alert-r hidden" style="margin-bottom:12px">
+          <i class="fa-solid fa-circle-exclamation"></i><span id="auth-error-text"></span>
+        </div>
+        <div id="auth-success" class="alert alert-g hidden" style="margin-bottom:12px">
+          <i class="fa-solid fa-circle-check"></i><span id="auth-success-text"></span>
+        </div>
+
+        <!-- Login form -->
+        <form id="login-form" novalidate style="display:flex;flex-direction:column;gap:11px">
+          <div class="inp-wrap">
+            <i class="inp-ico fa-solid fa-envelope"></i>
+            <input class="inp" type="email" id="login-email" required placeholder="Alamat email" autocomplete="email"/>
+          </div>
+          <div class="inp-wrap">
+            <i class="inp-ico fa-solid fa-lock"></i>
+            <input class="inp" type="password" id="login-password" required placeholder="Password" autocomplete="current-password"/>
+          </div>
+          <label class="human-check">
+            <input id="login-human-check" type="checkbox"/>
+            <span class="human-check-box" aria-hidden="true">
+              <i class="fa-solid fa-check human-check-check"></i>
+              <i class="fa-solid fa-spinner human-check-spinner"></i>
+            </span>
+            <span class="human-check-copy">Saya bukan robot</span>
+            <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
+          </label>
+          <button id="login-submit" type="submit" class="btn btn-primary btn-full btn-h" disabled>Masuk</button>
+        </form>
+
+        <!-- Register form -->
+        <form id="register-form" novalidate style="display:none;flex-direction:column;gap:11px">
+          <div class="inp-wrap">
+            <i class="inp-ico fa-solid fa-at"></i>
+            <input class="inp" type="text" id="reg-username" required placeholder="Username"/>
+          </div>
+          <div class="inp-wrap">
+            <i class="inp-ico fa-solid fa-ticket"></i>
+            <input class="inp" type="text" id="reg-referral-code" placeholder="Kode referral (opsional)" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateReferralCodeInput()"/>
+          </div>
+          <div id="reg-referral-code-status" role="status" style="display:none;font-size:.6875rem;margin-top:-7px"></div>
+          <div class="inp-wrap">
+            <i class="inp-ico fa-solid fa-envelope"></i>
+            <input class="inp" type="email" id="reg-email" required placeholder="Alamat email" autocomplete="email"/>
+          </div>
+          <div class="inp-wrap">
+            <i class="inp-ico fa-solid fa-lock"></i>
+            <input class="inp" type="password" id="reg-password" required placeholder="Password (min. 6)" autocomplete="new-password"/>
+          </div>
+          <label class="human-check">
+            <input id="register-human-check" type="checkbox"/>
+            <span class="human-check-box" aria-hidden="true">
+              <i class="fa-solid fa-check human-check-check"></i>
+              <i class="fa-solid fa-spinner human-check-spinner"></i>
+            </span>
+            <span class="human-check-copy">Saya bukan robot</span>
+            <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
+          </label>
+          <button id="register-submit" type="submit" class="btn btn-primary btn-full btn-h" disabled>Buat Akun</button>
+        </form>
+      </div>
     </div>
-    <!-- Alerts -->
-    <div id="auth-error" class="alert alert-r hidden" style="margin-bottom:12px">
-      <i class="fa-solid fa-circle-exclamation"></i><span id="auth-error-text"></span>
-    </div>
-    <div id="auth-success" class="alert alert-g hidden" style="margin-bottom:12px">
-      <i class="fa-solid fa-circle-check"></i><span id="auth-success-text"></span>
-    </div>
-    <!-- Login form -->
-    <form id="login-form" novalidate style="display:flex;flex-direction:column;gap:10px">
-      <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="login-email" required placeholder="Alamat email"/></div>
-      <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="login-password" required placeholder="Password"/></div>
-      <label class="human-check">
-        <input id="login-human-check" type="checkbox"/>
-        <span class="human-check-box" aria-hidden="true"><i class="fa-solid fa-check human-check-check"></i><i class="fa-solid fa-spinner human-check-spinner"></i></span>
-        <span class="human-check-copy">Saya bukan robot</span>
-        <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
-      </label>
-      <button id="login-submit" type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px" disabled>Masuk</button>
-    </form>
-    <!-- Register form -->
-    <form id="register-form" novalidate style="display:none;flex-direction:column;gap:10px">
-      <div class="inp-wrap"><i class="inp-ico fa-solid fa-at"></i><input class="inp" type="text" id="reg-username" required placeholder="Username"/></div>
-      <div class="inp-wrap"><i class="inp-ico fa-solid fa-ticket"></i><input class="inp" type="text" id="reg-referral-code" placeholder="Kode referral (opsional)" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="validateReferralCodeInput()"/></div>
-      <div id="reg-referral-code-status" role="status" style="display:none;font-size:.6875rem;margin-top:-7px"></div>
-      <div class="inp-wrap"><i class="inp-ico fa-solid fa-envelope"></i><input class="inp" type="email" id="reg-email" required placeholder="Alamat email"/></div>
-      <div class="inp-wrap"><i class="inp-ico fa-solid fa-lock"></i><input class="inp" type="password" id="reg-password" required placeholder="Password (min. 6)"/></div>
-      <label class="human-check">
-        <input id="register-human-check" type="checkbox"/>
-        <span class="human-check-box" aria-hidden="true"><i class="fa-solid fa-check human-check-check"></i><i class="fa-solid fa-spinner human-check-spinner"></i></span>
-        <span class="human-check-copy">Saya bukan robot</span>
-        <span class="human-check-brand" aria-hidden="true"><img src="/logo.svg" alt=""/></span>
-      </label>
-      <button id="register-submit" type="submit" class="btn btn-primary btn-full btn-h" style="margin-top:2px" disabled>Buat Akun</button>
-    </form>
+
   </div>
-  </div><!-- /max-width wrapper -->
 </div>
 
 
@@ -239,101 +304,104 @@
 <div id="app-screen" style="display:none;flex:1;flex-direction:column">
 
   <!-- Header -->
-  <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px">
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:var(--bg)">
     <div style="display:flex;align-items:center;gap:9px">
-      <img src="/logo.svg" alt="" width="30" height="30"/>
+      <div style="width:32px;height:32px;border-radius:9px;background:var(--accent-light);border:1px solid var(--accent-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <img src="/logo.svg" alt="" width="20" height="20"/>
+      </div>
       <div>
-        <div style="font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-.02em;line-height:1">NOKOTPOTP</div>
-        <div id="connection-banner" style="display:none;align-items:center;gap:4px;margin-top:2px">
-          <span class="bk" style="width:5px;height:5px;border-radius:50%;background:#f43f5e;display:inline-block"></span>
-          <span style="font-size:.625rem;font-weight:600;color:#f43f5e">Offline</span>
+        <div style="font-size:.9375rem;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1">NOKOTPOTP</div>
+        <div id="connection-banner" style="display:none;align-items:center;gap:4px;margin-top:1px">
+          <span class="bk" style="width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block"></span>
+          <span style="font-size:.5625rem;font-weight:600;color:var(--red)">Offline</span>
         </div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <button id="logout-btn" class="btn btn-icon btn-ghost">
-        <i class="fa-solid fa-right-from-bracket" style="font-size:13px;color:#64748b"></i>
-      </button>
-    </div>
+    <button id="logout-btn" class="btn btn-icon btn-ghost" aria-label="Keluar">
+      <i class="fa-solid fa-right-from-bracket" style="font-size:13px;color:var(--text3)"></i>
+    </button>
   </header>
 
   <!-- Error banner -->
-  <div id="error-banner" class="alert alert-r hidden fu" style="margin:0 18px 10px">
+  <div id="error-banner" class="alert alert-r hidden fu" style="margin:0 16px 8px">
     <i class="fa-solid fa-circle-exclamation"></i>
     <span id="error-banner-text" style="flex:1"></span>
-    <button onclick="hideError()" style="background:none;border:none;cursor:pointer;color:#fb7185;padding:0;flex-shrink:0;font-size:13px"><i class="fa-solid fa-xmark"></i></button>
+    <button onclick="hideError()" style="background:none;border:none;cursor:pointer;color:var(--red);padding:0;flex-shrink:0;font-size:13px"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
   <!-- Notification banners -->
-  <div id="notif-banners" style="display:flex;flex-direction:column;gap:6px;padding:0 18px;margin-bottom:4px"></div>
+  <div id="notif-banners" style="display:flex;flex-direction:column;gap:5px;padding:0 16px;margin-bottom:4px"></div>
 
   <!-- Scroll area -->
-  <div style="flex:1;overflow-y:auto;padding:0 18px 86px">
+  <div style="flex:1;overflow-y:auto;padding:0 16px 88px;background:var(--bg)">
 
     <!-- SHOP -->
     <div id="shop-section">
 
-      <!-- Balance card -->
-      <div class="inset" style="padding:12px 14px;margin-bottom:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div>
-            <div class="tl" style="margin-bottom:3px">Saldo</div>
-            <div style="display:flex;align-items:center;gap:5px">
-              <span id="balance-display" class="tm" style="font-size:1.25rem;color:#34d399">Rp 0</span>
-              <i id="balance-stale" class="fa-solid fa-triangle-exclamation" style="display:none;color:#f59e0b;font-size:10px"></i>
-            </div>
+      <!-- Balance row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;margin-bottom:12px">
+        <div>
+          <div class="tl" style="margin-bottom:3px">Saldo kamu</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span id="balance-display" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--accent);letter-spacing:-.03em">Rp 0</span>
+            <i id="balance-stale" class="fa-solid fa-triangle-exclamation" style="display:none;color:var(--amber);font-size:10px"></i>
           </div>
-          <i class="fa-solid fa-wallet" style="color:#334155;font-size:18px"></i>
         </div>
-        <button onclick="openDepositModal()" class="btn btn-sky btn-full" style="height:36px;font-size:.8125rem">
+        <button onclick="openDepositModal()" class="btn btn-primary btn-sm" style="gap:5px">
           <i class="fa-solid fa-plus" style="font-size:11px"></i> Top-Up
         </button>
       </div>
 
       <!-- Section title -->
-      <div style="margin-bottom:12px">
-        <h2 class="tt2" style="margin:0">Pilih Layanan</h2>
-        <div class="tb" style="margin-top:3px">Nomor siap pakai &middot; Stok real-time</div>
+      <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h2 style="margin:0;font-size:.9375rem;font-weight:700;color:var(--text)">Pilih Layanan</h2>
+          <p style="margin:2px 0 0;font-size:.75rem;color:var(--text2)">Stok real-time</p>
+        </div>
       </div>
 
       <!-- Tab pills -->
-      <div style="display:flex;background:rgba(2,6,23,.7);border:1px solid var(--border);border-radius:11px;padding:4px;gap:4px;margin-bottom:12px">
-        <button id="tab-indo" onclick="switchTab('indo')" class="tab-pill active"><span>&#127470;&#127465;</span> Nokos Indo</button>
-        <button id="tab-luar" onclick="switchTab('luar')" class="tab-pill"><i class="fa-solid fa-earth-asia" style="font-size:13px"></i> Nokos Luar</button>
+      <div style="display:flex;background:var(--bg2);border:1.5px solid var(--border);border-radius:11px;padding:4px;gap:4px;margin-bottom:11px">
+        <button id="tab-indo" onclick="switchTab('indo')" class="tab-pill active"><span>🇮🇩</span> Nokos Indo</button>
+        <button id="tab-luar" onclick="switchTab('luar')" class="tab-pill"><i class="fa-solid fa-earth-asia" style="font-size:12px"></i> Nokos Luar</button>
       </div>
 
       <!-- Country search -->
-      <div class="inp-wrap" style="margin-bottom:12px">
+      <div class="inp-wrap" style="margin-bottom:11px">
         <i class="inp-ico fa-solid fa-magnifying-glass"></i>
-        <input id="country-search" class="inp" type="search" placeholder="Cari negara atau layanan..." autocomplete="off" oninput="searchCountries(this.value)" aria-label="Cari negara atau layanan"/>
+        <input id="country-search" class="inp" type="search" placeholder="Cari negara atau layanan..." autocomplete="off" oninput="searchCountries(this.value)" aria-label="Cari negara atau layanan" style="padding-left:38px"/>
       </div>
 
       <!-- Country list -->
-      <div id="country-list" style="display:flex;flex-direction:column;gap:8px">
-        <div class="sk" style="height:62px"></div>
-        <div class="sk" style="height:62px"></div>
-        <div class="sk" style="height:62px"></div>
+      <div id="country-list" style="display:flex;flex-direction:column;gap:7px">
+        <div class="sk" style="height:60px"></div>
+        <div class="sk" style="height:60px"></div>
+        <div class="sk" style="height:60px"></div>
       </div>
 
     </div>
 
-    <!-- ACTIVE ORDERS LIST (di bawah shop) -->
-    <div id="active-orders-container" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
+    <!-- Active orders -->
+    <div id="active-orders-container" style="margin-top:11px;display:flex;flex-direction:column;gap:9px"></div>
 
   </div>
+
+  <!-- Bottom nav -->
   <nav class="bottom-nav" aria-label="Navigasi utama">
     <a href="/" class="active" aria-current="page"><i class="fa-solid fa-house"></i><span>Beranda</span></a>
-    <a href="/withdrawal"><i class="fa-solid fa-wallet"></i><span>Tarik Saldo</span></a>
-    <a href="/referral"><i class="fa-solid fa-user-group"></i><span>Undang Teman</span></a>
+    <a href="/withdrawal"><i class="fa-solid fa-wallet"></i><span>Tarik</span></a>
+    <a href="/referral"><i class="fa-solid fa-user-group"></i><span>Referral</span></a>
   </nav>
 </div>
 
+
+<!-- ══ MATH CHALLENGE MODAL ══ -->
 <div id="math-challenge-modal" class="promo-overlay math-challenge-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="math-challenge-title" aria-hidden="true" onclick="if(event.target===this)closeMathChallengeModal()">
   <div class="math-challenge-dialog fu" onclick="event.stopPropagation()">
-    <button id="math-challenge-close" type="button" class="btn btn-icon math-challenge-close" aria-label="Tutup verifikasi" onclick="closeMathChallengeModal()">
+    <button id="math-challenge-close" type="button" class="btn btn-icon math-challenge-close" aria-label="Tutup" onclick="closeMathChallengeModal()">
       <i class="fa-solid fa-xmark"></i>
     </button>
-    <h2 id="math-challenge-title" class="math-challenge-title">Verifikasi</h2>
+    <h2 id="math-challenge-title" class="math-challenge-title">Verifikasi cepat</h2>
     <div id="math-challenge-question" class="math-challenge-question" aria-live="polite"></div>
     <form id="math-challenge-form" novalidate>
       <input id="math-challenge-answer" class="math-challenge-input" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="Jawaban" aria-label="Jawaban" required/>
@@ -343,20 +411,21 @@
   </div>
 </div>
 
+
 <!-- ══ FEATURE PROMO MODAL ══ -->
 <div id="feature-promo-modal" class="promo-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="feature-promo-title" aria-hidden="true" onclick="if(event.target===this)closeFeaturePromoModal()">
   <div class="promo-dialog fu">
-    <button id="feature-promo-close" type="button" class="btn btn-icon btn-ghost promo-close" aria-label="Tutup promosi" onclick="closeFeaturePromoModal()">
+    <button id="feature-promo-close" type="button" class="btn btn-icon btn-ghost promo-close" aria-label="Tutup" onclick="closeFeaturePromoModal()">
       <i class="fa-solid fa-xmark"></i>
     </button>
-    <h2 id="feature-promo-title" class="promo-title">Tarik saldo, kumpulkan komisi</h2>
-    <p class="promo-description">Tarik saldo utama dengan minimal Rp1.000 bisa ditarik. Undang teman dan dapatkan komisi 50% dari deposit berhasil ( saldo bisa di tarik ).</p>
+    <h2 id="feature-promo-title" class="promo-title">Tarik saldo &amp; kumpulkan komisi</h2>
+    <p class="promo-description">Tarik saldo utama mulai Rp 1.000. Undang teman dan dapat komisi 50% dari setiap deposit berhasil.</p>
     <div class="promo-options">
       <a href="/withdrawal" class="promo-option">
         <span class="promo-option-icon"><i class="fa-solid fa-wallet"></i></span>
         <span class="promo-option-copy">
           <span class="promo-option-title" style="display:block">Tarik Saldo</span>
-          <span class="promo-option-description">Ajukan pencairan saldo ke DANA, GoPay, atau SeaBank.</span>
+          <span class="promo-option-description">Cairkan ke DANA, GoPay, atau SeaBank.</span>
         </span>
         <i class="promo-option-arrow fa-solid fa-chevron-right" aria-hidden="true"></i>
       </a>
@@ -364,7 +433,7 @@
         <span class="promo-option-icon"><i class="fa-solid fa-user-group"></i></span>
         <span class="promo-option-copy">
           <span class="promo-option-title" style="display:block">Undang Teman</span>
-          <span class="promo-option-description">Dapatkan komisi 50% dari setiap deposit teman yang berhasil.</span>
+          <span class="promo-option-description">Komisi 50% dari setiap deposit teman.</span>
         </span>
         <i class="promo-option-arrow fa-solid fa-chevron-right" aria-hidden="true"></i>
       </a>
@@ -372,159 +441,157 @@
   </div>
 </div>
 
+
 <!-- ══ BANNED MODAL ══ -->
-<div id="banned-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(2,6,23,.97);backdrop-filter:blur(12px);padding:24px">
-  <div class="card fu" style="width:100%;max-width:340px;padding:24px;text-align:center">
-    <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
-      <i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24;font-size:18px"></i>
+<div id="banned-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:24px">
+  <div class="card fu" style="width:100%;max-width:320px;padding:24px;text-align:center">
+    <div style="width:44px;height:44px;border-radius:12px;background:var(--amber-light);border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+      <i class="fa-solid fa-triangle-exclamation" style="color:var(--amber);font-size:18px"></i>
     </div>
-    <div style="font-size:.9375rem;font-weight:700;color:#f1f5f9;margin-bottom:6px">Akun Dibatasi</div>
-    <div style="font-size:.8125rem;color:#64748b;margin-bottom:12px;line-height:1.55">Akun Anda sedang dibatasi oleh admin.</div>
-    <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:9px;padding:11px;margin-bottom:16px;text-align:left">
-      <div style="font-size:.6875rem;color:#334155;margin-bottom:3px">Alasan</div>
-      <div id="banned-reason" style="font-size:.8125rem;color:#e2e8f0;font-weight:600">-</div>
+    <div style="font-size:.9375rem;font-weight:700;color:var(--text);margin-bottom:5px">Akun Dibatasi</div>
+    <div style="font-size:.8125rem;color:var(--text2);margin-bottom:12px;line-height:1.55">Akun kamu sedang dibatasi oleh admin.</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:11px;margin-bottom:16px;text-align:left">
+      <div class="tl" style="margin-bottom:3px">Alasan</div>
+      <div id="banned-reason" style="font-size:.8125rem;color:var(--text);font-weight:600">-</div>
     </div>
-    <div id="appeal-sent-info" style="display:none;background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:9px;padding:10px;margin-bottom:14px;font-size:.8125rem;color:#34d399">
+    <div id="appeal-sent-info" style="display:none;background:var(--accent-light);border:1px solid var(--accent-mid);border-radius:9px;padding:10px;margin-bottom:14px;font-size:.8125rem;color:var(--accent-text)">
       <i class="fa-solid fa-circle-check" style="margin-right:5px"></i>Banding sudah dikirim. Tunggu review admin.
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button id="appeal-btn" onclick="submitAppeal()" class="btn btn-primary btn-full" style="height:42px;font-size:.8125rem">
         <i class="fa-solid fa-flag" style="font-size:11px"></i> Ajukan Banding
       </button>
-      <button onclick="logoutBanned()" class="btn btn-ghost btn-full" style="height:38px;font-size:.8125rem;color:#64748b">
+      <button onclick="logoutBanned()" class="btn btn-ghost btn-full" style="height:38px;font-size:.8125rem">
         <i class="fa-solid fa-right-from-bracket" style="font-size:11px"></i> Keluar
       </button>
     </div>
   </div>
 </div>
 
+
 <!-- ══ TIMEOUT MODAL ══ -->
-<div id="timeout-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.9);backdrop-filter:blur(6px)">
-  <div class="card fu" style="width:100%;max-width:400px;border-radius:20px 20px 0 0;border-bottom:none;padding:20px 20px 32px">
-    <div style="width:32px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 20px"></div>
-    <div style="width:44px;height:44px;border-radius:12px;background:var(--rose-dim);border:1px solid var(--rose-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
-      <i class="fa-solid fa-hourglass-end" style="color:#fb7185;font-size:18px"></i>
+<div id="timeout-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:20px 20px 32px">
+    <div style="width:32px;height:3px;border-radius:3px;background:var(--border2);margin:0 auto 20px"></div>
+    <div style="width:44px;height:44px;border-radius:12px;background:var(--red-light);border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <i class="fa-solid fa-hourglass-end" style="color:var(--red);font-size:17px"></i>
     </div>
-    <div class="tt2" style="text-align:center;margin-bottom:6px">Waktu Habis</div>
-    <div class="tb" style="text-align:center;margin-bottom:18px;line-height:1.55">OTP tidak masuk dalam 5 menit. Batalkan untuk mendapat <span style="color:#34d399;font-weight:600">refund penuh</span>.</div>
+    <div class="tt2" style="text-align:center;margin-bottom:5px">Waktu Habis</div>
+    <div class="tb" style="text-align:center;margin-bottom:18px;line-height:1.6">OTP tidak masuk dalam 5 menit. Batalkan untuk mendapat <strong style="color:var(--accent)">refund penuh</strong>.</div>
     <div id="cancel-result" class="hidden" style="margin-bottom:10px"></div>
     <button id="cancel-order-btn" class="btn btn-rose btn-full btn-h">
-      <i class="fa-solid fa-rotate-left" style="font-size:13px"></i> Batalkan &amp; Dapatkan Refund
+      <i class="fa-solid fa-rotate-left" style="font-size:12px"></i> Batalkan &amp; Dapatkan Refund
     </button>
   </div>
 </div>
 
 
 <!-- ══ SUCCESS MODAL ══ -->
-<div id="success-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.9);backdrop-filter:blur(6px)">
-  <div class="card fu" style="width:100%;max-width:400px;border-radius:20px 20px 0 0;border-bottom:none;padding:20px 20px 32px">
-    <div style="width:32px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 20px"></div>
-    <div style="width:44px;height:44px;border-radius:12px;background:var(--green-dim);border:1px solid var(--green-bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
-      <i class="fa-solid fa-circle-check" style="color:#34d399;font-size:18px"></i>
+<div id="success-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:20px 20px 32px">
+    <div style="width:32px;height:3px;border-radius:3px;background:var(--border2);margin:0 auto 20px"></div>
+    <div style="width:44px;height:44px;border-radius:12px;background:var(--accent-light);border:1px solid var(--accent-mid);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <i class="fa-solid fa-circle-check" style="color:var(--accent);font-size:18px"></i>
     </div>
-    <div class="tt2" style="text-align:center;margin-bottom:6px">Berhasil!</div>
-    <p id="success-message" class="tb" style="text-align:center;margin-bottom:18px;line-height:1.55"></p>
+    <div class="tt2" style="text-align:center;margin-bottom:5px">Berhasil</div>
+    <p id="success-message" class="tb" style="text-align:center;margin-bottom:18px;line-height:1.6"></p>
     <button onclick="closeSuccessModal()" class="btn btn-primary btn-full btn-h">OK, Tutup</button>
   </div>
 </div>
 
 
 <!-- ══ DEPOSIT MODAL ══ -->
-<div id="deposit-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(8px);padding:16px">
-  <div class="card fu" style="width:100%;max-width:400px;max-height:90dvh;border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden">
-    
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
-      <div class="tt2" style="margin:0">Top-Up Saldo</div>
-      <button onclick="closeDepositModal()" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">
-        <i class="fa-solid fa-xmark" style="color:#64748b;font-size:14px"></i>
+<div id="deposit-modal" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(0,0,0,.4);padding:16px">
+  <div class="card fu" style="width:100%;max-width:400px;max-height:92dvh;border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden">
+
+    <!-- Modal header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div class="tt3" style="margin:0">Top-Up Saldo</div>
+      <button onclick="closeDepositModal()" style="width:30px;height:30px;border:none;background:var(--bg2);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">
+        <i class="fa-solid fa-xmark" style="color:var(--text3);font-size:13px"></i>
       </button>
     </div>
 
-    <!-- Content (scrollable) -->
+    <!-- Scrollable content -->
     <div style="flex:1;overflow-y:auto;padding:18px">
 
       <!-- Step 1: Amount -->
       <div id="deposit-step-amount">
-        <div class="tb" style="margin-bottom:14px">Pilih atau masukkan nominal top-up:</div>
+        <p class="tb" style="margin:0 0 14px">Pilih atau masukkan nominal top-up:</p>
 
-        <!-- Event banner (muncul kalau event aktif) -->
-        <div id="deposit-event-banner" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <i class="fa-solid fa-bolt" style="color:#fbbf24;font-size:13px"></i>
-            <span style="font-size:.8125rem;font-weight:700;color:#fbbf24">🎉 Bonus Deposit 100%</span>
+        <!-- Event banner -->
+        <div id="deposit-event-banner" style="display:none;background:var(--amber-light);border:1.5px solid #fde68a;border-radius:11px;padding:12px 14px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:12px"></i>
+            <span style="font-size:.8125rem;font-weight:700;color:var(--amber)">🎉 Bonus Deposit 100%</span>
           </div>
-          <div style="font-size:.75rem;color:#a16207;line-height:1.6">
-            Deposit minimal <strong style="color:#fbbf24">Rp25.000</strong> dan dapatkan bonus saldo <strong style="color:#fbbf24">100%</strong>.<br>
-            Contoh:<br>
-            Rp25.000 jadi <strong style="color:#fbbf24">Rp50.000</strong><br>
-            Rp100.000 jadi <strong style="color:#fbbf24">Rp200.000</strong>
+          <div style="font-size:.75rem;color:#78350f;line-height:1.6">
+            Deposit minimal <strong>Rp25.000</strong> dan dapatkan bonus saldo <strong>100%</strong>.<br>
+            Rp25.000 → <strong>Rp50.000</strong> &nbsp;·&nbsp; Rp100.000 → <strong>Rp200.000</strong>
           </div>
-          <div style="font-size:.6875rem;color:#78350f;margin-top:5px;display:flex;align-items:center;gap:4px">
-            <i class="fa-solid fa-circle-info" style="font-size:10px"></i> Berlaku 1 kali per akun selama event aktif.
-          </div>
+          <div style="font-size:.6875rem;color:#92400e;margin-top:5px">Berlaku 1× per akun selama event aktif.</div>
         </div>
 
-        <!-- Preview saldo (muncul saat event aktif + nominal diisi) -->
-        <div id="deposit-preview" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:11px 13px;margin-bottom:12px">
-          <div style="font-size:.75rem;color:#334155;margin-bottom:4px">Saldo yang akan kamu terima</div>
+        <!-- Preview saldo -->
+        <div id="deposit-preview" style="display:none;background:var(--accent-light);border:1.5px solid var(--accent-mid);border-radius:10px;padding:11px 13px;margin-bottom:12px">
+          <div class="tl" style="margin-bottom:4px;color:var(--accent-text)">Saldo yang akan kamu terima</div>
           <div style="display:flex;align-items:center;gap:8px">
-            <span id="deposit-preview-orig" style="font-size:.875rem;color:#475569;text-decoration:line-through"></span>
-            <i class="fa-solid fa-arrow-right" style="font-size:10px;color:#334155"></i>
-            <span id="deposit-preview-final" style="font-size:1.125rem;font-weight:700;color:#34d399"></span>
-            <span style="background:rgba(245,158,11,.2);color:#fbbf24;font-size:.625rem;font-weight:700;padding:2px 6px;border-radius:20px">2x</span>
+            <span id="deposit-preview-orig" style="font-size:.875rem;color:var(--text3);text-decoration:line-through;font-family:var(--mono)"></span>
+            <i class="fa-solid fa-arrow-right" style="font-size:10px;color:var(--text3)"></i>
+            <span id="deposit-preview-final" style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:var(--mono)"></span>
+            <span style="background:var(--amber-light);color:var(--amber);font-size:.625rem;font-weight:700;padding:2px 6px;border-radius:20px;border:1px solid #fde68a">2×</span>
           </div>
         </div>
-        
+
         <!-- Quick chips -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-          <button onclick="selectDepositAmount(10000)" data-amount="10000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 10.000</button>
-          <button onclick="selectDepositAmount(15000)" data-amount="15000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 15.000</button>
-          <button onclick="selectDepositAmount(25000)" data-amount="25000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 25.000</button>
-          <button onclick="selectDepositAmount(50000)" data-amount="50000" class="deposit-chip btn btn-ghost" style="height:52px;font-size:.875rem;justify-content:center">Rp 50.000</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px">
+          <button onclick="selectDepositAmount(10000)" data-amount="10000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 10.000</button>
+          <button onclick="selectDepositAmount(15000)" data-amount="15000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 15.000</button>
+          <button onclick="selectDepositAmount(25000)" data-amount="25000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 25.000</button>
+          <button onclick="selectDepositAmount(50000)" data-amount="50000" class="deposit-chip btn btn-ghost" style="height:48px;font-size:.875rem;font-weight:600">Rp 50.000</button>
         </div>
 
         <!-- Manual input -->
         <div class="inp-wrap" style="margin-bottom:12px">
           <i class="inp-ico fa-solid fa-wallet"></i>
-          <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="10000" step="1000" oninput="onDepositAmountInput(this.value)"/>
+          <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="5000" step="1000" oninput="onDepositAmountInput(this.value)"/>
         </div>
 
         <!-- Alert -->
-        <div id="deposit-amount-alert" style="display:none;align-items:center;gap:8px;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-size:.8125rem;color:#fb7185">
+        <div id="deposit-amount-alert" style="display:none;align-items:center;gap:8px;background:var(--red-light);border:1px solid #fecaca;border-radius:9px;padding:10px 12px;margin-bottom:12px;font-size:.8125rem;color:var(--red)">
           <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0"></i>
           <span></span>
         </div>
 
         <button onclick="proceedToMethod()" class="btn btn-primary btn-full btn-h">
-          <i class="fa-solid fa-arrow-right" style="font-size:12px"></i> Lanjutkan
+          Lanjutkan <i class="fa-solid fa-arrow-right" style="font-size:11px"></i>
         </button>
       </div>
 
-      <!-- Step 2: Payment Method -->
+      <!-- Step 2: Payment method -->
       <div id="deposit-step-method" style="display:none">
-        <div style="background:var(--green-dim);border:1px solid var(--green-bdr);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
-          <div class="tl" style="color:#34d399">Nominal Top-Up</div>
-          <div id="deposit-selected-amount" class="tm" style="font-size:1.375rem;color:#6ee7b7;margin-top:4px">Rp 0</div>
+        <div style="background:var(--accent-light);border:1.5px solid var(--accent-mid);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
+          <div class="tl" style="color:var(--accent-text);margin-bottom:3px">Nominal Top-Up</div>
+          <div id="deposit-selected-amount" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--accent)">Rp 0</div>
         </div>
 
-        <div class="tb" style="margin-bottom:12px">Pilih metode pembayaran:</div>
-        
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-link" style="font-size:14px;margin-right:10px"></i>
-            <span style="flex:1;text-align:left">Payment Link (Semua Metode)</span>
+        <p class="tb" style="margin:0 0 11px">Pilih metode pembayaran:</p>
+
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
+            <i class="fa-solid fa-link" style="font-size:13px;color:var(--text3);width:20px"></i>
+            <span style="flex:1;text-align:left">Payment Link</span>
           </button>
-          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-qrcode" style="font-size:14px;margin-right:10px"></i>
+          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
+            <i class="fa-solid fa-qrcode" style="font-size:13px;color:var(--text3);width:20px"></i>
             <span style="flex:1;text-align:left">QRIS</span>
           </button>
-          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-building-columns" style="font-size:14px;margin-right:10px"></i>
+          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
+            <i class="fa-solid fa-building-columns" style="font-size:13px;color:var(--text3);width:20px"></i>
             <span style="flex:1;text-align:left">BNI Virtual Account</span>
           </button>
-          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:50px;justify-content:flex-start;padding:0 16px">
-            <i class="fa-solid fa-building-columns" style="font-size:14px;margin-right:10px"></i>
+          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:48px;justify-content:flex-start;padding:0 15px">
+            <i class="fa-solid fa-building-columns" style="font-size:13px;color:var(--text3);width:20px"></i>
             <span style="flex:1;text-align:left">BRI Virtual Account</span>
           </button>
         </div>
@@ -534,40 +601,37 @@
         </button>
       </div>
 
-      <!-- Step 3: Payment Instructions -->
+      <!-- Step 3: Payment instructions -->
       <div id="deposit-step-payment" style="display:none">
-        <div style="background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
-          <div style="font-size:.8125rem;color:#fbbf24;display:flex;align-items:center;justify-content:center;gap:6px">
+        <div style="background:var(--amber-light);border:1.5px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
+          <div style="font-size:.8125rem;color:var(--amber);display:flex;align-items:center;justify-content:center;gap:6px">
             <i class="fa-solid fa-hourglass-half"></i> Menunggu Pembayaran...
           </div>
         </div>
-
-        <div id="deposit-payment-instructions" style="background:rgba(2,6,23,.4);border:1px solid var(--border);border-radius:10px;margin-bottom:14px"></div>
-
+        <div id="deposit-payment-instructions" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;margin-bottom:14px"></div>
         <button onclick="backToMethodSelect()" class="btn btn-ghost btn-full" style="height:40px">
           <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Pilih Metode Lain
         </button>
       </div>
 
     </div>
-
   </div>
 </div>
 
 
 <!-- ══ CUSTOM DIALOG ══ -->
-<div id="dialog-overlay" style="display:none;position:fixed;inset:0;z-index:99;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.92);backdrop-filter:blur(6px)">
-  <div class="card fu" style="width:100%;max-width:400px;border-radius:20px 20px 0 0;border-bottom:none;padding:20px 20px 28px">
-    <div style="width:32px;height:3px;border-radius:3px;background:#1e293b;margin:0 auto 18px"></div>
-    <!-- icon -->
+<div id="dialog-overlay" style="display:none;position:fixed;inset:0;z-index:99;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)">
+  <div class="card fu" style="width:100%;max-width:400px;border-radius:18px 18px 0 0;border-bottom:none;padding:20px 20px 28px">
+    <div style="width:32px;height:3px;border-radius:3px;background:var(--border2);margin:0 auto 18px"></div>
     <div id="dialog-icon-wrap" style="margin:0 auto 12px;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center"></div>
-    <div id="dialog-title" class="tt2" style="text-align:center;margin-bottom:6px"></div>
-    <div id="dialog-body" class="tb" style="text-align:center;margin-bottom:20px;line-height:1.55"></div>
+    <div id="dialog-title" class="tt2" style="text-align:center;margin-bottom:5px"></div>
+    <div id="dialog-body" class="tb" style="text-align:center;margin-bottom:20px;line-height:1.6"></div>
     <div id="dialog-btns" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
-</div></div>
+</div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="/js/firebase-config.js"></script>
@@ -576,63 +640,52 @@
 // ── Custom Dialog System ──
 const Dialog = (() => {
   let _resolve = null;
-
   const _config = {
-    confirm: { icon: 'fa-solid fa-circle-question',     bg: 'rgba(14,165,233,.12)', bdr: 'rgba(14,165,233,.2)',  color: '#38bdf8' },
-    warn:    { icon: 'fa-solid fa-triangle-exclamation', bg: 'rgba(245,158,11,.12)', bdr: 'rgba(245,158,11,.2)', color: '#fbbf24' },
-    success: { icon: 'fa-solid fa-circle-check',         bg: 'rgba(16,185,129,.12)', bdr: 'rgba(16,185,129,.2)', color: '#34d399' },
-    error:   { icon: 'fa-solid fa-circle-exclamation',   bg: 'rgba(244,63,94,.12)',  bdr: 'rgba(244,63,94,.2)',  color: '#fb7185' },
+    confirm: { icon:'fa-solid fa-circle-question',     bg:'var(--sky-light)',   bdr:'#bae6fd',           color:'var(--sky)' },
+    warn:    { icon:'fa-solid fa-triangle-exclamation', bg:'var(--amber-light)', bdr:'#fde68a',           color:'var(--amber)' },
+    success: { icon:'fa-solid fa-circle-check',         bg:'var(--accent-light)',bdr:'var(--accent-mid)', color:'var(--accent)' },
+    error:   { icon:'fa-solid fa-circle-exclamation',   bg:'var(--red-light)',   bdr:'#fecaca',           color:'var(--red)' },
   };
-
   function _close() {
-    const overlay = document.getElementById('dialog-overlay');
-    overlay.style.display = 'none';
-    overlay.classList.remove('show');
-    _resolve = null;
+    const o = document.getElementById('dialog-overlay');
+    o.style.display = 'none'; o.classList.remove('show'); _resolve = null;
   }
-
   function _show(type, title, body, buttons) {
     const cfg = _config[type] || _config.confirm;
     const wrap = document.getElementById('dialog-icon-wrap');
     wrap.style.background = cfg.bg;
-    wrap.style.border     = '1px solid ' + cfg.bdr;
-    wrap.innerHTML        = '<i class="' + cfg.icon + '" style="color:' + cfg.color + ';font-size:18px"></i>';
+    wrap.style.border = '1.5px solid ' + cfg.bdr;
+    wrap.innerHTML = '<i class="' + cfg.icon + '" style="color:' + cfg.color + ';font-size:18px"></i>';
     document.getElementById('dialog-title').textContent = title;
-    document.getElementById('dialog-body').innerHTML    = body;
-
+    document.getElementById('dialog-body').innerHTML = body;
     const btnsEl = document.getElementById('dialog-btns');
     btnsEl.innerHTML = '';
     buttons.forEach(b => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-full ' + b.cls;
-      btn.style.height    = '44px';
-      btn.style.fontSize  = '.875rem';
+      btn.style.height = '44px'; btn.style.fontSize = '.875rem';
       btn.innerHTML = b.label;
       btn.onclick = () => { const r = _resolve; _close(); if (r) r(b.value); };
       btnsEl.appendChild(btn);
     });
-
-    const overlay = document.getElementById('dialog-overlay');
-    overlay.style.display = 'flex';
-    overlay.classList.add('show');
+    const o = document.getElementById('dialog-overlay');
+    o.style.display = 'flex'; o.classList.add('show');
     return new Promise(r => { _resolve = r; });
   }
-
   return {
     confirm: (title, body) => _show('confirm', title, body, [
-      { label: 'Ya, Lanjutkan', cls: 'btn-primary', value: true },
-      { label: 'Batal',         cls: 'btn-ghost',   value: false },
+      { label:'Ya, Lanjutkan', cls:'btn-primary', value:true },
+      { label:'Batal',         cls:'btn-ghost',   value:false },
     ]),
-    confirmDanger: (title, body, okLabel = 'Ya, Lanjutkan') => _show('warn', title, body, [
-      { label: okLabel, cls: 'btn-rose',  value: true },
-      { label: 'Batal', cls: 'btn-ghost', value: false },
+    confirmDanger: (title, body, okLabel='Ya, Lanjutkan') => _show('warn', title, body, [
+      { label:okLabel,  cls:'btn-rose',  value:true },
+      { label:'Batal',  cls:'btn-ghost', value:false },
     ]),
     alert: (type, title, body) => _show(type, title, body, [
-      { label: 'OK', cls: 'btn-ghost', value: true },
+      { label:'OK', cls:'btn-ghost', value:true },
     ]),
   };
 })();
-
 window.Dialog = Dialog;
 </script>
 <script>
@@ -653,7 +706,6 @@ window.Dialog = Dialog;
     el.classList.remove = function(...a){ if(a.includes("hidden")){el.style.display=show;return} or(...a) };
     el.style.display = hiddenFirst ? "none" : show;
   }
-
   bridge("timeout-modal","flex",true);
   bridge("success-modal","flex",true);
   bridge("deposit-modal","flex",true);
