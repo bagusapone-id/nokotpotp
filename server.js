@@ -12,6 +12,7 @@ const registerRoutes = require('./src/routes/registerRoutes');
 const depositRoutes  = require('./src/routes/depositRoutes');
 const userRoutes     = require('./src/routes/userRoutes');
 const withdrawalRoutes = require('./src/routes/withdrawalRoutes');
+const cleanupRoutes    = require('./src/routes/cleanupRoutes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +47,7 @@ app.use('/api/admin',    adminRoutes);
 app.use('/api/deposit',  depositRoutes);
 app.use('/api/user',     userRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/cron',       cleanupRoutes);
 
 app.use((req, res) => {
   if (req.path.startsWith('/admin')) {
