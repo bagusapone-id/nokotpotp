@@ -544,6 +544,7 @@ function renderCountriesList() {
           '<div style="font-size:.6875rem;color:#334155;margin-top:1px"><i class="fa-solid fa-layer-group" style="font-size:10px;margin-right:2px"></i>'+avail+' tersedia</div>' +
         '</div>' +
         toggleBtn +
+        '<button onclick="event.stopPropagation();clearCountryStock('+htmlJsArg(k)+')" style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.18);color:#fb7185;border-radius:7px;height:28px;padding:0 10px;font-size:.6875rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Hapus semua stok negara ini"><i class="fa-solid fa-trash" style="font-size:9px;margin-right:3px"></i>Hapus Stok</button>' +
       '</div>' +
     '</div>';
   }).join("");
@@ -747,6 +748,38 @@ window.deleteStock = async function(stockId) {
     }
   } catch {
     await Dialog.alert("error","Koneksi Bermasalah","Periksa koneksi internet.");
+  }
+};
+
+// ── Clear Country Stock ──
+window.clearCountryStock = async function(key) {
+  const country = countriesData[key];
+  if (!country) return;
+
+  const avail = Object.values(stockData).filter(s => s.country_key === key && s.status === 'AVAILABLE').length;
+  const burned = Object.values(stockData).filter(s => s.country_key === key && s.status === 'BURNED').length;
+  const total = avail + burned;
+
+  const ok = await Dialog.confirmDanger(
+    'Hapus Semua Stok?',
+    'Semua stok <strong style="color:#e2e8f0">' + escapeHtml((country.flag || '') + ' ' + country.country_name) + '</strong> akan dihapus permanen (' + total + ' nomor). ' +
+    'Negara tidak dihapus. Stok yang sedang terkunci dalam order aktif dilewati.',
+    'Ya, Hapus Semua Stok'
+  );
+  if (!ok) return;
+
+  try {
+    const res = await adminFetch('/api/admin/stock/country/' + encodeURIComponent(key) + '/all', { method: 'DELETE' });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert('error', 'Gagal', data.message || 'Tidak bisa menghapus stok.');
+      return;
+    }
+    let msg = data.deleted + ' stok dihapus.';
+    if (data.skipped_locked > 0) msg += ' ' + data.skipped_locked + ' dilewati (sedang terkunci dalam order aktif).';
+    await Dialog.alert('success', 'Stok Dihapus', msg);
+  } catch {
+    await Dialog.alert('error', 'Koneksi Bermasalah', 'Periksa koneksi internet.');
   }
 };
 

@@ -282,6 +282,100 @@ router.post('/stock/bulk', authAdmin, async (req, res) => {
 });
 
 /**
+ * DELETE /api/admin/stock/country/:countryKey/all
+ * Hapus semua stok (AVAILABLE + BURNED) untuk satu negara.
+ * Stok LOCKED (dalam order aktif) tidak dihapus dan tidak menyebabkan error.
+ */
+router.delete('/stock/country/:countryKey/all', authAdmin, async (req, res) => {
+  const { countryKey } = req.params;
+  if (!countryKey) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'countryKey diperlukan.' });
+  }
+  try {
+    const countrySnap = await db.ref(`countries/${countryKey}`).once('value');
+    if (!countrySnap.exists()) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Negara tidak ditemukan.' });
+    }
+
+    const stockSnap = await db.ref('phone_stocks')
+      .orderByChild('country_key').equalTo(countryKey).once('value');
+
+    if (!stockSnap.exists()) {
+      return res.status(200).json({ success: true, deleted: 0, skipped_locked: 0 });
+    }
+
+    let deleted = 0;
+    let skippedLocked = 0;
+    const updates = {};
+
+    stockSnap.forEach(child => {
+      if (child.val().status === 'LOCKED') {
+        skippedLocked++;
+      } else {
+        updates[`phone_stocks/${child.key}`] = null;
+        deleted++;
+      }
+    });
+
+    if (deleted > 0) {
+      await db.ref('/').update(updates);
+    }
+
+    return res.status(200).json({ success: true, deleted, skipped_locked: skippedLocked });
+  } catch (err) {
+    console.error('[adminRoutes] clear country stock error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menghapus stok.' });
+  }
+});
+
+/**
+ * DELETE /api/admin/stock/country/:countryKey/all
+ * Hapus semua stok (AVAILABLE + BURNED) untuk satu negara, tanpa menghapus negara.
+ * Stok LOCKED (dalam order aktif) dilewati.
+ */
+router.delete('/stock/country/:countryKey/all', authAdmin, async (req, res) => {
+  const { countryKey } = req.params;
+  if (!countryKey) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'countryKey diperlukan.' });
+  }
+  try {
+    const countrySnap = await db.ref(`countries/${countryKey}`).once('value');
+    if (!countrySnap.exists()) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Negara tidak ditemukan.' });
+    }
+
+    const stockSnap = await db.ref('phone_stocks')
+      .orderByChild('country_key').equalTo(countryKey).once('value');
+
+    if (!stockSnap.exists()) {
+      return res.status(200).json({ success: true, deleted: 0, skipped_locked: 0 });
+    }
+
+    let deleted = 0;
+    let skippedLocked = 0;
+    const updates = {};
+
+    stockSnap.forEach(child => {
+      if (child.val().status === 'LOCKED') {
+        skippedLocked++;
+      } else {
+        updates[`phone_stocks/${child.key}`] = null;
+        deleted++;
+      }
+    });
+
+    if (deleted > 0) {
+      await db.ref('/').update(updates);
+    }
+
+    return res.status(200).json({ success: true, deleted, skipped_locked: skippedLocked });
+  } catch (err) {
+    console.error('[adminRoutes] clear country stock error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menghapus stok.' });
+  }
+});
+
+/**
  * DELETE /api/admin/stock/:stockId
  * Delete a stock entry
  */

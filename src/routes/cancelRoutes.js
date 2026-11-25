@@ -42,7 +42,8 @@ async function adminCancelOrder(orderId, allowedStatuses) {
 
   if (price > 0) await refundOrderToUser(order.user_id, orderId, order);
   if (order.stock_key) {
-    await db.ref(`phone_stocks/${order.stock_key}/status`).set('AVAILABLE');
+    // Admin cancel: nomor sudah dipakai / ampas → hapus permanen dari stok
+    await db.ref(`phone_stocks/${order.stock_key}`).remove();
   }
   await orderRef.update({ status: 'CANCELLED', is_refunded: true });
 
