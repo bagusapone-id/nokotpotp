@@ -1168,6 +1168,29 @@ window.copyPhoneNumber = function() {
 let currentDeposit = null;
 let depositCheckInterval = null;
 const MIN_DEPOSIT_AMOUNT = 5000;
+const MAX_DEPOSIT_AMOUNT = 10000000;
+const DELIVERY_DETAILS_THRESHOLD = 1000000;
+
+function getJakartaDate() {
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const date = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${date.year}-${date.month}-${date.day}`;
+}
+
+function formatJakartaDate(dateString) {
+  const [year, month, day] = dateString.split('-');
+  const monthDate = new Date(`${year}-${month}-01T00:00:00+07:00`);
+  const monthName = new Intl.DateTimeFormat('id-ID', {
+    month: 'long',
+    timeZone: 'Asia/Jakarta',
+  }).format(monthDate);
+  return `${Number(day)} ${monthName} ${year}`;
+}
 
 window.openDepositModal = function() {
   document.getElementById('deposit-modal').classList.remove('hidden');
@@ -1222,6 +1245,7 @@ window.selectDepositAmount = function(amount) {
     chip.classList.toggle('active', chip.dataset.amount == input.value);
   });
   updateDepositPreview(parseInt(input.value) || 0);
+  updateDepositDeliveryTerms(parseInt(input.value) || 0);
 };
 
 window.onDepositAmountInput = function(val) {
@@ -1230,7 +1254,20 @@ window.onDepositAmountInput = function(val) {
     chip.classList.toggle('active', chip.dataset.amount == val);
   });
   updateDepositPreview(parseInt(val) || 0);
+  updateDepositDeliveryTerms(parseInt(val) || 0);
 };
+
+function updateDepositDeliveryTerms(amount) {
+  const notice = document.getElementById('deposit-delivery-terms');
+  if (!notice) return;
+  if (amount > DELIVERY_DETAILS_THRESHOLD) {
+    const date = getJakartaDate();
+    notice.textContent = `Saldo masuk setelah pembayaran dikonfirmasi. Estimasi: ${formatJakartaDate(date)}.`;
+    notice.style.display = 'block';
+  } else {
+    notice.style.display = 'none';
+  }
+}
 
 function updateDepositPreview(amount) {
   const preview = document.getElementById('deposit-preview');
@@ -1251,8 +1288,12 @@ function updateDepositPreview(amount) {
 window.proceedToMethod = async function() {
   const amount = parseInt(document.getElementById('deposit-amount-input').value);
   const alertEl = document.getElementById('deposit-amount-alert');
-  if (!amount || amount < MIN_DEPOSIT_AMOUNT) {
-    const msg = !amount ? 'Masukkan nominal deposit terlebih dahulu.' : 'Minimal deposit adalah Rp 5.000.';
+  if (!amount || amount < MIN_DEPOSIT_AMOUNT || amount > MAX_DEPOSIT_AMOUNT) {
+    const msg = !amount
+      ? 'Masukkan nominal.'
+      : amount < MIN_DEPOSIT_AMOUNT
+        ? 'Minimal Rp 5.000.'
+        : 'Maksimal Rp 10.000.000.';
     alertEl.querySelector('span').textContent = msg;
     alertEl.style.display = 'flex';
     document.getElementById('deposit-amount-input').focus();
@@ -1263,6 +1304,56 @@ window.proceedToMethod = async function() {
   document.getElementById('deposit-step-amount').style.display = 'none';
   document.getElementById('deposit-step-method').style.display = 'block';
   document.getElementById('deposit-selected-amount').textContent = formatRupiah(amount);
+
+  const methodsContainer = document.getElementById('deposit-payment-methods');
+  const deliveryNotice = document.getElementById('deposit-method-delivery-terms');
+  methodsContainer.textContent = 'Memuat...';
+  deliveryNotice.style.display = 'none';
+  try {
+    const res = await apiFetch(`/api/deposit/methods?amount=${encodeURIComponent(amount)}`);
+    const data = await safeJson(res);
+    if (!res.ok) {
+      methodsContainer.textContent = data.message || 'Gagal memuat metode.';
+      return;
+    }
+
+    methodsContainer.replaceChildren();
+    if (!Array.isArray(data.methods) || data.methods.length === 0) {
+      methodsContainer.textContent = 'Metode tidak tersedia.';
+      return;
+    }
+
+    for (const method of data.methods) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn-ghost btn-full';
+      button.style.cssText = 'min-height:44px;justify-content:flex-start;padding:8px 14px;text-align:left';
+
+      const icon = document.createElement('i');
+      icon.className = method.code === 'qris'
+        ? 'fa-solid fa-qrcode'
+        : method.code.startsWith('va_')
+          ? 'fa-solid fa-building-columns'
+          : 'fa-solid fa-mobile-screen-button';
+      icon.style.cssText = 'font-size:12px;color:var(--text3);width:18px;flex-shrink:0';
+
+      const name = document.createElement('span');
+      name.style.fontWeight = '600';
+      name.textContent = method.display_name;
+      button.append(icon, name);
+      button.addEventListener('click', () => window.selectPaymentMethod(method));
+      methodsContainer.append(button);
+    }
+
+    if (data.methods.some(method => method.total_amount > DELIVERY_DETAILS_THRESHOLD)) {
+      const date = getJakartaDate();
+      deliveryNotice.textContent = `Saldo masuk setelah pembayaran dikonfirmasi. Estimasi: ${formatJakartaDate(date)}.`;
+      deliveryNotice.style.display = 'block';
+    }
+  } catch (err) {
+    methodsContainer.textContent = 'Gagal memuat metode.';
+    console.error('[deposit] payment method loading error:', err.message);
+  }
 };
 
 window.backToAmount = function() {
@@ -1272,11 +1363,24 @@ window.backToAmount = function() {
 
 window.selectPaymentMethod = async function(method) {
   const amount = parseInt(document.getElementById('deposit-amount-input').value);
-  
+  if (!method || typeof method.code !== 'string' || !Number.isSafeInteger(method.total_amount)) {
+    showError('Metode tidak valid. Muat ulang pilihan.');
+    return;
+  }
+
   try {
+    const requestBody = {
+      amount,
+      payment_method: method.code,
+      quoted_total: method.total_amount,
+    };
+    if (method.total_amount > DELIVERY_DETAILS_THRESHOLD) {
+      requestBody.delivery_date = getJakartaDate();
+      requestBody.delivery_terms_shown = true;
+    }
     const res = await apiFetch('/api/deposit/create', {
       method: 'POST',
-      body: JSON.stringify({ amount, payment_method: method }),
+      body: JSON.stringify(requestBody),
     });
     const data = await safeJson(res);
     
@@ -1301,37 +1405,47 @@ window.selectPaymentMethod = async function(method) {
 
 function renderPaymentInstructions(deposit) {
   const container = document.getElementById('deposit-payment-instructions');
-  
-  if (deposit.payment_method === 'payment_link') {
-    // Payment Link � arahkan ke halaman Pakasir
+
+  if (deposit.payment_mode === 'checkout' || deposit.payment_method === 'payment_link') {
+    const checkoutDescription = 'Lanjutkan ke Kasera Pay.';
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">Klik tombol di bawah untuk melanjutkan pembayaran</div>
-        <a href="${deposit.payment_link}" target="_blank" class="btn btn-primary btn-full btn-h">
-          <i class="fa-solid fa-external-link" style="font-size:12px"></i> Bayar Sekarang
+        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">${checkoutDescription}</div>
+        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Top up</div>
+        <div class="tm" style="font-size:1rem;margin-bottom:8px">${formatRupiah(deposit.amount)}</div>
+        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Biaya</div>
+        <div class="tm" style="font-size:1rem;margin-bottom:8px">${formatRupiah(deposit.fee)}</div>
+        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Total</div>
+        <div class="tm" style="font-size:1.125rem;color:#34d399;margin-bottom:14px">${formatRupiah(deposit.total_payment)}</div>
+        <a class="btn btn-primary btn-full btn-h">
+          <i class="fa-solid fa-external-link" style="font-size:12px"></i> Lanjut bayar
         </a>
       </div>
     `;
-  } else if (deposit.payment_method === 'qris') {
-    // QRIS
+    const checkoutLink = container.querySelector('a');
+    checkoutLink.href = deposit.checkout_url || deposit.payment_link;
+    checkoutLink.target = '_blank';
+    checkoutLink.rel = 'noopener noreferrer';
+  } else if (deposit.payment?.type === 'qr' || deposit.payment_method === 'qris') {
+    const qrString = deposit.payment?.qr_string || deposit.qr_string;
+    const expiresAt = deposit.expires_at || deposit.expired_at;
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:12px">Scan QRIS dengan aplikasi pembayaran Anda</div>
+        <div style="font-size:.875rem;color:#64748b;margin-bottom:12px">Scan QRIS untuk membayar</div>
         <div style="background:#fff;padding:12px;border-radius:14px;display:inline-block;margin-bottom:10px">
           <canvas id="qris-canvas"></canvas>
         </div>
-        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Total Bayar</div>
-        <div class="tm" style="font-size:1.125rem;color:#34d399">${formatRupiah(deposit.total_payment)}</div>
+        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Total</div>
+        <div class="tm" style="font-size:1.125rem;color:#34d399">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
         <div style="font-size:.7rem;color:#334155;margin-top:8px">
           <i class="fa-solid fa-clock" style="margin-right:3px"></i>
-          Berlaku hingga ${new Date(deposit.expired_at).toLocaleString('id-ID')}
+          Sampai ${new Date(expiresAt).toLocaleString('id-ID')}
         </div>
       </div>
     `;
-    // Generate QR image dari qr_string
     const canvas = document.getElementById('qris-canvas');
     if (typeof QRCode !== 'undefined') {
-      QRCode.toCanvas(canvas, deposit.qr_string, {
+      QRCode.toCanvas(canvas, qrString, {
         width: 220,
         margin: 1,
         color: { dark: '#000000', light: '#ffffff' },
@@ -1341,10 +1455,18 @@ function renderPaymentInstructions(deposit) {
     }
 
   } else {
-    // Virtual Account
+    const paymentCode = deposit.payment?.payment_code || deposit.va_number;
+    const expiresAt = deposit.expires_at || deposit.expired_at;
     const bankName = {
       'bni_va':       'BNI',
       'bri_va':       'BRI',
+      'va_bni':       'BNI',
+      'va_bri':       'BRI',
+      'va_mandiri':   'Mandiri',
+      'va_permata':   'Permata',
+      'va_cimb':      'CIMB Niaga',
+      'va_danamon':   'Danamon',
+      'va_maybank':   'Maybank',
       'cimb_niaga_va':'CIMB Niaga',
       'danamon_va':   'Danamon',
       'maybank_va':   'Maybank',
@@ -1353,36 +1475,56 @@ function renderPaymentInstructions(deposit) {
       'muamalat_va':  'Muamalat',
       'ocbc_va':      'OCBC',
     }[deposit.payment_method] || 'Bank';
+    const bankDisplayName = deposit.payment?.display_name || deposit.payment?.bank || bankName;
     
     container.innerHTML = `
       <div style="padding:16px">
         <div style="font-size:.875rem;color:#64748b;margin-bottom:14px;text-align:center">
-          Transfer ke Virtual Account ${bankName}
+          ${bankDisplayName} Virtual Account
         </div>
         <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
           <div class="tl" style="margin-bottom:6px">Nomor VA</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <span class="tm" style="font-size:1.125rem;color:#f1f5f9">${deposit.va_number}</span>
+            <span class="tm" style="font-size:1.125rem;color:#f1f5f9">${paymentCode}</span>
             <button onclick="copyVA()" class="btn btn-xs btn-sky">
               <i class="fa-regular fa-copy" style="font-size:10px"></i> Salin
             </button>
           </div>
         </div>
         <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:14px">
-          <div class="tl" style="margin-bottom:6px">Total Transfer</div>
-          <div class="tm" style="font-size:1.25rem;color:#34d399">${formatRupiah(deposit.total_payment)}</div>
+          <div class="tl" style="margin-bottom:6px">Total</div>
+          <div class="tm" style="font-size:1.25rem;color:#34d399">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
         </div>
         <div style="font-size:.75rem;color:#334155;margin-top:12px;text-align:center">
-          <i class="fa-solid fa-clock" style="margin-right:3px"></i> Berlaku hingga ${new Date(deposit.expired_at).toLocaleString('id-ID')}
+          <i class="fa-solid fa-clock" style="margin-right:3px"></i> Sampai ${new Date(expiresAt).toLocaleString('id-ID')}
         </div>
       </div>
     `;
   }
+
+  const instructions = deposit.instructions;
+  if (instructions && Array.isArray(instructions.steps) && instructions.steps.length) {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'padding:0 16px 16px;font-size:.8125rem;color:#64748b';
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:600;margin-bottom:6px';
+    title.textContent = instructions.title || 'Cara pembayaran';
+    const steps = document.createElement('ol');
+    steps.style.cssText = 'margin:0;padding-left:20px;line-height:1.6';
+    instructions.steps.forEach(step => {
+      const item = document.createElement('li');
+      item.textContent = step;
+      steps.appendChild(item);
+    });
+    wrapper.append(title, steps);
+    container.appendChild(wrapper);
+  }
 }
 
 window.copyVA = function() {
-  if (!currentDeposit || !currentDeposit.va_number) return;
-  navigator.clipboard.writeText(currentDeposit.va_number);
+  const paymentCode = currentDeposit?.payment?.payment_code || currentDeposit?.va_number;
+  if (!paymentCode) return;
+  navigator.clipboard.writeText(paymentCode);
   showSuccessModal('Nomor VA berhasil disalin!');
 };
 

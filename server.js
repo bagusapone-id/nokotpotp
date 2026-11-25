@@ -16,6 +16,7 @@ const withdrawalRoutes = require('./src/routes/withdrawalRoutes');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+app.post('/api/deposit/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

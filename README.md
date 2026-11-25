@@ -18,6 +18,9 @@ Isi `.env` dengan kredensial Firebase project kamu:
 - `TELEGRAM_BOT_TOKEN` � Token bot Telegram dari BotFather
 - `ADMIN_CHAT_ID` � Chat ID Telegram admin untuk notifikasi
 - `ADMIN_SECRET_UID` � UID user Firebase yang dijadikan admin
+- `KASERA_API_KEY` � API key Kasera Pay (jangan letakkan di frontend)
+- `KASERA_WEBHOOK_SECRET` � signing secret webhook Kasera Pay
+- `KASERA_PAY_BASE_URL` � opsional; default `https://pay.kasera.id`
 
 ### Deploy ke Vercel
 
@@ -32,9 +35,16 @@ Tambahkan Environment Variables berikut di **Vercel Project Settings → Environ
 - `TELEGRAM_BOT_TOKEN`
 - `ADMIN_CHAT_ID`
 - `ADMIN_SECRET_UID`
-- `PAKASIR_SLUG`
-- `PAKASIR_API_KEY`
-- `PAKASIR_WEBHOOK_SECRET`
+- `KASERA_API_KEY` — API key Kasera Pay; simpan di server saja.
+- `KASERA_WEBHOOK_SECRET` — signing secret webhook dari dashboard Kasera Pay.
+
+Atur URL webhook Kasera Pay ke `https://<domain-kamu>/api/deposit/webhook`. Hapus variabel gateway lama dari `.env` dan Vercel; semua pembayaran baru dan pengecekan status sekarang menggunakan Kasera Pay.
+
+Checkout mengambil metode dan batas nominal langsung dari API Kasera, lalu hanya menawarkan QRIS, Virtual Account bank, dan DANA/OVO/ShopeePay/i.saku. E-wallet saat ini berstatus direncanakan di dokumentasi Kasera, jadi baru muncul jika sudah diaktifkan dan dikembalikan oleh API akun.
+
+Schema API publik belum mencantumkan field `fee_bearer` pada create transaksi; opsi **Terima utuh** dijelaskan pada formulir permintaan pembayaran Kasera. Karena itu, aplikasi mengambil tarif per metode dari API lalu menambahkan biaya ke total yang dibebankan ke pembeli. Pembeli memilih satu metode sebelum create; server mengirim total tersebut sebagai `amount` dan memverifikasi `net` response sama persis dengan nominal deposit yang dikreditkan.
+
+Deposit di atas Rp 1.000.000 memerlukan email/nomor telepon pada akun serta tanggal pemenuhan yang ditampilkan sebelum pembayaran. Akun Kasera Pay yang belum menyelesaikan verifikasi juga memiliki batas awal transaksi kumulatif Rp 1.000.000.
 
 Jangan gunakan `FIREBASE_SERVICE_ACCOUNT_PATH` di Vercel kecuali file service account memang disertakan dengan aman pada build. Gunakan variabel service account di atas. Setelah mengubah variabel Vercel, buat deployment baru.
 

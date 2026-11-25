@@ -41,4 +41,18 @@ const depositCreateLimiter = rateLimit({
   },
 });
 
-module.exports = { registerLimiter, depositCreateLimiter };
+const depositMethodsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req.user && req.user.uid) || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'TOO_MANY_REQUESTS',
+      message: 'Terlalu banyak permintaan metode pembayaran. Coba lagi sebentar.',
+    });
+  },
+});
+
+module.exports = { registerLimiter, depositCreateLimiter, depositMethodsLimiter };

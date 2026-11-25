@@ -677,7 +677,7 @@
   <div class="card fu" style="width:100%;max-width:400px;max-height:92dvh;border-radius:14px;padding:0;display:flex;flex-direction:column;overflow:hidden">
 
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);flex-shrink:0">
-      <div class="tt3">Top-Up Saldo</div>
+      <div class="tt3">Top up</div>
       <button onclick="closeDepositModal()" class="btn btn-icon" style="width:28px;height:28px;border-radius:7px">
         <i class="fa-solid fa-xmark" style="font-size:12px"></i>
       </button>
@@ -687,7 +687,7 @@
 
       <!-- Step 1: Amount -->
       <div id="deposit-step-amount">
-        <p class="tb" style="margin:0 0 13px">Pilih atau masukkan nominal top-up:</p>
+        <p class="tb" style="margin:0 0 13px">Pilih nominal</p>
 
         <div id="deposit-event-banner" style="display:none;background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:11px 13px;margin-bottom:13px">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
@@ -702,7 +702,7 @@
         </div>
 
         <div id="deposit-preview" style="display:none;background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:10px 12px;margin-bottom:11px">
-          <div class="tl" style="margin-bottom:3px;color:var(--g-text)">Saldo yang akan kamu terima</div>
+          <div class="tl" style="margin-bottom:3px;color:var(--g-text)">Saldo masuk</div>
           <div style="display:flex;align-items:center;gap:7px">
             <span id="deposit-preview-orig" style="font-size:.875rem;color:var(--text3);text-decoration:line-through;font-family:var(--mono)"></span>
             <i class="fa-solid fa-arrow-right" style="font-size:9px;color:var(--text3)"></i>
@@ -720,8 +720,10 @@
 
         <div class="inp-wrap" style="margin-bottom:11px">
           <i class="inp-ico fa-solid fa-wallet"></i>
-          <input id="deposit-amount-input" class="inp" type="number" placeholder="Atau masukkan nominal" min="5000" step="1000" oninput="onDepositAmountInput(this.value)"/>
+          <input id="deposit-amount-input" class="inp" type="number" placeholder="Nominal lainnya" min="5000" max="10000000" step="1000" oninput="onDepositAmountInput(this.value)"/>
         </div>
+
+        <div id="deposit-delivery-terms" style="display:none;background:var(--sky-dim);border:1px solid var(--sky-bdr);border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:.75rem;color:var(--sky);line-height:1.55"></div>
 
         <div id="deposit-amount-alert" style="display:none;align-items:center;gap:7px;background:var(--rose-dim);border:1px solid var(--rose-bdr);border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:.8125rem;color:var(--rose)">
           <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0"></i><span></span>
@@ -735,28 +737,14 @@
       <!-- Step 2: Method -->
       <div id="deposit-step-method" style="display:none">
         <div style="background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:11px;margin-bottom:13px;text-align:center">
-          <div class="tl" style="color:var(--g-text);margin-bottom:3px">Nominal Top-Up</div>
+          <div class="tl" style="color:var(--g-text);margin-bottom:3px">Top up</div>
           <div id="deposit-selected-amount" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--g-text)">Rp 0</div>
         </div>
-        <p class="tb" style="margin:0 0 10px">Pilih metode pembayaran:</p>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:13px">
-          <button onclick="selectPaymentMethod('payment_link')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
-            <i class="fa-solid fa-link" style="font-size:12px;color:var(--text3);width:18px"></i>
-            <span style="flex:1;text-align:left">Payment Link</span>
-          </button>
-          <button onclick="selectPaymentMethod('qris')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
-            <i class="fa-solid fa-qrcode" style="font-size:12px;color:var(--text3);width:18px"></i>
-            <span style="flex:1;text-align:left">QRIS</span>
-          </button>
-          <button onclick="selectPaymentMethod('bni_va')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
-            <i class="fa-solid fa-building-columns" style="font-size:12px;color:var(--text3);width:18px"></i>
-            <span style="flex:1;text-align:left">BNI Virtual Account</span>
-          </button>
-          <button onclick="selectPaymentMethod('bri_va')" class="btn btn-ghost btn-full" style="height:46px;justify-content:flex-start;padding:0 14px">
-            <i class="fa-solid fa-building-columns" style="font-size:12px;color:var(--text3);width:18px"></i>
-            <span style="flex:1;text-align:left">BRI Virtual Account</span>
-          </button>
+        <p class="tb" style="margin:0 0 10px">Metode pembayaran</p>
+        <div id="deposit-payment-methods" style="display:flex;flex-direction:column;gap:6px;margin-bottom:13px">
+          <div class="tl" style="text-align:center;padding:12px">Memuat...</div>
         </div>
+        <div id="deposit-method-delivery-terms" style="display:none;background:var(--sky-dim);border:1px solid var(--sky-bdr);border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:.75rem;color:var(--sky);line-height:1.55"></div>
         <button onclick="backToAmount()" class="btn btn-ghost btn-full" style="height:38px">
           <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Kembali
         </button>
@@ -766,12 +754,12 @@
       <div id="deposit-step-payment" style="display:none">
         <div style="background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:9px;padding:11px;margin-bottom:13px;text-align:center">
           <div style="font-size:.8125rem;color:var(--amber);display:flex;align-items:center;justify-content:center;gap:5px">
-            <i class="fa-solid fa-hourglass-half"></i> Menunggu Pembayaran...
+            <i class="fa-solid fa-hourglass-half"></i> Menunggu pembayaran
           </div>
         </div>
         <div id="deposit-payment-instructions" style="background:var(--s2);border:1px solid var(--line);border-radius:9px;margin-bottom:13px"></div>
         <button onclick="backToMethodSelect()" class="btn btn-ghost btn-full" style="height:38px">
-          <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Pilih Metode Lain
+          <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Ganti metode
         </button>
       </div>
 
