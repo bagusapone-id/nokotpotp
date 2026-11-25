@@ -460,8 +460,8 @@ window.closeFeaturePromoModal = function() {
   const modal = document.getElementById("feature-promo-modal");
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
-  // Setelah promo ditutup, tampilkan info sistem cleanup akun
-  openAccountPolicyModal();
+  // Delay 400ms sebelum buka modal kedua biar tidak kaget
+  setTimeout(openAccountPolicyModal, 400);
 };
 
 function openAccountPolicyModal() {
