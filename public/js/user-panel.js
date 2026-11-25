@@ -460,12 +460,32 @@ window.closeFeaturePromoModal = function() {
   const modal = document.getElementById("feature-promo-modal");
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
+  // Setelah promo ditutup, tampilkan info sistem cleanup akun
+  openAccountPolicyModal();
+};
+
+function openAccountPolicyModal() {
+  const modal = document.getElementById("account-policy-modal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+window.closeAccountPolicyModal = function() {
+  const modal = document.getElementById("account-policy-modal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
 };
 
 document.addEventListener("keydown", event => {
   const modal = document.getElementById("feature-promo-modal");
   if (event.key === "Escape" && !modal.classList.contains("hidden")) {
     window.closeFeaturePromoModal();
+  }
+  const policyModal = document.getElementById("account-policy-modal");
+  if (event.key === "Escape" && policyModal && !policyModal.classList.contains("hidden")) {
+    window.closeAccountPolicyModal();
   }
   if (event.key === "Escape" && !mathChallengeModal.classList.contains("hidden")) {
     window.closeMathChallengeModal();
