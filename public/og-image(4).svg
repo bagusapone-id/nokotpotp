@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">NOKOTPOTP — Nomor Virtual WhatsApp &amp; Verifikasi OTP</title>
+  <desc id="desc">Platform nomor virtual untuk kebutuhan WhatsApp dan verifikasi OTP.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071321"/>
+      <stop offset=".58" stop-color="#0b1b2b"/>
+      <stop offset="1" stop-color="#102c36"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5df0bd"/>
+      <stop offset="1" stop-color="#16b981"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#142b3a"/>
+      <stop offset="1" stop-color="#0c1d2a"/>
+    </linearGradient>
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" fill="none" stroke="#b8f5df" stroke-opacity=".055" stroke-width="1"/>
+    </pattern>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="34"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <circle cx="1020" cy="120" r="190" fill="#18b981" opacity=".13" filter="url(#soft)"/>
+  <circle cx="210" cy="590" r="180" fill="#1dd6a0" opacity=".08" filter="url(#soft)"/>
+
+  <!-- Brand -->
+  <g transform="translate(88 78)">
+    <rect width="62" height="62" rx="17" fill="#103a36" stroke="#2dd6a0" stroke-opacity=".42"/>
+    <path d="M17 45V17l28 28V17" fill="none" stroke="url(#accent)" stroke-width="6.5" stroke-linecap="square" stroke-linejoin="miter"/>
+    <text x="80" y="41" fill="#f2fbf8" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="750" letter-spacing="-.8">NOKOTPOTP</text>
+  </g>
+
+  <!-- Main message -->
+  <g font-family="Inter,Arial,sans-serif">
+    <rect x="90" y="205" width="274" height="36" rx="18" fill="#103c37" stroke="#2dd6a0" stroke-opacity=".28"/>
+    <circle cx="111" cy="223" r="5" fill="#55e6b5"/>
+    <text x="128" y="229" fill="#9cebd0" font-size="15" font-weight="650" letter-spacing="1.4">NOMOR VIRTUAL &amp; OTP</text>
+
+    <text x="88" y="315" fill="#f5faf8" font-size="58" font-weight="760" letter-spacing="-2.4">Verifikasi jadi</text>
+    <text x="88" y="383" fill="#55e6b5" font-size="64" font-weight="780" letter-spacing="-2.8">lebih praktis.</text>
+    <text x="92" y="440" fill="#b4c5c9" font-size="23" font-weight="400">Nomor virtual WhatsApp dan layanan</text>
+    <text x="92" y="473" fill="#b4c5c9" font-size="23" font-weight="400">verifikasi OTP dalam satu tempat.</text>
+  </g>
+
+  <!-- Abstract verification interface -->
+  <g transform="translate(760 125)">
+    <rect x="62" y="0" width="290" height="410" rx="30" fill="#06111c" opacity=".55"/>
+    <rect x="48" y="14" width="290" height="410" rx="29" fill="url(#screen)" stroke="#426071" stroke-opacity=".72" stroke-width="1.5"/>
+    <rect x="155" y="27" width="76" height="6" rx="3" fill="#49616d"/>
+    <text x="78" y="83" fill="#eaf7f2" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="700">Verifikasi OTP</text>
+    <text x="78" y="111" fill="#8fa8ad" font-family="Inter,Arial,sans-serif" font-size="12">Kode verifikasi Anda</text>
+
+    <rect x="76" y="137" width="234" height="94" rx="17" fill="#102a35" stroke="#285346"/>
+    <g fill="#f3fbf8" font-family="Inter,Arial,sans-serif" font-size="27" font-weight="700" text-anchor="middle">
+      <text x="111" y="194">•</text><text x="151" y="194">•</text><text x="191" y="194">•</text>
+      <text x="231" y="194">•</text><text x="271" y="194">•</text>
+    </g>
+    <g fill="#5be5b5">
+      <rect x="93" y="250" width="200" height="48" rx="13"/>
+    </g>
+    <text x="193" y="280" fill="#06251d" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="750" text-anchor="middle">KODE DITERIMA</text>
+
+    <g transform="translate(76 324)">
+      <circle cx="18" cy="18" r="18" fill="#123b36"/>
+      <path d="M10 18l6 6 11-13" fill="none" stroke="#5be5b5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="49" y="15" fill="#e4f2ed" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="650">Proses verifikasi</text>
+      <text x="49" y="34" fill="#8fa8ad" font-family="Inter,Arial,sans-serif" font-size="12">Lebih ringkas dan mudah</text>
+    </g>
+  </g>
+
+  <!-- Accent strokes -->
+  <path d="M1090 498h36" stroke="#55e6b5" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  <path d="M1108 480v36" stroke="#55e6b5" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  <text x="90" y="570" fill="#78949b" font-family="Inter,Arial,sans-serif" font-size="14" letter-spacing="1.1">NOKOTPOTP</text>
+  <text x="1110" y="570" fill="#78949b" font-family="Inter,Arial,sans-serif" font-size="14" text-anchor="end">NOMOR VIRTUAL • VERIFIKASI OTP</text>
+</svg>
