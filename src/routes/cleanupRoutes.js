@@ -31,7 +31,7 @@ router.get('/cleanup', async (req, res) => {
   }
 
   const now = Date.now();
-  const DEPOSIT_TTL = 24 * 60 * 60 * 1000;  // 24 jam
+  const DEPOSIT_TTL = 48 * 60 * 60 * 1000;  // 48 jam (cron jalan 1x/hari)
   const ORDER_TTL   = 60 * 60 * 1000;        // 1 jam setelah cancel/refund
 
   const result = {
