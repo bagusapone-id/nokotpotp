@@ -620,24 +620,24 @@
     <button type="button" class="btn btn-icon btn-ghost promo-close" aria-label="Tutup" onclick="closeAccountPolicyModal()">
       <i class="fa-solid fa-xmark"></i>
     </button>
-    <div style="width:36px;height:36px;border-radius:9px;background:var(--amber-dim);border:1px solid var(--amber-bdr);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
-      <i class="fa-solid fa-circle-info" style="color:var(--amber);font-size:15px"></i>
-    </div>
     <h2 id="account-policy-title" class="promo-title">Kebijakan akun aktif</h2>
-    <p class="promo-description" style="margin-bottom:12px">Untuk menjaga kualitas layanan, akun yang tidak memiliki aktivitas akan dihapus otomatis.</p>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 11px;border-radius:9px;background:var(--s2);border:1px solid var(--line)">
-        <i class="fa-solid fa-circle-xmark" style="color:var(--rose);font-size:13px;margin-top:1px;flex-shrink:0"></i>
-        <span style="font-size:.8rem;color:var(--text2);line-height:1.55">Akun tanpa deposit berhasil, pembelian nomor, atau saldo aktif selama <strong style="color:var(--text)">1×24 jam</strong> akan dihapus otomatis.</span>
+    <p class="promo-description">Akun tanpa aktivitas akan dihapus otomatis setiap hari.</p>
+    <div class="promo-options">
+      <div class="promo-option" style="cursor:default">
+        <span class="promo-option-icon"><i class="fa-solid fa-circle-xmark" style="color:#f85149"></i></span>
+        <span class="promo-option-copy">
+          <span class="promo-option-title" style="display:block">Akun dihapus jika</span>
+          <span class="promo-option-description">Tidak ada deposit berhasil, pembelian nomor, atau saldo aktif selama 1×24 jam.</span>
+        </span>
       </div>
-      <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 11px;border-radius:9px;background:var(--g-dim);border:1px solid var(--g-bdr)">
-        <i class="fa-solid fa-circle-check" style="color:var(--g-text);font-size:13px;margin-top:1px;flex-shrink:0"></i>
-        <span style="font-size:.8rem;color:var(--text2);line-height:1.55">Akun <strong style="color:var(--text)">aman</strong> jika sudah pernah deposit berhasil, membeli nomor, atau memiliki saldo.</span>
+      <div class="promo-option" style="cursor:default">
+        <span class="promo-option-icon"><i class="fa-solid fa-circle-check"></i></span>
+        <span class="promo-option-copy">
+          <span class="promo-option-title" style="display:block">Akun aman jika</span>
+          <span class="promo-option-description">Sudah pernah deposit berhasil, membeli nomor, atau memiliki saldo.</span>
+        </span>
       </div>
     </div>
-    <button onclick="closeAccountPolicyModal()" class="btn btn-primary btn-full" style="height:40px;margin-top:14px;font-size:.875rem">
-      Mengerti
-    </button>
   </div>
 </div>
 
