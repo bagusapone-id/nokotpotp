@@ -1315,7 +1315,7 @@ function updateDepositPreview(amount) {
     finalEl.textContent = formatRupiah(amount);
     if (badgeEl) badgeEl.style.display = 'none';
   }
-  preview.style.display = 'flex';
+  preview.style.display = 'block';
 }
 
 window.proceedToMethod = async function() {
