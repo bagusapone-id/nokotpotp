@@ -720,16 +720,6 @@
       <div id="deposit-step-amount">
         <p class="tb" style="margin:0 0 13px">Pilih nominal <span style="color:var(--text3);font-size:.6875rem">· Min. Rp 5.000</span></p>
 
-        <div id="deposit-preview" style="display:none;background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:10px 12px;margin-bottom:11px">
-          <div class="tl" style="margin-bottom:3px;color:var(--g-text)">Saldo masuk</div>
-          <div style="display:flex;align-items:center;gap:7px">
-            <span id="deposit-preview-orig" style="font-size:.875rem;color:var(--text3);text-decoration:line-through;font-family:var(--mono)"></span>
-            <i class="fa-solid fa-arrow-right" style="font-size:9px;color:var(--text3)"></i>
-            <span id="deposit-preview-final" style="font-size:1.1rem;font-weight:700;color:var(--g-text);font-family:var(--mono)"></span>
-            <span style="background:var(--amber-dim);color:var(--amber);font-size:.625rem;font-weight:700;padding:2px 6px;border-radius:20px;border:1px solid var(--amber-bdr)">2×</span>
-          </div>
-        </div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px">
           <button onclick="selectDepositAmount(5000)" data-amount="5000" class="deposit-chip btn btn-ghost" style="height:46px;font-size:.875rem;font-weight:600">Rp 5.000</button>
           <button onclick="selectDepositAmount(15000)" data-amount="15000" class="deposit-chip btn btn-ghost" style="height:46px;font-size:.875rem;font-weight:600">Rp 15.000</button>
@@ -748,14 +738,25 @@
           <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0"></i><span></span>
         </div>
 
-        <!-- Event banner — di bawah input, muncul jika event aktif -->
+        <!-- Preview saldo masuk — muncul saat event aktif + nominal diisi -->
+        <div id="deposit-preview" style="display:none;background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:10px 12px;margin-bottom:11px">
+          <div class="tl" style="margin-bottom:5px;color:var(--g-text)">Saldo yang kamu dapat</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="deposit-preview-orig" style="font-size:.875rem;color:var(--text3);text-decoration:line-through;font-family:var(--mono)"></span>
+            <i class="fa-solid fa-arrow-right" style="font-size:9px;color:var(--text3)"></i>
+            <span id="deposit-preview-final" style="font-size:1.1rem;font-weight:700;color:var(--g-text);font-family:var(--mono)"></span>
+            <span style="background:var(--amber-dim);color:var(--amber);font-size:.625rem;font-weight:700;padding:2px 7px;border-radius:20px;border:1px solid var(--amber-bdr)">+100%</span>
+          </div>
+        </div>
+
+        <!-- Event banner — muncul jika event aktif -->
         <div id="deposit-event-banner" style="display:none;background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:12px 13px;margin-bottom:13px">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
             <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:11px"></i>
-            <span style="font-size:.8125rem;font-weight:800;color:var(--amber)">🎉 Event Bonus 100%</span>
+            <span style="font-size:.8125rem;font-weight:800;color:var(--amber)">🎉 Event Bonus +100%</span>
           </div>
           <div style="font-size:.8rem;color:var(--text2);line-height:1.6;margin-bottom:8px">
-            Top up min. <strong style="color:var(--amber)">Rp 25.000</strong>, saldo yang kamu dapat langsung <strong style="color:var(--amber)">2×</strong>.
+            Top up min. <strong style="color:var(--amber)">Rp 25.000</strong> dan saldo yang kamu terima langsung <strong style="color:var(--amber)">dobel (+100%)</strong>. Berlaku sekali per akun.
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">
             <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.2);border-radius:7px;padding:7px 10px">
