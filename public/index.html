@@ -713,7 +713,7 @@
       <!-- Strip otomatis — tampil di semua step -->
       <div style="display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:8px;background:var(--g-dim);border:1px solid var(--g-bdr);margin-bottom:14px;font-size:.6875rem;color:var(--g-text);line-height:1.5">
         <i class="fa-solid fa-circle-check" style="font-size:10px;flex-shrink:0"></i>
-        Saldo masuk otomatis setelah bayar — tidak perlu konfirmasi atau hubungi admin.
+        Setelah pembayaran berhasil, saldo masuk otomatis. Tidak perlu konfirmasi atau hubungi admin.
       </div>
 
       <!-- Step 1: Amount -->
@@ -750,18 +750,26 @@
 
         <!-- Event banner — di bawah input, muncul jika event aktif -->
         <div id="deposit-event-banner" style="display:none;background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:12px 13px;margin-bottom:13px">
-          <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
             <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:11px"></i>
-            <span style="font-size:.8125rem;font-weight:800;color:var(--amber)">🎉 Event Bonus Deposit 100%</span>
+            <span style="font-size:.8125rem;font-weight:800;color:var(--amber)">🎉 Event Bonus 100%</span>
           </div>
-          <div style="font-size:.8rem;color:var(--text2);line-height:1.65;margin-bottom:6px">
-            Top up minimal <strong style="color:var(--amber)">Rp 25.000</strong> dan saldo yang kamu terima langsung <strong style="color:var(--amber)">dobel (2×)</strong>.<br/>
-            Contoh: top up <strong style="color:var(--text)">Rp 25.000</strong> → dapat <strong style="color:var(--g-text)">Rp 50.000</strong>, top up <strong style="color:var(--text)">Rp 100.000</strong> → dapat <strong style="color:var(--g-text)">Rp 200.000</strong>.
+          <div style="font-size:.8rem;color:var(--text2);line-height:1.6;margin-bottom:8px">
+            Top up min. <strong style="color:var(--amber)">Rp 25.000</strong>, saldo yang kamu dapat langsung <strong style="color:var(--amber)">2×</strong>.
           </div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:.6875rem;color:#92400e;background:rgba(0,0,0,.15);border-radius:6px;padding:5px 8px">
-            <i class="fa-solid fa-circle-info" style="font-size:10px;flex-shrink:0"></i>
-            Bonus hanya berlaku <strong>1 kali per akun</strong> selama event masih aktif.
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px">
+            <div style="background:rgba(0,0,0,.2);border-radius:7px;padding:7px 9px;text-align:center">
+              <div style="font-size:.625rem;color:#92400e;margin-bottom:2px">Top up</div>
+              <div style="font-family:var(--mono);font-size:.8125rem;font-weight:700;color:var(--text)">Rp 25.000</div>
+              <div style="font-size:.6875rem;color:var(--g-text);font-weight:700;margin-top:2px">→ Rp 50.000</div>
+            </div>
+            <div style="background:rgba(0,0,0,.2);border-radius:7px;padding:7px 9px;text-align:center">
+              <div style="font-size:.625rem;color:#92400e;margin-bottom:2px">Top up</div>
+              <div style="font-family:var(--mono);font-size:.8125rem;font-weight:700;color:var(--text)">Rp 100.000</div>
+              <div style="font-size:.6875rem;color:var(--g-text);font-weight:700;margin-top:2px">→ Rp 200.000</div>
+            </div>
           </div>
+          <div style="font-size:.6875rem;color:#92400e">Bonus berlaku 1× per akun selama event aktif.</div>
         </div>
 
         <button onclick="proceedToMethod()" class="btn btn-primary btn-full btn-h">
