@@ -710,21 +710,15 @@
 
     <div style="flex:1;overflow-y:auto;padding:16px">
 
+      <!-- Strip otomatis — tampil di semua step -->
+      <div style="display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:8px;background:var(--g-dim);border:1px solid var(--g-bdr);margin-bottom:14px;font-size:.6875rem;color:var(--g-text);line-height:1.5">
+        <i class="fa-solid fa-circle-check" style="font-size:10px;flex-shrink:0"></i>
+        Saldo masuk otomatis setelah bayar — tidak perlu konfirmasi atau hubungi admin.
+      </div>
+
       <!-- Step 1: Amount -->
       <div id="deposit-step-amount">
         <p class="tb" style="margin:0 0 13px">Pilih nominal</p>
-
-        <div id="deposit-event-banner" style="display:none;background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:11px 13px;margin-bottom:13px">
-          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
-            <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:11px"></i>
-            <span style="font-size:.8125rem;font-weight:700;color:var(--amber)">🎉 Bonus Deposit 100%</span>
-          </div>
-          <div style="font-size:.75rem;color:#a16207;line-height:1.6">
-            Deposit minimal <strong style="color:var(--amber)">Rp25.000</strong> dan dapatkan bonus saldo <strong style="color:var(--amber)">100%</strong>.<br/>
-            Rp25.000 → <strong>Rp50.000</strong> &nbsp;·&nbsp; Rp100.000 → <strong>Rp200.000</strong>
-          </div>
-          <div style="font-size:.6875rem;color:#92400e;margin-top:4px">Berlaku 1× per akun selama event aktif.</div>
-        </div>
 
         <div id="deposit-preview" style="display:none;background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:10px 12px;margin-bottom:11px">
           <div class="tl" style="margin-bottom:3px;color:var(--g-text)">Saldo masuk</div>
@@ -754,6 +748,22 @@
           <i class="fa-solid fa-circle-exclamation" style="flex-shrink:0"></i><span></span>
         </div>
 
+        <!-- Event banner — di bawah input, muncul jika event aktif -->
+        <div id="deposit-event-banner" style="display:none;background:var(--amber-dim);border:1px solid var(--amber-bdr);border-radius:10px;padding:12px 13px;margin-bottom:13px">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+            <i class="fa-solid fa-bolt" style="color:var(--amber);font-size:11px"></i>
+            <span style="font-size:.8125rem;font-weight:800;color:var(--amber)">🎉 Event Bonus Deposit 100%</span>
+          </div>
+          <div style="font-size:.8rem;color:var(--text2);line-height:1.65;margin-bottom:6px">
+            Top up minimal <strong style="color:var(--amber)">Rp 25.000</strong> dan saldo yang kamu terima langsung <strong style="color:var(--amber)">dobel (2×)</strong>.<br/>
+            Contoh: top up <strong style="color:var(--text)">Rp 25.000</strong> → dapat <strong style="color:var(--g-text)">Rp 50.000</strong>, top up <strong style="color:var(--text)">Rp 100.000</strong> → dapat <strong style="color:var(--g-text)">Rp 200.000</strong>.
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:.6875rem;color:#92400e;background:rgba(0,0,0,.15);border-radius:6px;padding:5px 8px">
+            <i class="fa-solid fa-circle-info" style="font-size:10px;flex-shrink:0"></i>
+            Bonus hanya berlaku <strong>1 kali per akun</strong> selama event masih aktif.
+          </div>
+        </div>
+
         <button onclick="proceedToMethod()" class="btn btn-primary btn-full btn-h">
           Lanjutkan <i class="fa-solid fa-arrow-right" style="font-size:11px"></i>
         </button>
@@ -761,10 +771,6 @@
 
       <!-- Step 2: Method -->
       <div id="deposit-step-method" style="display:none">
-        <div style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:8px;background:var(--g-dim);border:1px solid var(--g-bdr);margin-bottom:11px;font-size:.6875rem;color:var(--g-text);line-height:1.5">
-          <i class="fa-solid fa-circle-check" style="font-size:11px;flex-shrink:0"></i>
-          Setelah pembayaran berhasil, saldo masuk otomatis. Tidak perlu konfirmasi atau hubungi admin.
-        </div>
         <div style="background:var(--g-dim);border:1px solid var(--g-bdr);border-radius:9px;padding:11px;margin-bottom:13px;text-align:center">
           <div class="tl" style="color:var(--g-text);margin-bottom:3px">Top up</div>
           <div id="deposit-selected-amount" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--g-text)">Rp 0</div>
