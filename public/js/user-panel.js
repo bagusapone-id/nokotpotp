@@ -1293,16 +1293,29 @@ function updateDepositPreview(amount) {
   const preview = document.getElementById('deposit-preview');
   const origEl  = document.getElementById('deposit-preview-orig');
   const finalEl = document.getElementById('deposit-preview-final');
+  const badgeEl = document.getElementById('deposit-preview-badge');
   if (!preview || !origEl || !finalEl) return;
+
+  if (!amount || amount < 1) {
+    preview.style.display = 'none';
+    return;
+  }
+
   const eventActive = window._depositEventActive;
   const eventMin    = window._depositEventMin || 25000;
-  if (eventActive && amount >= eventMin) {
+  const isBonus     = eventActive && amount >= eventMin;
+
+  if (isBonus) {
     origEl.textContent  = formatRupiah(amount);
+    origEl.style.display = 'inline';
     finalEl.textContent = formatRupiah(amount * 2);
-    preview.style.display = 'block';
+    if (badgeEl) badgeEl.style.display = 'inline-flex';
   } else {
-    preview.style.display = 'none';
+    origEl.style.display = 'none';
+    finalEl.textContent = formatRupiah(amount);
+    if (badgeEl) badgeEl.style.display = 'none';
   }
+  preview.style.display = 'flex';
 }
 
 window.proceedToMethod = async function() {
