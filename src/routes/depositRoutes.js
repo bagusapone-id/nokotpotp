@@ -118,6 +118,14 @@ router.post('/create', authUser, depositCreateLimiter, async (req, res) => {
       external_id: orderId,
       payment_methods: [selectedMethod.code],
       customer: { name: customerName },
+      order_items: [
+        {
+          name: 'Top-Up Saldo Nokos OTP',
+          price: selectedMethod.total_amount,
+          quantity: 1,
+          sku: `deposit-${depositId}`,
+        },
+      ],
     };
     if (req.user.email) transactionInput.customer.email = req.user.email;
     if (req.user.phone_number) transactionInput.customer.phone = req.user.phone_number;
