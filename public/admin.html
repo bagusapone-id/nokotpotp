@@ -204,6 +204,10 @@
           <i class="fa-solid fa-rotate-left" style="font-size:11px;margin-right:4px"></i>Refund Semua (<span id="active-order-count">0</span>)
         </button>
       </div>
+      <div class="inp-wrap" style="margin-bottom:10px">
+        <i class="inp-ico fa-solid fa-magnifying-glass"></i>
+        <input id="order-search" class="inp" type="search" placeholder="Cari username, nomor HP, negara, order ID..." autocomplete="off" oninput="renderOrders()" aria-label="Cari order"/>
+      </div>
       <div id="order-list" style="display:flex;flex-direction:column;gap:10px">
         <div style="text-align:center;padding:48px 0;color:#1e293b">
           <i class="fa-solid fa-inbox" style="font-size:1.75rem;display:block;margin-bottom:10px;color:#0f172a"></i>
@@ -466,6 +470,10 @@
     <div id="tab-withdrawals" style="display:none">
       <div style="padding:12px;margin-bottom:12px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.16);border-radius:12px">
         <div style="font-size:.75rem;color:#94a3b8;line-height:1.5">Riwayat penarikan disimpan sebagai catatan operasional dan tidak dapat dihapus massal dari panel ini.</div>
+      </div>
+      <div class="inp-wrap" style="margin-bottom:10px">
+        <i class="inp-ico fa-solid fa-magnifying-glass"></i>
+        <input id="withdrawal-search" class="inp" type="search" placeholder="Cari username, nominal, bank, nomor rekening..." autocomplete="off" oninput="filterWithdrawals()" aria-label="Cari penarikan"/>
       </div>
       <div id="withdrawal-list" style="display:flex;flex-direction:column;gap:10px">
         <div class="sk" style="height:100px"></div>

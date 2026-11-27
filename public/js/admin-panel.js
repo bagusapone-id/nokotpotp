@@ -5,6 +5,7 @@ let countrySearchQueryAdmin = "";
 let withdrawalRefreshTimer = null;
 let currentAdminTab = "orders";
 let withdrawalsLoadInProgress = false;
+let allWithdrawalsData = [];
 let usersLoadInProgress = false;
 let auditLoadInProgress = false;
 let eventStatusLoadInProgress = false;
@@ -176,7 +177,14 @@ async function loadOrders() {
 
 function renderOrders() {
   const container = document.getElementById("order-list");
-  const entries   = Object.entries(ordersData).slice(0, 200);
+  const q = (document.getElementById("order-search")?.value || "").trim().toLowerCase();
+  const entries = Object.entries(ordersData)
+    .filter(([id, o]) => {
+      if (!q) return true;
+      return [id, o.username, o.phone_number, o.country_name, o.country_key]
+        .some(v => String(v || "").toLowerCase().includes(q));
+    })
+    .slice(0, 200);
   document.getElementById("order-count").textContent = entries.length;
   const activeCount = Object.keys(ordersData).length;
   document.getElementById("active-order-count").textContent = activeCount;
@@ -582,7 +590,8 @@ async function loadWithdrawals() {
     const res = await adminFetch("/api/admin/withdrawals");
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.message || "Gagal memuat penarikan.");
-    renderWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
+    allWithdrawalsData = Array.isArray(data.withdrawals) ? data.withdrawals : [];
+    renderWithdrawals(allWithdrawalsData);
   } catch (err) {
     document.getElementById("withdrawal-count").textContent = "!";
     container.textContent = err.message || "Gagal memuat permintaan penarikan.";
@@ -590,6 +599,16 @@ async function loadWithdrawals() {
     withdrawalsLoadInProgress = false;
   }
 }
+
+window.filterWithdrawals = function() {
+  const q = (document.getElementById("withdrawal-search")?.value || "").trim().toLowerCase();
+  if (!q) { renderWithdrawals(allWithdrawalsData); return; }
+  const filtered = allWithdrawalsData.filter(item =>
+    [item.username, item.bank, item.account_number, item.withdrawal_id, String(item.amount || "")]
+      .some(v => String(v || "").toLowerCase().includes(q))
+  );
+  renderWithdrawals(filtered);
+};
 
 function renderWithdrawals(withdrawals) {
   const container = document.getElementById("withdrawal-list");
