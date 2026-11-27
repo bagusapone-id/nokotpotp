@@ -650,12 +650,18 @@ window.processWithdrawal = async function(uid, withdrawalId, action, amount) {
   const complete = action === "complete";
   const confirmed = complete
     ? await Dialog.confirm("Konfirmasi penarikan?", "Pastikan transfer sebesar <strong style=\"color:#34d399\">" + amountText + "</strong> sudah dilakukan ke rekening tujuan.")
-    : await Dialog.confirmDanger("Tolak penarikan?", "Saldo sebesar <strong style=\"color:#34d399\">" + amountText + "</strong> akan dikembalikan ke akun user.", "Ya, Tolak & Refund");
+    : await Dialog.confirmDanger("Tolak penarikan?",
+        "Saldo sebesar <strong style=\"color:#34d399\">" + amountText + "</strong> akan dikembalikan ke akun user.<br/><br/>" +
+        "<label style=\"display:block;text-align:left;font-size:.75rem;color:#94a3b8;margin-bottom:5px\">Alasan penolakan (opsional)</label>" +
+        "<textarea id=\"reject-reason-input\" placeholder=\"cth: Nomor rekening tidak valid, nama tidak sesuai...\" style=\"width:100%;background:rgba(2,6,23,.8);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e2e8f0;font-family:inherit;font-size:.8125rem;padding:9px 10px;resize:none;outline:none;height:68px;box-sizing:border-box\"></textarea>",
+        "Ya, Tolak & Refund");
   if (!confirmed) return;
+  const reason = complete ? '' : (document.getElementById('reject-reason-input')?.value?.trim() || '');
 
   try {
     const res = await adminFetch("/api/admin/withdrawals/" + encodeURIComponent(uid) + "/" + encodeURIComponent(withdrawalId) + "/" + action, {
       method: "POST",
+      body: complete ? undefined : JSON.stringify({ reason }),
     });
     const data = await safeJson(res);
     if (!res.ok) {

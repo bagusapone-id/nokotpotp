@@ -308,6 +308,15 @@ function renderHistory(withdrawals) {
     fee.className = 'history-meta';
     fee.textContent = `Biaya gratis · ${formatDate(withdrawal.created_at)}`;
     item.append(heading, destination, fee);
+
+    // Tampilkan alasan penolakan jika ada
+    if (withdrawal.status === 'REJECTED' && withdrawal.rejection_reason) {
+      const reason = document.createElement('div');
+      reason.className = 'history-meta';
+      reason.style.cssText = 'margin-top:5px;padding:6px 9px;border-radius:7px;background:var(--rose-dim);border:1px solid var(--rose-bdr);color:#ffa198';
+      reason.innerHTML = '<i class="fa-solid fa-circle-info" style="font-size:10px;margin-right:5px"></i>Alasan: ' + escapeHtml(withdrawal.rejection_reason);
+      item.append(reason);
+    }
     return item;
   }));
 }
@@ -326,6 +335,10 @@ function showMessage(message, isError = false) {
 
 function formatRupiah(value) {
   return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function formatDate(timestamp) {

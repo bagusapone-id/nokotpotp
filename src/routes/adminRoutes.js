@@ -96,6 +96,7 @@ router.post('/withdrawals/:uid/:withdrawalId/complete', authAdmin, async (req, r
 
 router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res) => {
   const { uid, withdrawalId } = req.params;
+  const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
   const requestRef = db.ref(`withdrawal_requests/${uid}/${withdrawalId}`);
   try {
     const requestSnap = await requestRef.once('value');
@@ -112,6 +113,7 @@ router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res
       if (!request || !['PENDING', 'REJECTING'].includes(request.status)) return;
       request.status = 'REJECTING';
       request.rejection_started_at = request.rejection_started_at || Date.now();
+      if (reason) request.rejection_reason = reason;
       return request;
     });
 
@@ -147,6 +149,7 @@ router.post('/withdrawals/:uid/:withdrawalId/reject', authAdmin, async (req, res
       current.status = 'REJECTED';
       current.processed_at = Date.now();
       current.processed_by = req.user.uid;
+      if (reason) current.rejection_reason = reason;
       return current;
     });
     if (!finishResult.committed && finishResult.snapshot.child('status').val() !== 'REJECTED') {
