@@ -729,6 +729,11 @@ window.switchTab = function(tab) {
   const searchInput = document.getElementById("country-search");
   if (searchInput) searchInput.value = "";
   renderCountryList();
+  // Scroll ke country list setelah render
+  requestAnimationFrame(() => {
+    const list = document.getElementById("country-list");
+    if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 };
 
 window.searchCountries = function(query) {
@@ -1703,9 +1708,19 @@ function renderNotifCarousel() {
         '<div style="font-size:.75rem;color:#94a3b8;line-height:1.45">'+n.message+'</div>' +
         dots +
       '</div>' +
+      '<button onclick="dismissNotif()" style="background:none;border:none;cursor:pointer;color:#475569;font-size:14px;padding:0;flex-shrink:0;margin-top:-1px;line-height:1" title="Tutup notifikasi"><i class="fa-solid fa-xmark"></i></button>' +
     '</div>';
   requestAnimationFrame(updateScrollPadding);
 }
+
+window.dismissNotif = function() {
+  _notifItems = [];
+  _notifIndex = 0;
+  if (_notifTimer) { clearInterval(_notifTimer); _notifTimer = null; }
+  const container = document.getElementById('notif-banners');
+  if (container) container.innerHTML = '';
+  updateScrollPadding();
+};
 
 function updateScrollPadding() {
   const notifEl = document.getElementById('notif-banners');
