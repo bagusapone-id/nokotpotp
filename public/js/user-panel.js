@@ -899,7 +899,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
       '</span>' +
     '</div>' +
     '<div style="display:flex;flex-direction:column;gap:7px">' +
-      '<button id="req-btn-" + orderId + "" class="btn btn-sky btn-full" style="height:34px;font-size:.75rem" onclick="doRequestOtpFor(\'' + orderId + '\')">' +
+      '<button id="req-btn-' + orderId + '" class="btn btn-sky btn-full" style="height:34px;font-size:.75rem" onclick="doRequestOtpFor(\'' + orderId + '\')">' +
         '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP (30s)' +
       '</button>' +
       '<button id="resend-btn-' + orderId + '" class="btn btn-amber btn-full" style="display:none;height:38px;font-size:.75rem" onclick="doResendOtpFor(\'' + orderId + '\')">' +
