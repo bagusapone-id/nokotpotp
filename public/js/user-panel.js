@@ -1445,14 +1445,18 @@ function renderPaymentInstructions(deposit) {
   if (paymentType === 'qr') {
     const qrString = deposit.payment.qr_string;
     container.innerHTML = `
-      <div style="text-align:center;padding:16px">
-        <div style="font-size:.8125rem;color:var(--text2);margin-bottom:12px">Scan QRIS untuk membayar</div>
-        <div style="background:#fff;padding:12px;border-radius:14px;display:inline-block;margin-bottom:12px">
-          <canvas id="qris-canvas"></canvas>
+      <div style="padding:16px">
+        <div style="font-size:.8125rem;color:var(--text2);margin-bottom:12px;text-align:center">Scan QRIS untuk membayar</div>
+        <div style="background:#fff;padding:12px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+          <canvas id="qris-canvas" style="display:block;max-width:100%;height:auto"></canvas>
         </div>
-        <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Total dibayar</div>
-        <div style="font-family:var(--mono);font-size:1.125rem;font-weight:700;color:var(--g-text);margin-bottom:8px">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
-        <div style="font-size:.7rem;color:var(--text3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px">
+          <div>
+            <div style="font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">Total dibayar</div>
+            <div style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--g-text)">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:var(--text3);text-align:center">
           <i class="fa-solid fa-clock" style="margin-right:3px"></i>
           Berlaku sampai ${new Date(expiresAt).toLocaleString('id-ID')}
         </div>
@@ -1460,12 +1464,13 @@ function renderPaymentInstructions(deposit) {
     `;
     const canvas = document.getElementById('qris-canvas');
     if (typeof QRCode !== 'undefined') {
+      const size = Math.min(container.offsetWidth - 56, 240);
       QRCode.toCanvas(canvas, qrString, {
-        width: 220, margin: 1,
+        width: size || 220, margin: 1,
         color: { dark: '#000000', light: '#ffffff' },
       }, err => { if (err) console.error('[QRIS]', err); });
     } else {
-      canvas.parentElement.innerHTML = '<div style="color:var(--rose);font-size:.75rem;padding:16px">Gagal load QR library</div>';
+      canvas.parentElement.innerHTML = '<div style="color:var(--rose);font-size:.75rem;padding:16px;text-align:center">Gagal load QR library</div>';
     }
 
   // ── Virtual Account / Payment Code ────────────────────────────────────
@@ -1476,11 +1481,11 @@ function renderPaymentInstructions(deposit) {
       <div style="padding:16px">
         <div style="font-size:.8125rem;color:var(--text2);margin-bottom:13px;text-align:center">${bankDisplay} Virtual Account</div>
         <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:10px">
-          <div style="font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Nomor VA</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <span style="font-family:var(--mono);font-size:1.125rem;font-weight:700;color:var(--text)">${paymentCode}</span>
-            <button onclick="copyVA()" class="btn btn-sm btn-sky">
-              <i class="fa-regular fa-copy" style="font-size:10px"></i> Salin
+          <div style="font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px">Nomor VA</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${paymentCode}</span>
+            <button onclick="copyVA()" class="btn btn-icon btn-sky" style="flex-shrink:0" title="Salin nomor VA">
+              <i class="fa-regular fa-copy" style="font-size:13px"></i>
             </button>
           </div>
         </div>
