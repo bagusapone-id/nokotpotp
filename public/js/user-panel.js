@@ -866,7 +866,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   const card = document.createElement("div");
   card.id = "order-card-" + orderId;
   card.className = "card fu";
-  card.style.cssText = "padding:14px";
+  card.style.cssText = "padding:12px;flex-shrink:0;width:260px";
   card.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
       '<div style="min-width:0;flex:1">' +
@@ -881,20 +881,20 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
       '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' +
         '<button onclick="copyOrderNumber(\'' + phoneNumber + '\')" class="btn btn-xs btn-sky"><i class="fa-regular fa-copy" style="font-size:10px"></i></button>' +
         '<div id="timer-pill-' + orderId + '" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:7px;background:var(--amber-dim);border:1px solid var(--amber-bdr)">' +
-          '<i class="fa-regular fa-clock" style="font-size:9px;color:#f59e0b"></i>' +
-          '<span id="timer-' + orderId + '" class="tm" style="font-size:.8rem;color:#fbbf24">05:00</span>' +
+          '<i class="fa-regular fa-clock" style="font-size:9px;color:var(--amber)"></i>' +
+          '<span id="timer-' + orderId + '" class="tm" style="font-size:.8rem;color:var(--amber)">05:00</span>' +
         '</div>' +
       '</div>' +
     '</div>' +
     // Kotak OTP � selalu tampil, berubah saat OTP masuk
-    '<div id="otp-display-' + orderId + '" style="background:rgba(2,6,23,.55);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
-      '<span class="tl" style="white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:4px"></i>Kode OTP</span>' +
+    '<div id="otp-display-' + orderId + '" style="background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
+      '<span style="font-size:.5625rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap"><i class="fa-solid fa-key" style="margin-right:3px"></i>OTP</span>' +
       '<span id="otp-val-' + orderId + '" style="font-size:.8125rem;color:#334155;font-style:italic">' +
         '<i class="fa-solid fa-spinner fa-spin" style="font-size:10px;margin-right:4px"></i>Menunggu OTP...' +
       '</span>' +
     '</div>' +
     '<div style="display:flex;flex-direction:column;gap:7px">' +
-      '<button id="req-btn-' + orderId + '" class="btn btn-sky btn-full" style="height:40px;font-size:.8125rem" onclick="doRequestOtpFor(\'' + orderId + '\')">' +
+      '<button id="req-btn-" + orderId + "" class="btn btn-sky btn-full" style="height:34px;font-size:.75rem" onclick="doRequestOtpFor(\'' + orderId + '\')">' +
         '<i class="fa-solid fa-paper-plane" style="font-size:11px"></i> Request OTP (30s)' +
       '</button>' +
       '<button id="resend-btn-' + orderId + '" class="btn btn-amber btn-full" style="display:none;height:38px;font-size:.75rem" onclick="doResendOtpFor(\'' + orderId + '\')">' +
@@ -907,8 +907,12 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
     '</div>';
   container.appendChild(card);
 
+  // Show wrapper
+  const wrapper = document.getElementById("active-orders-wrapper");
+  if (wrapper) wrapper.style.display = 'block';
+
   // Scroll ke card order yang baru
-  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' }), 100);
 
   // Init state
   orderStates[orderId] = {
@@ -949,6 +953,12 @@ function removeOrderCard(orderId) {
   }
   const card = document.getElementById("order-card-" + orderId);
   if (card) card.remove();
+  // Sembunyikan wrapper jika tidak ada order lagi
+  const container = document.getElementById("active-orders-container");
+  const wrapper = document.getElementById("active-orders-wrapper");
+  if (wrapper && container && container.children.length === 0) {
+    wrapper.style.display = 'none';
+  }
 }
 
 // ---- Timer per order ----
