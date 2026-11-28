@@ -543,13 +543,16 @@
         <input id="country-search" class="search-inp" type="search" placeholder="Cari negara atau layanan..." autocomplete="off" oninput="searchCountries(this.value)" aria-label="Cari negara atau layanan"/>
       </div>
 
-      <!-- Active orders — full width, di bawah search -->
-      <div id="active-orders-wrapper" style="display:none;padding:0 18px;margin-bottom:12px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-          <span style="width:6px;height:6px;border-radius:50%;background:var(--g-text);display:inline-block"></span>
-          <span style="font-size:.6875rem;font-weight:700;color:var(--text2);letter-spacing:.04em;text-transform:uppercase">Order Aktif</span>
+      <!-- Active orders — horizontal scroll di bawah search -->
+      <div id="active-orders-wrapper" style="display:none;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--g-text);flex-shrink:0;display:inline-block"></span>
+            <span style="font-size:.6875rem;font-weight:700;color:var(--text2);letter-spacing:.04em;text-transform:uppercase">Order Aktif</span>
+          </div>
+          <span id="active-orders-count" style="font-size:.625rem;font-weight:700;background:var(--g-dim);border:1px solid var(--g-bdr);color:var(--g-text);padding:2px 8px;border-radius:20px">0</span>
         </div>
-        <div id="active-orders-container" style="display:flex;flex-direction:column;gap:9px"></div>
+        <div id="active-orders-container" style="display:flex;gap:10px;padding:0 18px 4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch"></div>
       </div>
 
       <!-- Country list (2-col grid via CSS) -->

@@ -866,7 +866,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   const card = document.createElement("div");
   card.id = "order-card-" + orderId;
   card.className = "card fu";
-  card.style.cssText = "padding:14px";
+  card.style.cssText = "padding:14px;flex-shrink:0;width:calc(100vw - 72px);max-width:328px;scroll-snap-align:start";
   card.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
       '<div style="min-width:0;flex:1">' +
@@ -907,9 +907,11 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
     '</div>';
   container.appendChild(card);
 
-  // Show wrapper
+  // Show wrapper + update counter
   const wrapper = document.getElementById("active-orders-wrapper");
   if (wrapper) wrapper.style.display = 'block';
+  const counter = document.getElementById("active-orders-count");
+  if (counter && container) counter.textContent = container.children.length;
 
   // Scroll ke card order yang baru
   setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
@@ -959,6 +961,8 @@ function removeOrderCard(orderId) {
   if (wrapper && container && container.children.length === 0) {
     wrapper.style.display = 'none';
   }
+  const counter = document.getElementById("active-orders-count");
+  if (counter && container) counter.textContent = container.children.length;
 }
 
 // ---- Timer per order ----
