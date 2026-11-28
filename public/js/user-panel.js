@@ -1557,6 +1557,8 @@ window.copyVA = function() {
 function startDepositStatusCheck(depositId) {
   if (depositCheckInterval) clearInterval(depositCheckInterval);
   if (depositStatusListenerRef) depositStatusListenerRef.off();
+
+  // Primary: Firebase realtime — trigger saat webhook Kasera masuk
   depositStatusListenerRef = firebaseDB.ref('deposits/' + depositId);
   depositStatusListenerRef.on('value', snap => {
     const deposit = snap.val();
@@ -1566,19 +1568,20 @@ function startDepositStatusCheck(depositId) {
   }, error => {
     console.error('[deposit] realtime status listener error:', error.message);
   });
-  
+
+  // Backup: polling ke server setiap 30 detik — hanya jika Firebase listener miss
+  // Kasera rate limit: max 1x/detik per transaksi, jadi jangan poll terlalu sering
   depositCheckInterval = setInterval(async () => {
     try {
       const res = await apiFetch(`/api/deposit/status/${depositId}`);
       const data = await safeJson(res);
-      
       if (data.success && data.deposit.status === 'SUCCESS') {
         finishDepositSuccess(depositId, data.deposit);
       }
     } catch (err) {
       console.error('[deposit] status check error:', err);
     }
-  }, 5000);
+  }, 30000); // 30 detik — backup saja, Firebase listener yang utama
 }
 
 function finishDepositSuccess(depositId, deposit) {
