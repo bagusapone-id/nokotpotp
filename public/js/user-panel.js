@@ -1159,7 +1159,8 @@ function listenOrderById(orderId) {
       if (otpEl) {
         otpEl.style.background = "var(--green-dim)";
         otpEl.style.borderColor = "var(--green-bdr)";
-        otpEl.querySelector('.tl').style.color = "#34d399";
+        const otpLabel = otpEl.querySelector('.tl') || otpEl.querySelector('span');
+        if (otpLabel) otpLabel.style.color = "var(--g-text)";
       }
       if (otpVal) {
         otpVal.style.fontFamily = "'Geist Mono',monospace";
