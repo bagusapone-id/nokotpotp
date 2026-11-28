@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dynamic Island WebView</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Roboto", "Segoe UI", sans-serif;
+    }
+
+    .status-bar {
+      width: 100vw;
+      height: 100vh;
+      background-color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3.8vw;
+      user-select: none;
+    }
+
+    /* Jam kiri — proporsi 3.2vw sama dengan gambar */
+    .clock {
+      font-size: 3.2vw;
+      font-weight: 700;
+      color: #181818;
+      letter-spacing: -0.05vw;
+      font-variant-numeric: tabular-nums;
+      min-width: 14.5vw;
+    }
+
+    /* Pill Dynamic Island tengah — proporsi 57.6vw x 12.6vw */
+    .dynamic-island {
+      width: 57.6vw;
+      height: 12.6vw;
+      max-height: 82vh;
+      background-color: #161616;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9.6vw;
+      transition: transform 0.2s ease;
+    }
+
+    .island-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8vw;
+      border-radius: 50%;
+    }
+
+    .island-btn:active {
+      transform: scale(0.88);
+      opacity: 0.7;
+    }
+
+    .island-btn svg {
+      width: 2.4vw;
+      height: 2.4vw;
+    }
+
+    /* Baterai kanan — proporsi identik dengan gambar */
+    .battery-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 1vw;
+      min-width: 14.5vw;
+    }
+
+    .battery-text {
+      font-size: 3.2vw;
+      font-weight: 700;
+      color: #181818;
+      letter-spacing: -0.05vw;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .battery-icon {
+      display: flex;
+      align-items: center;
+    }
+
+    .battery-body {
+      width: 6.6vw;
+      height: 3.1vw;
+      border: 0.26vw solid #3c3c3c;
+      border-radius: 0.8vw;
+      padding: 0.26vw;
+      display: flex;
+      align-items: center;
+    }
+
+    .battery-level {
+      height: 100%;
+      width: 45%;
+      background-color: #3c3c3c;
+      border-radius: 0.4vw;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .battery-cap {
+      width: 0.36vw;
+      height: 1.1vw;
+      background-color: #3c3c3c;
+      border-radius: 0 0.2vw 0.2vw 0;
+      margin-left: 0.2vw;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+    .spinning {
+      animation: spin 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="status-bar">
+    <div class="clock" id="clock">08.30.00</div>
+
+    <div class="dynamic-island" id="dynamicIsland">
+      <button class="island-btn" id="btnRefresh" aria-label="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+      </button>
+
+      <button class="island-btn" id="btnExpand" aria-label="Expand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"/>
+          <polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/>
+          <line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+      </button>
+
+      <button class="island-btn" id="btnClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="battery-wrapper">
+      <span class="battery-text" id="batteryText">98%</span>
+      <div class="battery-icon">
+        <div class="battery-body">
+          <div class="battery-level" id="batteryLevel"></div>
+        </div>
+        <div class="battery-cap"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${h}.${m}.${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const batteryText = document.getElementById('batteryText');
+    const batteryLevel = document.getElementById('batteryLevel');
+
+    function renderBattery(level, charging) {
+      const pct = Math.round(level * 100);
+      batteryText.textContent = `${pct}%`;
+      batteryLevel.style.width = `${pct}%`;
+
+      if (charging) {
+        batteryLevel.style.backgroundColor = '#28a745';
+      } else if (pct <= 20) {
+        batteryLevel.style.backgroundColor = '#dc3545';
+      } else {
+        batteryLevel.style.backgroundColor = '#3c3c3c';
+      }
+    }
+
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then((battery) => {
+        renderBattery(battery.level, battery.charging);
+        battery.addEventListener('levelchange', () => renderBattery(battery.level, battery.charging));
+        battery.addEventListener('chargingchange', () => renderBattery(battery.level, battery.charging));
+      });
+    } else {
+      renderBattery(0.98, false);
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', function () {
+      const svg = this.querySelector('svg');
+      svg.classList.remove('spinning');
+      void svg.offsetWidth;
+      svg.classList.add('spinning');
+      if (window.Android && window.Android.onRefresh) window.Android.onRefresh();
+    });
+
+    document.getElementById('btnExpand').addEventListener('click', () => {
+      if (window.Android && window.Android.onExpand) window.Android.onExpand();
+    });
+
+    document.getElementById('btnClose').addEventListener('click', () => {
+      if (window.Android && window.Android.onClose) window.Android.onClose();
+    });
+  </script>
+</body>
+</html>
