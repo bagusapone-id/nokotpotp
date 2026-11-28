@@ -31,10 +31,10 @@
       --mono:'JetBrains Mono',monospace;
     }
 
-    .page{width:min(100%,400px);margin:0 auto;padding:0 0 100px}
+    .page{width:min(100%,400px);margin:0 auto;padding:66px 0 100px}
 
     /* Topbar */
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px}
+    .topbar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(100%,400px);z-index:30;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--bg);border-bottom:1px solid var(--line)}
     .topbar-left{display:flex;align-items:center;gap:10px}
     .back-btn{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--s1);display:flex;align-items:center;justify-content:center;color:var(--text2);text-decoration:none;font-size:13px;flex-shrink:0}
     .topbar-title{font-size:.9375rem;font-weight:700;color:var(--text)}

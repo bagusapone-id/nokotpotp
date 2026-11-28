@@ -221,9 +221,12 @@
 
     /* Topbar */
     .app-topbar{
+      position:fixed;top:0;left:50%;transform:translateX(-50%);
+      width:min(100%,400px);z-index:30;
       display:flex;align-items:center;justify-content:space-between;
-      padding:16px 18px 0;
+      padding:14px 18px;
       background:var(--bg);
+      border-bottom:1px solid var(--line);
     }
     .app-topbar-brand{display:flex;align-items:center;gap:8px}
     .app-topbar-dot{width:7px;height:7px;border-radius:50%;background:var(--g-text)}
@@ -508,7 +511,7 @@
   <div id="notif-banners" style="display:flex;flex-direction:column;gap:5px;padding:0 18px;margin-top:6px"></div>
 
   <!-- Scroll area -->
-  <div style="flex:1;overflow-y:auto;padding-bottom:80px">
+  <div style="flex:1;overflow-y:auto;padding-top:62px;padding-bottom:80px">
 
     <!-- SHOP -->
     <div id="shop-section">
