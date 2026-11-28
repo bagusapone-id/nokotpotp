@@ -533,11 +533,8 @@
 
       <div class="h-line"></div>
 
-      <!-- Tabs segmented -->
-      <div class="seg-tabs">
-        <button id="tab-indo" onclick="switchTab('indo')" class="seg-tab active">🇮🇩 Nokos Indo</button>
-        <button id="tab-luar" onclick="switchTab('luar')" class="seg-tab"><i class="fa-solid fa-earth-asia" style="font-size:11px"></i> Nokos Luar</button>
-      </div>
+      <!-- Tabs segmented — rendered dynamically by JS from Firebase tabs/ -->
+      <div id="tab-container" class="seg-tabs" style="overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch"></div>
 
       <!-- Search -->
       <div class="search-wrap">

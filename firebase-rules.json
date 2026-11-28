@@ -49,6 +49,11 @@
       ".write": "false"
     },
 
+    "tabs": {
+      ".read": "auth !== null",
+      ".write": "false"
+    },
+
     "phone_stocks": {
       ".read": "false",
       ".write": "false"

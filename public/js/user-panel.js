@@ -497,6 +497,7 @@ function cleanupListeners() {
     balanceListenerRef,
     connectionListenerRef,
     countriesListenerRef,
+    tabsListenerRef,
     notificationsListenerRef,
     banListenerRef,
     depositEventListenerRef,
@@ -507,6 +508,7 @@ function cleanupListeners() {
   balanceListenerRef = null;
   connectionListenerRef = null;
   countriesListenerRef = null;
+  tabsListenerRef = null;
   notificationsListenerRef = null;
   banListenerRef = null;
   depositEventListenerRef = null;
@@ -620,12 +622,39 @@ function setupBalanceListener() {
 
 // ---- Countries + Stock ----
 let countriesData = {};
+let tabsData = {};
+let tabsListenerRef = null;
 let stockCounts = {};
 let countrySearchQuery = "";
 let stockSummaryLoadInProgress = false;
 let stockSummaryLastError = "";
 
 function setupCountriesAndStockListener() {
+  // Listen to tabs realtime
+  tabsListenerRef = firebaseDB.ref("tabs");
+  tabsListenerRef.on("value", (snap) => {
+    tabsData = snap.val() || {};
+    // If no tabs in DB yet, provide defaults so the UI still works
+    if (!Object.keys(tabsData).length) {
+      tabsData = {
+        indo: { name: "Nokos Indo", emoji: "🇮🇩", order: 0 },
+        luar: { name: "Nokos Luar", emoji: "🌍", order: 1 },
+      };
+    }
+    renderTabButtons();
+    renderCountryList();
+  }, error => {
+    // Fallback to defaults on error
+    if (!Object.keys(tabsData).length) {
+      tabsData = {
+        indo: { name: "Nokos Indo", emoji: "🇮🇩", order: 0 },
+        luar: { name: "Nokos Luar", emoji: "🌍", order: 1 },
+      };
+      renderTabButtons();
+    }
+    console.error("[tabs] listener error:", error.message);
+  });
+
   countriesListenerRef = firebaseDB.ref("countries");
   countriesListenerRef.on("value", (snap) => {
     countriesData = snap.val() || {};
@@ -639,6 +668,24 @@ function setupCountriesAndStockListener() {
       if (document.visibilityState !== "hidden") loadStockCounts();
     }, 5000);
   }
+}
+
+function renderTabButtons() {
+  const container = document.getElementById("tab-container");
+  if (!container) return;
+  const entries = Object.entries(tabsData).sort((a, b) => Number(a[1].order || 0) - Number(b[1].order || 0));
+  if (!entries.length) return;
+
+  // If currentTab is not in the new tab list, default to first tab
+  if (!tabsData[currentTab]) {
+    currentTab = entries[0][0];
+  }
+
+  container.innerHTML = entries.map(([id, t]) => {
+    const label = (t.emoji ? t.emoji + " " : "") + (t.name || id);
+    const isActive = id === currentTab;
+    return '<button id="tab-' + id + '" onclick="switchTab(\'' + id.replace(/'/g, "\\'") + '\')" class="seg-tab' + (isActive ? ' active' : '') + '">' + label + '</button>';
+  }).join("");
 }
 
 async function loadStockCounts() {
@@ -671,12 +718,12 @@ function getStockCount(countryKey) {
 
 window.switchTab = function(tab) {
   currentTab = tab;
-  const indo = document.getElementById("tab-indo");
-  const luar = document.getElementById("tab-luar");
-  if (tab === "indo") {
-    indo.classList.add("active"); luar.classList.remove("active");
-  } else {
-    luar.classList.add("active"); indo.classList.remove("active");
+  // Update active state on dynamically generated buttons
+  const container = document.getElementById("tab-container");
+  if (container) {
+    container.querySelectorAll(".seg-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.id === "tab-" + tab);
+    });
   }
   countrySearchQuery = "";
   const searchInput = document.getElementById("country-search");

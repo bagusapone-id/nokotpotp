@@ -1,6 +1,7 @@
 // ADMIN PANEL
 let adminUser = null, adminToken = null, currentStockTab = "indo";
 let stockData = {}, countriesData = {}, ordersData = {};
+let tabsData = {};
 let countrySearchQueryAdmin = "";
 let withdrawalRefreshTimer = null;
 let currentAdminTab = "orders";
@@ -127,7 +128,8 @@ window.showAdminTab = function(tab) {
   const navEl = document.getElementById("nav-"+tab);
   if (navEl) navEl.classList.add("active");
   if (tab === 'orders') loadOrders();
-  if (tab === 'stock') loadStock();
+  if (tab === 'stock') { loadTabs(); loadStock(); }
+  if (tab === 'countries') loadTabs();
   if (tab === 'users') loadUsers();
   if (tab === 'notifications') loadEventStatus();
   if (tab === 'withdrawals') loadWithdrawals();
@@ -437,10 +439,13 @@ window.renderStockList = function() {
 // ── Stock tab toggle ──
 window.selectStockTab = function(tab) {
   currentStockTab = tab;
-  const indo = document.getElementById("stock-tab-indo");
-  const luar = document.getElementById("stock-tab-luar");
-  if (indo) indo.classList.toggle("active", tab==="indo");
-  if (luar) luar.classList.toggle("active", tab==="luar");
+  // Update all dynamic stab buttons
+  const container = document.getElementById("stock-tab-buttons");
+  if (container) {
+    container.querySelectorAll(".stab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tabId === tab);
+    });
+  }
   populateCountrySelect();
 };
 
@@ -525,9 +530,16 @@ function renderCountriesList() {
   c.innerHTML = entries.map(([k,v]) => {
     const avail = Object.values(stockData).filter(s=>s.country_key===k&&s.status==="AVAILABLE").length;
     const isOffline = v.offline === true;
-    const tb = v.tab==="indo"
-      ? '<span style="background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.18);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">Indo</span>'
-      : '<span style="background:rgba(14,165,233,.1);color:#38bdf8;border:1px solid rgba(14,165,233,.18);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">Luar</span>';
+    const tb = (() => {
+      const tObj = tabsData[v.tab];
+      const tLabel = tObj ? escapeHtml((tObj.emoji ? tObj.emoji + ' ' : '') + tObj.name) : escapeHtml(v.tab || '');
+      const isIndo = v.tab === 'indo';
+      const isLuar = v.tab === 'luar';
+      const color = isIndo ? '#34d399' : isLuar ? '#38bdf8' : '#c084fc';
+      const bg    = isIndo ? 'rgba(16,185,129,.1)'  : isLuar ? 'rgba(14,165,233,.1)'  : 'rgba(168,85,247,.1)';
+      const bdr   = isIndo ? 'rgba(16,185,129,.18)' : isLuar ? 'rgba(14,165,233,.18)' : 'rgba(168,85,247,.2)';
+      return '<span style="background:'+bg+';color:'+color+';border:1px solid '+bdr+';font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px">'+tLabel+'</span>';
+    })();
     const offlineBadge = isOffline
       ? '<span style="background:rgba(244,63,94,.12);color:#fb7185;border:1px solid rgba(244,63,94,.2);font-size:.625rem;font-weight:600;padding:1px 6px;border-radius:20px"><i class="fa-solid fa-power-off" style="font-size:9px;margin-right:2px"></i>Offline</span>'
       : '';
@@ -952,6 +964,135 @@ window.resetEventUsers = async function() {
     else await Dialog.alert('success','Berhasil','Event berhasil direset. Semua user bisa dapat bonus lagi.');
   } catch { await Dialog.alert('error','Koneksi Bermasalah','Periksa koneksi.'); }
 };
+
+// ── Tabs ──
+let tabsLoadInProgress = false;
+
+async function loadTabs() {
+  if (tabsLoadInProgress) return;
+  tabsLoadInProgress = true;
+  try {
+    const res  = await adminFetch('/api/admin/tabs');
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.message || 'Gagal memuat tab.');
+    tabsData = data.tabs || {};
+    renderTabsList();
+    renderStockTabButtons();
+    populateCTabSelect();
+    populateCountrySelect();
+  } catch (err) {
+    const container = document.getElementById('tabs-list');
+    if (container) container.textContent = 'Gagal memuat tab: ' + err.message;
+  } finally {
+    tabsLoadInProgress = false;
+  }
+}
+
+function renderTabsList() {
+  const container = document.getElementById('tabs-list');
+  if (!container) return;
+  const entries = Object.entries(tabsData).sort((a, b) => Number(a[1].order || 0) - Number(b[1].order || 0));
+  if (!entries.length) {
+    container.innerHTML = '<div style="text-align:center;padding:14px;color:#334155;font-size:.8125rem">Belum ada tab.</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([id, t]) => {
+    const isProtected = id === 'indo' || id === 'luar';
+    const label = escapeHtml((t.emoji ? t.emoji + ' ' : '') + t.name);
+    return '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.05);border-radius:9px;padding:9px 12px;gap:8px">' +
+      '<div style="min-width:0;flex:1">' +
+        '<span style="font-size:.875rem;font-weight:700;color:#e2e8f0">' + label + '</span>' +
+        '<span style="font-family:\'Geist Mono\',monospace;font-size:.625rem;color:#334155;margin-left:8px">' + escapeHtml(id) + '</span>' +
+        (isProtected ? '<span style="margin-left:7px;font-size:.625rem;color:#475569;font-weight:600">🔒 default</span>' : '') +
+      '</div>' +
+      (isProtected ? '' :
+        '<button onclick="deleteTab('+htmlJsArg(id)+')" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#fb7185;border-radius:7px;width:28px;height:28px;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
+          '<i class="fa-solid fa-trash" style="font-size:10px"></i>' +
+        '</button>'
+      ) +
+    '</div>';
+  }).join('');
+}
+
+function renderStockTabButtons() {
+  const container = document.getElementById('stock-tab-buttons');
+  if (!container) return;
+  const entries = Object.entries(tabsData).sort((a, b) => Number(a[1].order || 0) - Number(b[1].order || 0));
+  if (!entries.length) return;
+  container.innerHTML = entries.map(([id, t]) => {
+    const isActive = id === currentStockTab;
+    const label = (t.emoji ? t.emoji + ' ' : '') + escapeHtml(t.name);
+    return '<button type="button" id="stock-tab-' + escapeHtml(id) + '" data-tab-id="' + escapeHtml(id) + '" onclick="selectStockTab(\'' + escapeHtml(id) + '\')" class="stab' + (isActive ? ' active' : '') + '">' + label + '</button>';
+  }).join('');
+  // Ensure currentStockTab is valid; default to first tab
+  if (!tabsData[currentStockTab]) {
+    currentStockTab = entries[0][0];
+  }
+  populateCountrySelect();
+}
+
+function populateCTabSelect() {
+  const sel = document.getElementById('c-tab');
+  if (!sel) return;
+  const entries = Object.entries(tabsData).sort((a, b) => Number(a[1].order || 0) - Number(b[1].order || 0));
+  sel.innerHTML = entries.length
+    ? entries.map(([id, t]) => '<option value="' + escapeHtml(id) + '">' + escapeHtml((t.emoji ? t.emoji + ' ' : '') + t.name) + '</option>').join('')
+    : '<option value="">Belum ada tab</option>';
+}
+
+window.deleteTab = async function(tabId) {
+  const tab = tabsData[tabId];
+  if (!tab) return;
+  const ok = await Dialog.confirmDanger(
+    'Hapus Tab?',
+    'Tab <strong style="color:#e2e8f0">' + escapeHtml((tab.emoji ? tab.emoji + ' ' : '') + tab.name) + '</strong> akan dihapus permanen. Tab hanya bisa dihapus jika tidak ada negara yang menggunakannya.',
+    'Ya, Hapus'
+  );
+  if (!ok) return;
+  try {
+    const res  = await adminFetch('/api/admin/tabs/' + encodeURIComponent(tabId), { method: 'DELETE' });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      await Dialog.alert('error', 'Gagal', data.message || 'Tidak bisa menghapus tab.');
+    } else {
+      delete tabsData[tabId];
+      renderTabsList();
+      renderStockTabButtons();
+      populateCTabSelect();
+    }
+  } catch {
+    await Dialog.alert('error', 'Koneksi Bermasalah', 'Periksa koneksi internet.');
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tabForm = document.getElementById('tab-form');
+  if (!tabForm) return;
+  tabForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id    = document.getElementById('t-id').value.trim().toLowerCase();
+    const name  = document.getElementById('t-name').value.trim();
+    const emoji = document.getElementById('t-emoji').value.trim();
+    const errEl  = document.getElementById('tab-error');
+    const succEl = document.getElementById('tab-success');
+    errEl.classList.add('hidden'); succEl.classList.add('hidden');
+    if (!id || !name) { errEl.querySelector('span, #tab-error-text') || (errEl.textContent = 'ID dan nama wajib diisi.'); document.getElementById('tab-error-text').textContent = 'ID dan nama wajib diisi.'; errEl.classList.remove('hidden'); return; }
+    const sb = tabForm.querySelector('button[type=submit]');
+    sb.disabled = true; sb.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:12px"></i> Menyimpan...';
+    try {
+      const res  = await adminFetch('/api/admin/tabs', { method: 'POST', body: JSON.stringify({ id, name, emoji }) });
+      const data = await safeJson(res);
+      if (!res.ok) { document.getElementById('tab-error-text').textContent = data.message || 'Gagal.'; errEl.classList.remove('hidden'); }
+      else {
+        document.getElementById('tab-success-text').textContent = 'Tab "' + name + '" berhasil ditambahkan!';
+        succEl.classList.remove('hidden');
+        tabForm.reset();
+        await loadTabs();
+      }
+    } catch { document.getElementById('tab-error-text').textContent = 'Koneksi bermasalah.'; errEl.classList.remove('hidden'); }
+    finally { sb.disabled = false; sb.innerHTML = '<i class="fa-solid fa-floppy-disk" style="font-size:12px"></i> Tambah Tab'; }
+  });
+});
 
 // ── Notifications ──
 let notificationsData = {};

@@ -406,6 +406,101 @@ router.delete('/stock/:stockId', authAdmin, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/tabs
+ * List all tabs
+ */
+router.get('/tabs', authAdmin, async (req, res) => {
+  try {
+    const snap = await db.ref('tabs').once('value');
+    const tabs = snap.val() || {};
+    return res.status(200).json({ success: true, tabs });
+  } catch (err) {
+    console.error('[adminRoutes] tabs list error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal memuat tab.' });
+  }
+});
+
+/**
+ * POST /api/admin/tabs
+ * Create a new tab
+ * Body: { id: string, name: string, emoji?: string }
+ */
+router.post('/tabs', authAdmin, async (req, res) => {
+  const { id, name, emoji = '' } = req.body;
+
+  if (!id || typeof id !== 'string') {
+    return res.status(400).json({ error: 'INVALID_ID', message: 'ID tab wajib diisi.' });
+  }
+  const cleanId = id.trim().toLowerCase();
+  if (!/^[a-z0-9_]{2,20}$/.test(cleanId)) {
+    return res.status(400).json({ error: 'INVALID_ID', message: 'ID tab hanya huruf kecil, angka, underscore, min 2 maks 20 karakter.' });
+  }
+  if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 40) {
+    return res.status(400).json({ error: 'INVALID_NAME', message: 'Nama tab wajib diisi, min 2 maks 40 karakter.' });
+  }
+
+  try {
+    const existing = await db.ref(`tabs/${cleanId}`).once('value');
+    if (existing.exists()) {
+      return res.status(409).json({ error: 'DUPLICATE_ID', message: 'ID tab sudah digunakan.' });
+    }
+
+    // Determine order: max existing order + 1
+    const allSnap = await db.ref('tabs').once('value');
+    const allTabs = allSnap.val() || {};
+    const maxOrder = Object.values(allTabs).reduce((m, t) => Math.max(m, Number(t.order) || 0), -1);
+
+    await db.ref(`tabs/${cleanId}`).set({
+      name: name.trim(),
+      emoji: typeof emoji === 'string' ? emoji.trim() : '',
+      order: maxOrder + 1,
+      created_at: Date.now(),
+    });
+
+    return res.status(201).json({ success: true, id: cleanId });
+  } catch (err) {
+    console.error('[adminRoutes] add tab error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menyimpan tab.' });
+  }
+});
+
+/**
+ * DELETE /api/admin/tabs/:tabId
+ * Delete a tab (not indo or luar; not if countries still use it)
+ */
+router.delete('/tabs/:tabId', authAdmin, async (req, res) => {
+  const { tabId } = req.params;
+
+  if (['indo', 'luar'].includes(tabId)) {
+    return res.status(403).json({ error: 'PROTECTED_TAB', message: 'Tab "indo" dan "luar" tidak bisa dihapus.' });
+  }
+
+  try {
+    const snap = await db.ref(`tabs/${tabId}`).once('value');
+    if (!snap.exists()) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Tab tidak ditemukan.' });
+    }
+
+    // Check if any country uses this tab
+    const countrySnap = await db.ref('countries').orderByChild('tab').equalTo(tabId).once('value');
+    if (countrySnap.exists()) {
+      let count = 0;
+      countrySnap.forEach(() => { count++; });
+      return res.status(409).json({
+        error: 'TAB_IN_USE',
+        message: `Tidak bisa hapus tab — masih ada ${count} negara yang menggunakan tab ini.`,
+      });
+    }
+
+    await db.ref(`tabs/${tabId}`).remove();
+    return res.status(200).json({ success: true, message: 'Tab berhasil dihapus.' });
+  } catch (err) {
+    console.error('[adminRoutes] delete tab error:', err.message);
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'Gagal menghapus tab.' });
+  }
+});
+
+/**
  * POST /api/admin/country
  * Add a new country/service entry.
  * Body: { key, tab, country_name, flag, price }
@@ -421,8 +516,10 @@ router.post('/country', authAdmin, async (req, res) => {
     return res.status(400).json({ error: 'INVALID_KEY', message: 'Key hanya boleh huruf kecil, angka, dan underscore.' });
   }
 
-  if (!['indo', 'luar'].includes(tab)) {
-    return res.status(400).json({ error: 'INVALID_TAB', message: 'Tab harus "indo" atau "luar".' });
+  // Accept any tab that exists in DB (not just 'indo'/'luar')
+  const tabSnap = await db.ref(`tabs/${tab}`).once('value');
+  if (!tabSnap.exists()) {
+    return res.status(400).json({ error: 'INVALID_TAB', message: 'Tab tidak ditemukan. Buat tab terlebih dahulu.' });
   }
 
   try {

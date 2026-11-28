@@ -239,7 +239,7 @@
               <div class="tl" style="margin-bottom:6px">
                 <span style="background:var(--purple-dim);color:#c084fc;border-radius:4px;padding:1px 5px;margin-right:5px">1</span>Kategori
               </div>
-              <div style="display:flex;gap:6px">
+              <div id="stock-tab-buttons" style="display:flex;gap:6px;flex-wrap:wrap">
                 <button type="button" id="stock-tab-indo" onclick="selectStockTab('indo')" class="stab active">
                   &#127470;&#127465; Nokos Indo
                 </button>
@@ -318,6 +318,46 @@
     <div id="tab-countries" style="display:none">
       <div style="display:grid;grid-template-columns:1fr;gap:14px">
 
+        <!-- Kelola Tab -->
+        <div class="card" style="padding:16px">
+          <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">
+            <i class="fa-solid fa-layer-group" style="color:#a855f7;font-size:12px"></i> Kelola Tab
+          </div>
+          <div id="tab-error" class="alert alert-r hidden" style="margin-bottom:12px">
+            <i class="fa-solid fa-circle-exclamation"></i><span id="tab-error-text"></span>
+          </div>
+          <div id="tab-success" class="alert alert-g hidden" style="margin-bottom:12px">
+            <i class="fa-solid fa-circle-check"></i><span id="tab-success-text"></span>
+          </div>
+          <form id="tab-form" style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:end">
+              <div>
+                <div class="tl" style="margin-bottom:5px">Emoji</div>
+                <input class="inp inp-no-icon" type="text" id="t-emoji" placeholder="🌐" maxlength="4" style="text-align:center;font-size:1.25rem"/>
+              </div>
+              <div>
+                <div class="tl" style="margin-bottom:5px">ID Tab</div>
+                <div class="inp-wrap"><i class="inp-ico fa-solid fa-key"></i>
+                  <input class="inp" type="text" id="t-id" required placeholder="cth: asia" style="font-family:'Geist Mono',monospace;font-size:.8125rem"/>
+                </div>
+              </div>
+            </div>
+            <div class="tb" style="margin-top:-4px;font-size:.6875rem">ID Tab: huruf kecil, angka, underscore, min 2 maks 20 karakter</div>
+            <div>
+              <div class="tl" style="margin-bottom:5px">Nama Tab</div>
+              <div class="inp-wrap"><i class="inp-ico fa-solid fa-tag"></i>
+                <input class="inp" type="text" id="t-name" required placeholder="cth: Nokos Asia"/>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-purple btn-full btn-h">
+              <i class="fa-solid fa-floppy-disk" style="font-size:12px"></i> Tambah Tab
+            </button>
+          </form>
+          <div id="tabs-list" style="margin-top:14px;display:flex;flex-direction:column;gap:7px">
+            <div class="sk" style="height:40px"></div>
+          </div>
+        </div>
+
         <!-- Form tambah negara -->
         <div class="card" style="padding:16px">
           <div class="tt3" style="margin-bottom:14px;display:flex;align-items:center;gap:7px">
@@ -333,8 +373,7 @@
             <div>
               <div class="tl" style="margin-bottom:5px">Tab</div>
               <select id="c-tab" required class="inp inp-no-icon" style="padding-left:12px">
-                <option value="indo">Nokos Indo</option>
-                <option value="luar">Nokos Luar</option>
+                <option value="">Memuat tab...</option>
               </select>
             </div>
             <div>
