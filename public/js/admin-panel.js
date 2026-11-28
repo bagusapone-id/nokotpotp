@@ -653,7 +653,7 @@ function renderWithdrawals(withdrawals) {
         '<div><div style="color:#64748b">Nominal</div><strong style="color:#34d399">' + escapeHtml(formatRupiah(item.amount)) + '</strong></div>' +
         '<div><div style="color:#64748b">Bank / e-wallet</div><strong style="color:#e2e8f0">' + escapeHtml(item.bank) + '</strong></div>' +
         '<div><div style="color:#64748b">Nomor rekening</div><strong style="color:#e2e8f0;font-family:monospace">' + escapeHtml(item.account_number) + '</strong></div>' +
-        '<div><div style="color:#64748b">Biaya</div><strong style="color:#e2e8f0">Gratis</strong></div>' +
+        '<div><div style="color:#64748b">Nama akun</div><strong style="color:#e2e8f0">' + escapeHtml(item.account_name || '-') + '</strong></div>' +
       '</div>' + actions +
     '</div>';
   }).join("");

@@ -154,6 +154,7 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
   const amount = Number(document.getElementById('withdrawal-amount').value);
   const bank = selectedBank;
   const accountNumber = document.getElementById('withdrawal-account').value.trim();
+  const accountName = document.getElementById('withdrawal-account-name').value.trim();
   const button = document.getElementById('withdrawal-submit');
   if (!bank) {
     showMessage('Pilih bank atau e-wallet tujuan.', true);
@@ -171,13 +172,17 @@ document.getElementById('withdrawal-form').addEventListener('submit', async even
     showMessage('Nomor rekening harus terdiri dari 8 sampai 20 digit.', true);
     return;
   }
+  if (!accountName || accountName.length < 2) {
+    showMessage('Nama pemilik akun harus diisi.', true);
+    return;
+  }
 
   button.disabled = true;
   button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
   try {
     const response = await withdrawalFetch('/api/withdrawals', {
       method: 'POST',
-      body: JSON.stringify({ amount, bank, account_number: accountNumber }),
+      body: JSON.stringify({ amount, bank, account_number: accountNumber, account_name: accountName }),
     });
     const data = await parseWithdrawalResponse(response);
 
@@ -306,7 +311,8 @@ function renderHistory(withdrawals) {
     destination.textContent = `${withdrawal.bank || '-'} · ${maskAccountNumber(withdrawal.account_number)}`;
     const fee = document.createElement('div');
     fee.className = 'history-meta';
-    fee.textContent = `Biaya gratis · ${formatDate(withdrawal.created_at)}`;
+    const nameLine = withdrawal.account_name ? ` · a/n ${withdrawal.account_name}` : '';
+    fee.textContent = `Biaya gratis · ${formatDate(withdrawal.created_at)}${nameLine}`;
     item.append(heading, destination, fee);
 
     // Tampilkan alasan penolakan jika ada

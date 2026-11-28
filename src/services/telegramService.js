@@ -69,6 +69,7 @@ async function sendWithdrawalNotification(payload) {
     `&#128181; <b>Nominal:</b> ${escapeHtml(payload.amount.toLocaleString('id-ID'))}`,
     `&#127974; <b>Bank/E-wallet:</b> ${escapeHtml(payload.bank)}`,
     `&#128179; <b>Nomor rekening:</b> <code>${escapeHtml(payload.account_number)}</code>`,
+    `&#128100; <b>Nama akun:</b> ${escapeHtml(payload.account_name || '-')}`,
     '&#128176; <b>Biaya:</b> Gratis',
   ].join('\n');
   await sendTelegramMessage(text, { withdrawal_id: payload.withdrawal_id });

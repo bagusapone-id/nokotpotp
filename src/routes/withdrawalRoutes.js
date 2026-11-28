@@ -73,6 +73,9 @@ router.post('/', authUser, async (req, res) => {
   const accountNumber = typeof req.body.account_number === 'string'
     ? req.body.account_number.trim()
     : '';
+  const accountName = typeof req.body.account_name === 'string'
+    ? req.body.account_name.trim()
+    : '';
 
   if (!Number.isSafeInteger(amount) || amount < MIN_WITHDRAWAL) {
     return res.status(400).json({
@@ -89,6 +92,12 @@ router.post('/', authUser, async (req, res) => {
       message: 'Nomor rekening harus terdiri dari 8 sampai 20 digit.',
     });
   }
+  if (!accountName || accountName.length < 2 || accountName.length > 60) {
+    return res.status(400).json({
+      error: 'INVALID_ACCOUNT_NAME',
+      message: 'Nama pemilik akun harus diisi (2–60 karakter).',
+    });
+  }
 
   const uid = req.user.uid;
   const userRef = db.ref(`users/${uid}`);
@@ -102,6 +111,7 @@ router.post('/', authUser, async (req, res) => {
     net_amount: amount,
     bank: BANKS[bankKey],
     account_number: accountNumber,
+    account_name: accountName,
     status: 'PROCESSING',
     created_at: createdAt,
   };
