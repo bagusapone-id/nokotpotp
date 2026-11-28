@@ -259,13 +259,14 @@
     .h-line{height:1px;background:var(--line);margin:0 0 14px}
 
     /* Tab pills (segmented) */
-    .seg-tabs{display:flex;gap:5px;padding:0 18px;margin-bottom:12px}
+    .seg-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px;margin-bottom:12px}
     .seg-tab{
       height:30px;padding:0 13px;border-radius:30px;
       border:1px solid var(--line);background:transparent;
       color:var(--text3);font:600 .75rem 'Inter',sans-serif;
       cursor:pointer;transition:all .12s;
       display:flex;align-items:center;gap:5px;
+      white-space:nowrap;
     }
     .seg-tab.active{background:var(--s2);border-color:var(--line2);color:var(--text)}
 
@@ -534,7 +535,7 @@
       <div class="h-line"></div>
 
       <!-- Tabs segmented — rendered dynamically by JS from Firebase tabs/ -->
-      <div id="tab-container" class="seg-tabs" style="overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch"></div>
+      <div id="tab-container" class="seg-tabs"></div>
 
       <!-- Search -->
       <div class="search-wrap">
