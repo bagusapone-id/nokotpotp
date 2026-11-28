@@ -1438,112 +1438,100 @@ window.selectPaymentMethod = async function(method) {
 
 function renderPaymentInstructions(deposit) {
   const container = document.getElementById('deposit-payment-instructions');
+  const paymentType = deposit.payment?.type;
+  const expiresAt = deposit.expired_at || deposit.expires_at;
 
-  if (deposit.payment_mode === 'checkout' || deposit.payment_method === 'payment_link') {
-    const checkoutDescription = 'Lanjutkan ke Kasera Pay.';
+  // ── QRIS ──────────────────────────────────────────────────────────────
+  if (paymentType === 'qr') {
+    const qrString = deposit.payment.qr_string;
     container.innerHTML = `
       <div style="text-align:center;padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px">${checkoutDescription}</div>
-        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Top up</div>
-        <div class="tm" style="font-size:1rem;margin-bottom:8px">${formatRupiah(deposit.amount)}</div>
-        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Biaya</div>
-        <div class="tm" style="font-size:1rem;margin-bottom:8px">${formatRupiah(deposit.fee)}</div>
-        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Total</div>
-        <div class="tm" style="font-size:1.125rem;color:#34d399;margin-bottom:14px">${formatRupiah(deposit.total_payment)}</div>
-        <a class="btn btn-primary btn-full btn-h">
-          <i class="fa-solid fa-external-link" style="font-size:12px"></i> Lanjut bayar
-        </a>
-      </div>
-    `;
-    const checkoutLink = container.querySelector('a');
-    checkoutLink.href = deposit.checkout_url || deposit.payment_link;
-    checkoutLink.target = '_blank';
-    checkoutLink.rel = 'noopener noreferrer';
-  } else if (deposit.payment?.type === 'qr' || deposit.payment_method === 'qris') {
-    const qrString = deposit.payment?.qr_string || deposit.qr_string;
-    const expiresAt = deposit.expires_at || deposit.expired_at;
-    container.innerHTML = `
-      <div style="text-align:center;padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:12px">Scan QRIS untuk membayar</div>
-        <div style="background:#fff;padding:12px;border-radius:14px;display:inline-block;margin-bottom:10px">
+        <div style="font-size:.8125rem;color:var(--text2);margin-bottom:12px">Scan QRIS untuk membayar</div>
+        <div style="background:#fff;padding:12px;border-radius:14px;display:inline-block;margin-bottom:12px">
           <canvas id="qris-canvas"></canvas>
         </div>
-        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:4px">Total</div>
-        <div class="tm" style="font-size:1.125rem;color:#34d399">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
-        <div style="font-size:.7rem;color:#334155;margin-top:8px">
+        <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Total dibayar</div>
+        <div style="font-family:var(--mono);font-size:1.125rem;font-weight:700;color:var(--g-text);margin-bottom:8px">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
+        <div style="font-size:.7rem;color:var(--text3)">
           <i class="fa-solid fa-clock" style="margin-right:3px"></i>
-          Sampai ${new Date(expiresAt).toLocaleString('id-ID')}
+          Berlaku sampai ${new Date(expiresAt).toLocaleString('id-ID')}
         </div>
       </div>
     `;
     const canvas = document.getElementById('qris-canvas');
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(canvas, qrString, {
-        width: 220,
-        margin: 1,
+        width: 220, margin: 1,
         color: { dark: '#000000', light: '#ffffff' },
       }, err => { if (err) console.error('[QRIS]', err); });
     } else {
-      canvas.parentElement.innerHTML = '<div style="color:#ef4444;font-size:.75rem">Gagal load QR library</div>';
+      canvas.parentElement.innerHTML = '<div style="color:var(--rose);font-size:.75rem;padding:16px">Gagal load QR library</div>';
     }
 
-  } else {
-    const paymentCode = deposit.payment?.payment_code || deposit.va_number;
-    const expiresAt = deposit.expires_at || deposit.expired_at;
-    const bankName = {
-      'bni_va':       'BNI',
-      'bri_va':       'BRI',
-      'va_bni':       'BNI',
-      'va_bri':       'BRI',
-      'va_mandiri':   'Mandiri',
-      'va_permata':   'Permata',
-      'va_cimb':      'CIMB Niaga',
-      'va_danamon':   'Danamon',
-      'va_maybank':   'Maybank',
-      'cimb_niaga_va':'CIMB Niaga',
-      'danamon_va':   'Danamon',
-      'maybank_va':   'Maybank',
-      'bnc_va':       'Neo Commerce',
-      'bsi_va':       'BSI',
-      'muamalat_va':  'Muamalat',
-      'ocbc_va':      'OCBC',
-    }[deposit.payment_method] || 'Bank';
-    const bankDisplayName = deposit.payment?.display_name || deposit.payment?.bank || bankName;
-    
+  // ── Virtual Account / Payment Code ────────────────────────────────────
+  } else if (paymentType === 'payment_code') {
+    const paymentCode = deposit.payment.payment_code;
+    const bankDisplay = deposit.payment.display_name || deposit.payment.bank || deposit.gateway_payment_method_name || 'Bank';
     container.innerHTML = `
       <div style="padding:16px">
-        <div style="font-size:.875rem;color:#64748b;margin-bottom:14px;text-align:center">
-          ${bankDisplayName} Virtual Account
-        </div>
-        <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-          <div class="tl" style="margin-bottom:6px">Nomor VA</div>
+        <div style="font-size:.8125rem;color:var(--text2);margin-bottom:13px;text-align:center">${bankDisplay} Virtual Account</div>
+        <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:10px">
+          <div style="font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Nomor VA</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <span class="tm" style="font-size:1.125rem;color:#f1f5f9">${paymentCode}</span>
-            <button onclick="copyVA()" class="btn btn-xs btn-sky">
+            <span style="font-family:var(--mono);font-size:1.125rem;font-weight:700;color:var(--text)">${paymentCode}</span>
+            <button onclick="copyVA()" class="btn btn-sm btn-sky">
               <i class="fa-regular fa-copy" style="font-size:10px"></i> Salin
             </button>
           </div>
         </div>
-        <div style="background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:10px;padding:14px">
-          <div class="tl" style="margin-bottom:6px">Total</div>
-          <div class="tm" style="font-size:1.25rem;color:#34d399">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
+        <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:10px">
+          <div style="font-size:.5625rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Total dibayar</div>
+          <div style="font-family:var(--mono);font-size:1.25rem;font-weight:700;color:var(--g-text)">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
         </div>
-        <div style="font-size:.75rem;color:#334155;margin-top:12px;text-align:center">
-          <i class="fa-solid fa-clock" style="margin-right:3px"></i> Sampai ${new Date(expiresAt).toLocaleString('id-ID')}
+        <div style="font-size:.75rem;color:var(--text3);text-align:center">
+          <i class="fa-solid fa-clock" style="margin-right:3px"></i>
+          Berlaku sampai ${new Date(expiresAt).toLocaleString('id-ID')}
         </div>
+      </div>
+    `;
+
+  // ── Redirect (e-wallet) ───────────────────────────────────────────────
+  } else if (paymentType === 'redirect') {
+    const redirectUrl = deposit.payment.redirect_url;
+    container.innerHTML = `
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:.8125rem;color:var(--text2);margin-bottom:12px">Klik tombol di bawah untuk melanjutkan pembayaran di aplikasi e-wallet.</div>
+        <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Total dibayar</div>
+        <div style="font-family:var(--mono);font-size:1.125rem;font-weight:700;color:var(--g-text);margin-bottom:14px">${formatRupiah(deposit.total_payment || deposit.amount)}</div>
+        <a href="${redirectUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full btn-h" style="text-decoration:none">
+          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:12px"></i> Lanjut ke ${deposit.gateway_payment_method_name || 'E-Wallet'}
+        </a>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:10px">
+          <i class="fa-solid fa-clock" style="margin-right:3px"></i>
+          Berlaku sampai ${new Date(expiresAt).toLocaleString('id-ID')}
+        </div>
+      </div>
+    `;
+
+  // ── Fallback ──────────────────────────────────────────────────────────
+  } else {
+    container.innerHTML = `
+      <div style="text-align:center;padding:16px;color:var(--text2);font-size:.8125rem">
+        Tipe pembayaran tidak dikenali. Hubungi admin.
       </div>
     `;
   }
 
+  // ── Instruksi cara bayar ──────────────────────────────────────────────
   const instructions = deposit.instructions;
   if (instructions && Array.isArray(instructions.steps) && instructions.steps.length) {
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'padding:0 16px 16px;font-size:.8125rem;color:#64748b';
+    wrapper.style.cssText = 'padding:0 16px 16px;font-size:.8125rem;color:var(--text2)';
     const title = document.createElement('div');
-    title.style.cssText = 'font-weight:600;margin-bottom:6px';
+    title.style.cssText = 'font-weight:600;margin-bottom:6px;color:var(--text)';
     title.textContent = instructions.title || 'Cara pembayaran';
     const steps = document.createElement('ol');
-    steps.style.cssText = 'margin:0;padding-left:20px;line-height:1.6';
+    steps.style.cssText = 'margin:0;padding-left:20px;line-height:1.7';
     instructions.steps.forEach(step => {
       const item = document.createElement('li');
       item.textContent = step;

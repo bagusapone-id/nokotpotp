@@ -136,23 +136,29 @@ router.post('/create', authUser, depositCreateLimiter, async (req, res) => {
     transactionInput.checkout = { steps: ['customer', 'payment'] };
 
     const transaction = await kaseraPay.createTransaction(transactionInput, orderId);
-    let checkoutUrl;
-    try {
-      checkoutUrl = new URL(transaction.checkout_url);
-    } catch {
-      throw new Error('Kasera Pay returned an invalid checkout URL.');
-    }
-    if (!transaction.id || !Number.isSafeInteger(transaction.amount) ||
+
+    // Validasi response — payment object harus ada untuk Direct API
+    if (!transaction.id ||
+        !Number.isSafeInteger(transaction.amount) ||
         !Number.isSafeInteger(transaction.fee) ||
         !Number.isSafeInteger(transaction.net) ||
         transaction.net !== amount ||
         transaction.amount !== transaction.net + transaction.fee ||
         transaction.amount !== selectedMethod.total_amount ||
-        transaction.fee !== selectedMethod.fee_amount ||
-        checkoutUrl.origin !== 'https://pay.kasera.id') {
-      const error = new Error('Kasera Pay returned an unexpected gross-up amount or fee.');
+        transaction.fee !== selectedMethod.fee_amount) {
+      const error = new Error('Kasera Pay returned an unexpected amount or fee.');
       error.status = 503;
       error.publicMessage = 'Tarif pembayaran berubah saat permintaan dibuat. Muat ulang metode pembayaran dan coba lagi.';
+      throw error;
+    }
+
+    // Untuk metode redirect (e-wallet), payment.redirect_url harus ada
+    // Untuk qr dan payment_code, payment object harus ada
+    const paymentType = transaction.payment?.type;
+    if (!paymentType || !['qr', 'payment_code', 'redirect'].includes(paymentType)) {
+      const error = new Error(`Kasera Pay returned unknown payment type: ${paymentType}`);
+      error.status = 503;
+      error.publicMessage = 'Metode pembayaran tidak didukung. Coba metode lain.';
       throw error;
     }
 
@@ -167,13 +173,11 @@ router.post('/create', authUser, depositCreateLimiter, async (req, res) => {
       gateway:        'kasera',
       txn_id:         transaction.id,
       payment_request_id: transaction.id,
-      payment_mode:   'checkout',
-      payment_method: 'payment_link',
+      payment_mode:   'direct',
+      payment_method: selectedMethod.code,
       requested_payment_method: selectedMethod.code,
       gateway_payment_method_name: selectedMethod.display_name,
       gateway_payment_method: transaction.payment_method,
-      payment_link:   checkoutUrl.toString(),
-      checkout_url:  checkoutUrl.toString(),
       payment:        transaction.payment || null,
       instructions:   transaction.instructions || null,
       fee:            transaction.fee || 0,
