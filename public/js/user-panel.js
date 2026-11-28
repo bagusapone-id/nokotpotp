@@ -866,7 +866,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   const card = document.createElement("div");
   card.id = "order-card-" + orderId;
   card.className = "card fu";
-  card.style.cssText = "padding:12px;flex-shrink:0;width:260px";
+  card.style.cssText = "padding:14px";
   card.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
       '<div style="min-width:0;flex:1">' +
@@ -912,7 +912,7 @@ function addActiveOrderCard(orderId, phoneNumber, expiresAt, countryName, initia
   if (wrapper) wrapper.style.display = 'block';
 
   // Scroll ke card order yang baru
-  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' }), 100);
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
 
   // Init state
   orderStates[orderId] = {
