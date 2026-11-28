@@ -1621,6 +1621,7 @@ function renderNotifCarousel() {
   const container = document.getElementById("notif-banners");
   if (!container || !_notifItems.length) {
     if (container) container.innerHTML = "";
+    updateScrollPadding();
     return;
   }
   const n   = _notifItems[_notifIndex];
@@ -1641,6 +1642,16 @@ function renderNotifCarousel() {
         dots +
       '</div>' +
     '</div>';
+  requestAnimationFrame(updateScrollPadding);
+}
+
+function updateScrollPadding() {
+  const notifEl = document.getElementById('notif-banners');
+  const scrollEl = notifEl?.parentElement;
+  if (!scrollEl) return;
+  const notifH = notifEl.offsetHeight;
+  scrollEl.style.paddingTop = (62 + (notifH > 0 ? notifH + 8 : 0)) + 'px';
+  if (notifEl) notifEl.style.top = '62px';
 }
 
 function setupNotificationsListener() {
