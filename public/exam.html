@@ -1,0 +1,569 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL EXAM Manager</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f6f8;
+  color: #202124;
+  padding: 25px 16px;
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+}
+
+.login-container {
+  max-width: 380px;
+  margin: 70px auto;
+}
+
+h2 {
+  font-size: 22px;
+  margin-bottom: 7px;
+}
+
+.subtitle {
+  color: #777;
+  font-size: 13px;
+  margin-bottom: 25px;
+}
+
+.section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.section h3 {
+  font-size: 15px;
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  background: white;
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 13px;
+  border-radius: 3px;
+}
+
+input:focus, select:focus {
+  border-color: #2563eb;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 3px;
+}
+
+.primary, .open {
+  background: #2563eb;
+  color: white;
+  width: 100%;
+}
+
+.open {
+  margin-top: 5px;
+}
+
+.delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.edit {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.url-item {
+  border: 1px solid #e5e7eb;
+  padding: 13px;
+  margin-bottom: 10px;
+}
+
+.url-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.url-address {
+  font-size: 11px;
+  color: #888;
+  word-break: break-all;
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 7px;
+}
+
+.actions button {
+  flex: 1;
+}
+
+.empty {
+  color: #999;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.count {
+  font-size: 11px;
+  color: #888;
+  margin-top: -7px;
+  margin-bottom: 13px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 65px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background: transparent;
+  color: #2563eb;
+  padding: 5px;
+  font-size: 11px;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-bottom: 12px;
+  display: none;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+  gap: 10px;
+}
+
+.logout {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="login-container" id="loginPage">
+
+  <div class="section">
+
+    <h2>URL EXAM</h2>
+    <p class="subtitle">Masukkan password untuk mengakses dashboard.</p>
+
+    <form onsubmit="login(event)">
+
+      <label>Password akses</label>
+
+      <div class="password-wrap">
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="Masukkan password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button
+          type="button"
+          class="toggle-password"
+          onclick="togglePassword()"
+        >LIHAT</button>
+      </div>
+
+      <div class="error" id="loginError">
+        Password salah. Silakan coba lagi.
+      </div>
+
+      <button type="submit" class="primary">
+        Login
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboard">
+
+  <div class="header">
+    <div>
+      <h2>URL EXAM Manager</h2>
+      <p class="subtitle" style="margin-bottom:0">
+        Kelola tujuan URL EXAM.
+      </p>
+    </div>
+
+    <button class="logout" onclick="logout()">
+      Logout
+    </button>
+  </div>
+
+  <!-- PILIH TUJUAN -->
+  <div class="section">
+
+    <h3>Pilih Tujuan</h3>
+
+    <label>Pilih halaman</label>
+
+    <select id="urlSelect">
+      <option value="">Pilih URL EXAM tujuan...</option>
+    </select>
+
+    <button class="open" onclick="openURL()">
+      Buka URL EXAM
+    </button>
+
+  </div>
+
+  <!-- TAMBAH URL -->
+  <div class="section">
+
+    <h3 id="formTitle">Tambah URL EXAM Baru</h3>
+
+    <label>Nama pilihan</label>
+    <input type="text" id="urlName" placeholder="Contoh: Ujian Sekolah">
+
+    <label>URL tujuan</label>
+    <input type="text" id="urlAddress" placeholder="https://example.com">
+
+    <button class="primary" onclick="saveURL()" id="saveButton">
+      + Tambahkan URL EXAM
+    </button>
+
+  </div>
+
+  <!-- DAFTAR URL -->
+  <div class="section">
+
+    <h3>Daftar URL EXAM</h3>
+
+    <div class="count" id="urlCount">0 URL tersimpan</div>
+
+    <div id="urlList"></div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+// KONFIGURASI LOGIN
+const ACCESS_PASSWORD = "EXAMBY@BGSAPDOTKOM";
+
+// SESSION
+function login(event) {
+
+  event.preventDefault();
+
+  const password = document.getElementById("loginPassword").value;
+  const error = document.getElementById("loginError");
+
+  if (password === ACCESS_PASSWORD) {
+
+    sessionStorage.setItem("urlExamLoggedIn", "true");
+
+    error.style.display = "none";
+
+    showDashboard();
+
+  } else {
+
+    error.style.display = "block";
+
+    document.getElementById("loginPassword").value = "";
+
+  }
+
+}
+
+function showDashboard() {
+
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+}
+
+function logout() {
+
+  sessionStorage.removeItem("urlExamLoggedIn");
+
+  document.getElementById("loginPassword").value = "";
+
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("loginPage").classList.remove("hidden");
+
+}
+
+function togglePassword() {
+
+  const input = document.getElementById("loginPassword");
+  const button = document.querySelector(".toggle-password");
+
+  if (input.type === "password") {
+    input.type = "text";
+    button.textContent = "SEMBUNYI";
+  } else {
+    input.type = "password";
+    button.textContent = "LIHAT";
+  }
+
+}
+
+// CEK SESSION
+if (sessionStorage.getItem("urlExamLoggedIn") === "true") {
+  showDashboard();
+}
+
+
+// URL MANAGER
+const STORAGE_KEY = "url_exam_manager_data";
+
+let urls = [];
+
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  urls = Array.isArray(saved) ? saved : [];
+} catch (e) {
+  urls = [];
+}
+
+let editIndex = -1;
+
+function saveStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(urls));
+}
+
+function render(selectedIndex = -1) {
+
+  const select = document.getElementById("urlSelect");
+  const list = document.getElementById("urlList");
+
+  select.innerHTML = '<option value="">Pilih URL EXAM tujuan...</option>';
+  list.innerHTML = "";
+
+  urls.forEach((item, index) => {
+
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = item.name;
+    select.appendChild(option);
+
+    const div = document.createElement("div");
+    div.className = "url-item";
+
+    const name = document.createElement("div");
+    name.className = "url-name";
+    name.textContent = item.name;
+
+    const address = document.createElement("div");
+    address.className = "url-address";
+    address.textContent = item.url;
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const edit = document.createElement("button");
+    edit.className = "edit";
+    edit.textContent = "Edit";
+    edit.onclick = () => editURL(index);
+
+    const del = document.createElement("button");
+    del.className = "delete";
+    del.textContent = "Hapus";
+    del.onclick = () => deleteURL(index);
+
+    actions.append(edit, del);
+    div.append(name, address, actions);
+
+    list.appendChild(div);
+
+  });
+
+  document.getElementById("urlCount").textContent =
+    urls.length + " URL tersimpan";
+
+  if (urls.length === 0) {
+    list.innerHTML =
+      '<div class="empty">Belum ada URL EXAM ditambahkan.</div>';
+  }
+
+  if (selectedIndex >= 0 && urls[selectedIndex]) {
+    select.value = selectedIndex;
+  }
+
+}
+
+function saveURL() {
+
+  const name = document.getElementById("urlName").value.trim();
+  let url = document.getElementById("urlAddress").value.trim();
+
+  if (!name || !url) {
+    alert("Nama dan URL wajib diisi!");
+    return;
+  }
+
+  if (!/^https?:\/\//i.test(url)) {
+    url = "https://" + url;
+  }
+
+  try {
+
+    const parsed = new URL(url);
+
+    if (
+      !["http:", "https:"].includes(parsed.protocol) ||
+      !parsed.hostname.includes(".")
+    ) {
+      throw new Error();
+    }
+
+  } catch (e) {
+
+    alert("URL EXAM tidak valid!");
+    return;
+
+  }
+
+  const data = { name, url };
+
+  let selectedIndex;
+
+  if (editIndex >= 0) {
+
+    selectedIndex = editIndex;
+    urls[editIndex] = data;
+
+  } else {
+
+    urls.push(data);
+    selectedIndex = urls.length - 1;
+
+  }
+
+  saveStorage();
+  render(selectedIndex);
+  resetForm();
+
+  alert("URL EXAM berhasil disimpan!");
+
+}
+
+function editURL(index) {
+
+  const item = urls[index];
+
+  document.getElementById("urlName").value = item.name;
+  document.getElementById("urlAddress").value = item.url;
+
+  editIndex = index;
+
+  document.getElementById("formTitle").textContent = "Edit URL EXAM";
+  document.getElementById("saveButton").textContent = "Simpan Perubahan";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+}
+
+function deleteURL(index) {
+
+  if (!confirm("Yakin ingin menghapus URL EXAM ini?")) return;
+
+  urls.splice(index, 1);
+
+  saveStorage();
+  render();
+  resetForm();
+
+}
+
+function openURL() {
+
+  const selected = document.getElementById("urlSelect").value;
+
+  if (selected === "") {
+    alert("Silakan pilih URL EXAM tujuan!");
+    return;
+  }
+
+  const item = urls[Number(selected)];
+
+  if (item) {
+    window.open(item.url, "_blank", "noopener,noreferrer");
+  }
+
+}
+
+function resetForm() {
+
+  document.getElementById("urlName").value = "";
+  document.getElementById("urlAddress").value = "";
+
+  document.getElementById("formTitle").textContent = "Tambah URL EXAM Baru";
+  document.getElementById("saveButton").textContent = "+ Tambahkan URL EXAM";
+
+  editIndex = -1;
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
